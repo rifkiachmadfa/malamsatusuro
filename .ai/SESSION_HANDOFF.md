@@ -86,11 +86,14 @@ Prasyarat: Tool `KunciPeti` (dengan Handle, atau RequiresHandle=false) di Server
 6. Pemegang kunci keluar (sebelum peti): kunci pindah ke pemain lain.
 7. Tanpa template KunciPeti: Output warning, state tetap KELOR_COMPLETE, Kelor tidak terhapus.
 
+<<<<<<< HEAD
 ## Uji Quest UI satu-quest di Studio
 1. Sebelum intro: panel tidak tampil. Setelah intro: hanya KERIS PUSAKA (4 objective), tanpa KANTIL/KAFAN.
 2. Ubah state via Command Bar (server) untuk cek quest lain, mis. selesaikan KERIS lalu `QuestService.activate("KANTIL")`: panel hanya KEMBANG KANTIL HITAM.
 3. Device Emulator: PC, tablet, HP landscape. Panel lebih kecil dari sebelumnya, teks terbaca, header bisa diketuk, tidak menimpa tombol menu Roblox.
 
+=======
+>>>>>>> fix: BUG-001 dialog Pemandu KELOR_COMPLETE; Task 4.3 serah-terima kunci acak
 ## Langkah berikutnya
 1. User: uji 2.1 di atas dan lapor Output; tinjau SkyboxInserter; siapkan naskah dialog Pemandu.
 2. Task 2.2 Quest UI, Task 2.3 alur Pemandu -> quest.
