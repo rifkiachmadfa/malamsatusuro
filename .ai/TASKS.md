@@ -21,24 +21,26 @@ Before starting a task:
 # PHASE 0 — FOUNDATION AUDIT
 
 Status:
-IN PROGRESS
+REPOSITORY AUDIT DONE (2026-10-04) — Studio audit PENDING
 
-- [ ] Audit repository
-- [ ] Audit Rojo configuration
-- [ ] Audit Roblox Studio structure
-- [ ] Audit existing scripts
-- [ ] Audit RemoteEvents
-- [ ] Audit current map
-- [ ] Identify missing systems
-- [ ] Identify broken systems
+- [x] Audit repository (1 commit, template Rojo)
+- [x] Audit Rojo configuration (shared/server/client terpetakan)
+- [ ] Audit Roblox Studio structure (butuh Explorer dari user)
+- [x] Audit existing scripts (hanya template Hello)
+- [ ] Audit RemoteEvents (belum ada di repo; Studio belum diperiksa)
+- [ ] Audit current map (butuh Studio)
+- [x] Identify missing systems (semua sistem gameplay belum ada)
+- [ ] Identify broken systems (belum bisa dinilai tanpa Studio)
 - [ ] Establish baseline
 
 
 # PHASE 1 — FOUNDATION
 
 Status:
-NOT STARTED
+IN PROGRESS
 
+- [x] 1.1 Dokumentasi dasar (AGENTS.md, SESSION_HANDOFF.md, ADR-011/012) — menunggu commit
+- [x] 1.2 Strategi map: Git hanya script (ADR-011)
 - [ ] Finalize Rojo project structure
 - [ ] GameManager
 - [ ] Basic game state
@@ -46,8 +48,6 @@ NOT STARTED
 - [ ] Pemandu NPC
 - [ ] Basic interaction system
 - [ ] Basic GUI foundation
-- [ ] Multiplayer state foundation
-
 
 # PHASE 2 — QUEST SYSTEM
 
