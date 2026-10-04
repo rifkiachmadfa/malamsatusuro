@@ -1,83 +1,76 @@
 # CURRENT PROJECT STATE
 
 Last Updated:
-2026-10-04
+2026-10-05
 
 ## CURRENT PHASE
 
-PHASE 2 — QUEST SYSTEM: SELESAI DENGAN CATATAN (lihat "BELUM DITES").
-Berikutnya: PHASE 3 — INTERACTION + INVENTORY (belum dimulai; mulai dengan audit + rencana, tanpa langsung kode).
+PHASE 1 — FOUNDATION: SELESAI.
+PHASE 2 — QUEST SYSTEM: SELESAI (diuji 1 dan 2 pemain).
+PHASE 3 — INTERACTION & INVENTORY: ItemService selesai (boot diuji; give/consume diuji lewat Phase 4).
+PHASE 4 — KERIS PUSAKA: SEDANG BERJALAN (4.1 spawn Kelor + 4.2 pickup/progres: kode selesai, belum dites di Studio).
+
 
 ## TOOLCHAIN
 
 Windows → VS Code → Rojo 7.7.1 → Roblox Studio → Git / GitHub
 AI bekerja tanpa MCP Studio (ADR-012): hasil test Studio/Output ditempel oleh user.
 
-## SISTEM YANG SUDAH ADA
 
-Phase 1 (dites user, 1 dan 2+ pemain):
-- Kerangka src/, Remotes, GameManager, SpawnService, InteractionService, DialogueService,
-  InteractionController, DialogueController, Theme (ADR-013..017)
+## SISTEM YANG SUDAH ADA DAN SUDAH DITES
 
-Phase 2 (dites user di Studio, 1 pemain, 2026-10-04):
-- shared/Config/QuestConfig: data 3 quest (states, resets, counters, objectives, dialog Pemandu)
-- server/Services/QuestService: state quest party-wide. API: getState, getActiveQuestId, getCounter,
-  startGame, advance, addProgress, reset, onStateChanged, markPlayerDone/isPlayerDone/areAllPlayersDone
-- server/Services/PemanduService: dialog Pemandu mengikuti state quest; transisi setelah dialog dibaca sampai habis
-- client/Controllers/QuestController: Quest UI kanan atas (minimize, TopbarSafeInsets), hanya merender snapshot server
-- DialogueService: parameter `onFinished` (hanya bila dibaca sampai baris terakhir)
-- DialogueConfig: dialog quest PLACEHOLDER (Brief, Hint, Submit) + Pemandu_Idle
+- Kerangka src/: shared/Config (GameConfig, DialogueConfig), shared/Util (Log, Spatial, Interactable), bootstrap server dan client
+- shared/Remotes: pembuat dan pengambil RemoteEvent (ADR-013). Remote aktif: InteractionRequest, DialogueUpdate, DialogueAction
+- server/Services/GameManager: state game dan pemain, direplikasi lewat Attribute (ADR-014)
+- server/Services/SpawnService: pemeriksaan dependency SpawnPoints (ADR-015)
+- server/Services/InteractionService: interaksi [E] tervalidasi server, tag + attribute (ADR-016)
+- server/Services/DialogueService: sesi dialog per pemain, indeks baris di server
+- client/Controllers/InteractionController dan DialogueController; client/UI/Theme hitam-putih (ADR-017)
+- server/Services/QuestService + shared/Config/QuestConfig (Task 2.1, ADR-019): state machine 3 quest, counter party-wide, replikasi Attribute ke ReplicatedStorage.QuestState. STATUS: logika lulus harness offline (stub Roblox, 32 cek); BELUM dites di Studio. 
+- server/Services/GameFlowService (Task 2.3, ADR-020) + DialogueService.onCompleted: dialog Pemandu_Intro selesai -> game LOBBY->INTRO->QUEST_KERIS, quest KERIS ACTIVE->SEARCHING_KELOR. STATUS: DITES user di Studio (1 pemain, 2026-10-05): transisi game dan quest benar di Output. Setelah intro, Pemandu memutar Pemandu_KerisSearch (placeholder) selama SEARCHING_KELOR; state lain belum punya dialog.
+- client/Controllers/QuestController + shared/Util/QuestView (Task 2.2, ADR-021): Quest UI kanan atas dari Attribute QuestState. STATUS: DITES user di Studio (1 pemain, 2026-10-05): panel muncul setelah intro, addProgress via Command Bar mengubah panel, minimize berfungsi. Belum dilaporkan: Device Emulator, 2+ pemain.
+- server/Services/ItemService + shared/Config/ItemConfig (Task 3.1, ADR-022): give/has/count/consume Tool di Backpack, stack lewat Attribute Count, item unique. STATUS: logika lulus harness offline (28 cek); BELUM dites di Studio. Dipakai KerisQuestService untuk pickup Kelor.
+- server/Services/RandomSpawnService + KerisQuestService (Task 4.1–4.2, ADR-023): saat KERIS masuk SEARCHING_KELOR, server memilih 4 dari 8 titik di Workspace.QuestObjects.KelorSpawns, membuat pickup Model dari template DaunKelor di Workspace.QuestRuntime; [E] Ambil -> item ke Backpack + progres party. STATUS: logika lulus harness offline (18 cek); pembuatan Model visual dan pickup di Studio BELUM dites.
+- Pemandu NPC: dialog berjalan; teks dialog masih PLACEHOLDER (ganti dengan naskah GDD)
 
-## HASIL TEST PHASE 2
+Hasil test (dilaporkan user, 2026-10-04):
+- Interaksi dan dialog Pemandu: lulus (1 pemain, 2+ pemain)
+- Tampilan dialog: lulus di berbagai device di Device Emulator
+- Output server/client: tanpa error dari kode project
+- Belum dites: 4 pemain penuh; disconnect/reconnect saat dialog (dijadwalkan Phase 10)
 
-Dilaporkan user (Studio, Play, 1 pemain):
-- T1 mulai game lewat dialog intro: LULUS (INTRO -> QUEST_KERIS, Keris LOCKED -> ACTIVE)
-- T2 Pemandu Brief: LULUS (ACTIVE -> SEARCHING_KELOR)
-- T3 counter party: LULUS (addProgress menambah counter, UI berubah)
-- T4 lompat state ditolak: LULUS (SEARCHING_KELOR -> KERIS_OBTAINED = false + warning, state tetap)
-- advance berurutan KEY_OBTAINED..KERIS_OBTAINED: LULUS (4x true)
-- addProgress pada quest LOCKED (Kantil) ditolak: perilaku benar
-- T5 serah-terima Keris ke Pemandu dan T6 Kantil + party wipe (reset): dilaporkan user "aman" (log tidak ditempel)
 
-Verifikasi AI (bukan Studio): luau-compile 8 file OK; tes logika dengan mock Roblox 30/30.
+## OBJEK WORKSPACE (di Studio, tidak ada di Git)
 
-## OBJEK STUDIO (tidak ada di Git, ADR-011)
+Dari screenshot user (2026-10-05), belum diverifikasi lewat Explorer lengkap:
+- Workspace.QuestObjects: KelorSpawns (KelorSpawn_1..8), FlowerSpawns (FlowerSpawn_1..8), Graves (Grave_1..4), Chest, Gamelan, RitualCollection
+- QuestTemplates (Tool): DaunKelor, KantilKuning, MawarMerah, MawarPutih, Melati
+- DEPENDENCY BELUM ADA: template KunciPeti, KerisPusaka, KembangKantilHitam, MinyakZaitun, KainKafan
 
-- Workspace.SpawnPoints.Spawn1; Workspace.NPC.Pemandu (tag Interactable, InteractionId=Pemandu)
-- Workspace.QuestObjects: KelorSpawns (KelorSpawn_1..8), FlowerSpawns (FlowerSpawn_1..8), Graves (Grave_1..4),
-  Chest, Gamelan, RitualCollection
-- ServerStorage.QuestTemplates: DaunKelor, KantilKuning, MawarMerah, MawarPutih, Melati
-- Belum ada template: Kunci, Keris, Minyak Zaitun, Kantil Hitam, Kain Kafan (dibutuhkan Phase 3-7)
-- Belum diperiksa: tipe DaunKelor (Model/Part), PrimaryPart, tag/attribute pada spawn dan template (Phase 3/4)
+- Workspace.SpawnPoints: Spawn1 (SpawnLocation)
+- Workspace.NPC.Pemandu: Model R15 (Block Rig), HumanoidRootPart Anchored, tag Interactable,
+  attribute InteractionId=Pemandu, ActionText=Bicara, ObjectText=Pemandu, MaxDistance=10
+- Map desa belum ada
 
-## CATATAN PENTING UNTUK TEST
-
-Command Bar Studio harus memakai konteks Server. Pola test: `_G.Q = require(game.ServerScriptService.Server.Services.QuestService)`
-lalu panggil `_G.Q.addProgress(...)`, `_G.Q.advance(...)`, `_G.Q.reset(...)`. Satu baris per eksekusi.
 
 ## CATATAN KEAMANAN
 
-`SkyboxInserter` (Requiring asset 257460689) dari model langit Toolbox masih perlu ditinjau/dihapus sebelum publish.
+Output Studio menunjukkan `Requiring asset 257460689 (cloud_257463543.SkyboxInserter)`: script dari model langit Toolbox
+memuat modul dari asset ID luar. Bukan kode project. Perlu ditinjau/dihapus user sebelum publish.
 
-## ASUMSI YANG BERLAKU
-
-- Bunga Kantil dihitung total 4 (bukan per jenis).
-- Objective "Bicara dengan Pemandu" ditambahkan di tiap quest (tidak ada di contoh GDD).
-- Serah-terima ke Pemandu di Phase 2 hanya memeriksa STATE. Pemeriksaan kepemilikan item dibuat di Phase 3.
-- Satu server = satu party; boleh join di tengah game.
-- Kelor/bunga BELUM muncul di map: spawn dan pengambilan item adalah Phase 3-5 (bukan bug Phase 2).
 
 ## BELUM ADA
 
-InventoryService, ItemConfig, RandomSpawnService, pengambilan item, peti, puzzle Keris/Kantil, knock, revive,
-gamelan, ritual akhir, cutscene, efek horor. Teks dialog masih placeholder.
+ItemService (ADR-018, tanpa InventoryService), chest, Kelor, quest Keris, bunga, puzzle Kantil, knock, revive, gamelan, quest Kafan, ritual akhir, cutscene, efek horor.
+
 
 ## NEXT ACTION
 
-1. AI: audit repo + rencana Phase 3 (tanpa kode), ajukan pertanyaan konfirmasi.
-2. User: jawab pertanyaan Phase 3 (lihat SESSION_HANDOFF); kirim screenshot isi DaunKelor (Explorer + Properties).
-3. Opsional: jalankan T7-T9.
+1. User: uji Kelor di Studio (lihat SESSION_HANDOFF), lapor Output dan tampilan (posisi/orientasi model Kelor).
+2. Task 4.3: kunci peti setelah 4/4 (KELOR_COMPLETE -> KEY_OBTAINED), lalu peti dan memory puzzle.
+3. User (masih terbuka): tinjau SkyboxInserter; ganti teks placeholder dengan naskah GDD.
 
 ## IMPORTANT
 
-Dokumen ini adalah kondisi terakhir yang diketahui. Jangan menulis bahwa sistem berfungsi kalau belum dites.
+Dokumen ini adalah kondisi terakhir yang diketahui. Perbarui setelah pekerjaan signifikan.
+Jangan menulis bahwa sebuah sistem berfungsi kalau belum dites.

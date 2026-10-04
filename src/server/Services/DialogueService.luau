@@ -24,11 +24,13 @@ type Session = {
 	dialogueId: string,
 	index: number,
 	npc: Instance,
-	onFinished: (() -> ())?,
 }
+
+export type CompletedListener = (player: Player, dialogueId: string) -> ()
 
 local DialogueService = {}
 
+local completedListeners: { CompletedListener } = {}
 local sessions: { [Player]: Session } = {}
 local lastNext: { [Player]: number } = {}
 local updateRemote: RemoteEvent
@@ -54,9 +56,7 @@ local function closeSession(player: Player, notifyClient: boolean)
 end
 
 -- Mulai dialog untuk pemain. Dipanggil dari handler InteractionService (sudah tervalidasi).
--- onFinished (opsional) dipanggil HANYA jika pemain membaca sampai baris terakhir
--- (bukan saat ditutup dini, menjauh, atau disconnect).
-function DialogueService.start(player: Player, dialogueId: string, npc: Instance, onFinished: (() -> ())?)
+function DialogueService.start(player: Player, dialogueId: string, npc: Instance)
 	if sessions[player] then
 		return
 	end
@@ -67,9 +67,16 @@ function DialogueService.start(player: Player, dialogueId: string, npc: Instance
 		return
 	end
 
-	local session: Session = { dialogueId = dialogueId, index = 1, npc = npc, onFinished = onFinished }
+	local session: Session = { dialogueId = dialogueId, index = 1, npc = npc }
 	sessions[player] = session
 	sendLine(player, session)
+end
+
+-- Daftarkan callback yang dipanggil saat pemain menamatkan dialog sampai baris terakhir.
+-- Tidak dipanggil jika dialog ditutup di tengah (Close, menjauh, state berubah).
+-- Dijalankan lewat task.spawn agar error di listener tidak merusak dialog.
+function DialogueService.onCompleted(listener: CompletedListener)
+	table.insert(completedListeners, listener)
 end
 
 function DialogueService.isInDialogue(player: Player): boolean
@@ -102,10 +109,10 @@ local function onAction(player: Player, action: unknown)
 	session.index += 1
 	local dialogue = DialogueConfig[session.dialogueId]
 	if session.index > #dialogue.lines then
-		local onFinished = session.onFinished
+		local finishedId = session.dialogueId
 		closeSession(player, true)
-		if onFinished then
-			task.spawn(onFinished)
+		for _, listener in completedListeners do
+			task.spawn(listener, player, finishedId)
 		end
 		return
 	end

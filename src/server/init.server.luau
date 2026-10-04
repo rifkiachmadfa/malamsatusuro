@@ -14,14 +14,26 @@ local SpawnService = require(Services:WaitForChild("SpawnService") :: ModuleScri
 local InteractionService = require(Services:WaitForChild("InteractionService") :: ModuleScript)
 local DialogueService = require(Services:WaitForChild("DialogueService") :: ModuleScript)
 local QuestService = require(Services:WaitForChild("QuestService") :: ModuleScript)
-local PemanduService = require(Services:WaitForChild("PemanduService") :: ModuleScript)
+local ItemService = require(Services:WaitForChild("ItemService") :: ModuleScript)
+local GameFlowService = require(Services:WaitForChild("GameFlowService") :: ModuleScript)
+local KerisQuestService = require(Services:WaitForChild("KerisQuestService") :: ModuleScript)
 
 Log.info("Server", string.format("Malam Suro server siap (MAX_PLAYERS=%d)", GameConfig.MAX_PLAYERS))
 
 Remotes.init()
 GameManager.init()
+QuestService.init()
+ItemService.init()
 SpawnService.init()
 InteractionService.init()
 DialogueService.init()
-QuestService.init()
-PemanduService.init() -- mendaftarkan InteractionId "Pemandu" (Workspace.NPC.Pemandu ber-tag Interactable)
+GameFlowService.init()
+KerisQuestService.init()
+
+-- Pemandu: objek Workspace.NPC.Pemandu (dibuat di Studio) ber-tag Interactable dengan InteractionId = "Pemandu".
+InteractionService.register("Pemandu", function(player: Player, target: Instance)
+	local dialogueId = GameFlowService.getPemanduDialogueId()
+	if dialogueId then
+		DialogueService.start(player, dialogueId, target)
+	end
+end)

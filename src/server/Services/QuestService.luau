@@ -1,312 +1,185 @@
 --!strict
--- QuestService: SATU-SATUNYA pemilik state quest (party-wide, server-authoritative).
--- Progres quest milik party, bukan milik pemain. Inventory pemain = Phase 3.
--- Direplikasi ke client sebagai satu Attribute JSON di ReplicatedStorage (read-only bagi client).
+-- QuestService: pemilik state quest dan progres PARTY-WIDE (ADR-004, ADR-009, ADR-019).
+-- Progres milik party, bukan pemain, dan TIDAK dihitung dari jumlah Tool di Backpack (ADR-018).
+-- State direplikasi ke client lewat Attribute pada ReplicatedStorage.QuestState (read-only bagi client).
 
-local HttpService = game:GetService("HttpService")
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
-local GameConfig = require(Shared:WaitForChild("Config"):WaitForChild("GameConfig") :: ModuleScript)
 local QuestConfig = require(Shared:WaitForChild("Config"):WaitForChild("QuestConfig") :: ModuleScript)
 local Log = require(Shared:WaitForChild("Util"):WaitForChild("Log") :: ModuleScript)
-local GameManager = require(script.Parent:WaitForChild("GameManager") :: ModuleScript)
 
-local GameState = GameConfig.GameState
-local LOCKED = QuestConfig.LOCKED
-local ACTIVE = QuestConfig.ACTIVE
-local COMPLETE = QuestConfig.COMPLETE
 local TAG = "QuestService"
 
-type Runtime = {
-	state: string,
-	counters: { [string]: number },
-	playersDone: { [number]: boolean }, -- UserId; dipakai quest berbasis skor per pemain (Kafan)
-}
-
-type Listener = (questId: string, newState: string, oldState: string) -> ()
+export type StateListener = (questId: string, fromState: string, toState: string) -> ()
 
 local QuestService = {}
 
-local runtimes: { [string]: Runtime } = {}
-local listeners: { Listener } = {}
+local questStates: { [string]: string } = {}
+local counters: { [string]: { [string]: number } } = {}
+local listeners: { StateListener } = {}
+local stateFolder: Folder? = nil
 local initialized = false
 
--- ---------------------------------------------------------------- helpers
-
-local function indexOf(list: { string }, value: string): number?
-	return table.find(list, value)
-end
-
-local function nextQuestId(questId: string): string?
-	local index = table.find(QuestConfig.Order, questId)
-	if not index then
-		return nil
-	end
-	return QuestConfig.Order[index + 1]
-end
-
-local function validateConfig()
-	for _, questId in QuestConfig.Order do
-		local def = QuestConfig.Quests[questId]
-		assert(def, "quest tidak ada di config: " .. questId)
-		assert(def.states[1] == LOCKED and def.states[2] == ACTIVE, questId .. ": states harus diawali LOCKED, ACTIVE")
-		assert(def.states[#def.states] == COMPLETE, questId .. ": states harus diakhiri COMPLETE")
-		for from, to in def.resets do
-			assert(indexOf(def.states, from) and indexOf(def.states, to), questId .. ": reset memakai state tidak dikenal")
-		end
-		for counterId, counter in def.counters do
-			local whileIndex = indexOf(def.states, counter.whileState)
-			local completeIndex = indexOf(def.states, counter.completeState)
-			assert(whileIndex and completeIndex and completeIndex == whileIndex + 1, questId .. ": counter " .. counterId .. " tidak valid")
-		end
-		for _, objective in def.objectives do
-			assert(indexOf(def.states, objective.doneWhen), questId .. ": objective " .. objective.id .. " memakai state tidak dikenal")
-			if objective.counter then
-				assert(def.counters[objective.counter], questId .. ": objective " .. objective.id .. " memakai counter tidak dikenal")
-			end
-		end
+local function publishState(questId: string)
+	if stateFolder then
+		stateFolder:SetAttribute(QuestConfig.stateAttribute(questId), questStates[questId])
 	end
 end
 
--- ---------------------------------------------------------------- sinkronisasi
-
-local function buildSnapshot(): { [string]: any }
-	local quests = {}
-	for _, questId in QuestConfig.Order do
-		local def = QuestConfig.Quests[questId]
-		local runtime = runtimes[questId]
-		if runtime.state ~= LOCKED then
-			local isDone = runtime.state == COMPLETE
-			local objectives = {}
-			if not isDone then
-				local stateIndex = indexOf(def.states, runtime.state) :: number
-				for _, objective in def.objectives do
-					local objectiveDone = stateIndex >= (indexOf(def.states, objective.doneWhen) :: number)
-					local entry: { [string]: any } = { label = objective.label, done = objectiveDone }
-					if objective.counter then
-						local counter = def.counters[objective.counter]
-						entry.target = counter.target
-						entry.current = if objectiveDone then counter.target else (runtime.counters[objective.counter] or 0)
-					end
-					table.insert(objectives, entry)
-				end
-			end
-			table.insert(quests, { id = questId, title = def.title, done = isDone, objectives = objectives })
-		end
-	end
-	return { quests = quests }
-end
-
-local function publish()
-	ReplicatedStorage:SetAttribute(QuestConfig.ATTRIBUTE, HttpService:JSONEncode(buildSnapshot()))
-end
-
--- ---------------------------------------------------------------- state
-
-local function notify(questId: string, newState: string, oldState: string)
-	for _, listener in listeners do
-		task.spawn(listener, questId, newState, oldState)
+local function publishCounter(questId: string, counterId: string)
+	if stateFolder then
+		stateFolder:SetAttribute(QuestConfig.counterAttribute(questId, counterId), counters[questId][counterId])
 	end
 end
 
-local setState -- forward declaration
-
--- Quest selesai: buka quest berikutnya (atau masuk FINAL_RITUAL setelah quest terakhir).
-local function onQuestComplete(questId: string)
-	local nextId = nextQuestId(questId)
-	if nextId then
-		local nextDef = QuestConfig.Quests[nextId]
-		if GameManager.transitionTo(nextDef.gameState) then
-			setState(nextId, ACTIVE)
-		end
-	else
-		GameManager.transitionTo(GameState.FINAL_RITUAL)
-	end
+local function getDef(questId: string): QuestConfig.QuestDef?
+	return (QuestConfig.Quests :: any)[questId]
 end
-
-function setState(questId: string, newState: string)
-	local runtime = runtimes[questId]
-	local oldState = runtime.state
-	runtime.state = newState
-	publish()
-	Log.info(TAG, string.format("quest %s: %s -> %s", questId, oldState, newState))
-	notify(questId, newState, oldState)
-	if newState == COMPLETE then
-		onQuestComplete(questId)
-	end
-end
-
-local function reject(message: string): boolean
-	Log.warn(TAG, message)
-	return false
-end
-
--- ---------------------------------------------------------------- API publik
 
 function QuestService.init()
 	assert(not initialized, "QuestService.init sudah dipanggil")
 	initialized = true
 
-	validateConfig()
-	for _, questId in QuestConfig.Order do
-		runtimes[questId] = { state = LOCKED, counters = {}, playersDone = {} }
+	local existing = ReplicatedStorage:FindFirstChild(QuestConfig.STATE_FOLDER)
+	if existing and existing:IsA("Folder") then
+		stateFolder = existing
+	else
+		local folder = Instance.new("Folder")
+		folder.Name = QuestConfig.STATE_FOLDER
+		folder.Parent = ReplicatedStorage
+		stateFolder = folder
 	end
-	publish()
-	Log.info(TAG, "siap")
+
+	for _, questId in QuestConfig.ORDER do
+		local def = getDef(questId)
+		assert(def, "quest tidak ada di QuestConfig.Quests: " .. questId)
+		questStates[questId] = def.initialState
+		counters[questId] = {}
+		for counterId in def.counters do
+			counters[questId][counterId] = 0
+			publishCounter(questId, counterId)
+		end
+		publishState(questId)
+	end
+
+	Log.info(TAG, string.format("siap, %d quest terdaftar (semua LOCKED)", #QuestConfig.ORDER))
+end
+
+-- Daftarkan callback yang dipanggil setelah state quest berubah (dijalankan lewat task.spawn,
+-- sehingga error di listener tidak menggagalkan transisi).
+function QuestService.onStateChanged(listener: StateListener)
+	table.insert(listeners, listener)
 end
 
 function QuestService.getState(questId: string): string?
-	local runtime = runtimes[questId]
-	return if runtime then runtime.state else nil
+	return questStates[questId]
 end
 
--- Quest yang sedang berjalan (bukan LOCKED, bukan COMPLETE). nil jika tidak ada.
-function QuestService.getActiveQuestId(): string?
-	for _, questId in QuestConfig.Order do
-		local state = runtimes[questId].state
-		if state ~= LOCKED and state ~= COMPLETE then
-			return questId
+function QuestService.getCounter(questId: string, counterId: string): number?
+	local questCounters = counters[questId]
+	return questCounters and questCounters[counterId]
+end
+
+-- Pindah state quest. Hanya transisi yang tercantum di QuestConfig yang diterima.
+-- Return true jika diterima, false jika ditolak.
+function QuestService.transition(questId: string, newState: string): boolean
+	local def = getDef(questId)
+	local current = questStates[questId]
+	if not def or not current then
+		Log.warn(TAG, "quest tidak dikenal: " .. tostring(questId))
+		return false
+	end
+
+	local allowed = def.transitions[current]
+	if not allowed or table.find(allowed, newState) == nil then
+		Log.warn(TAG, string.format("transisi ditolak (%s): %s -> %s", questId, current, newState))
+		return false
+	end
+
+	questStates[questId] = newState
+
+	local toReset = def.resetCountersOnEnter[newState]
+	if toReset then
+		for _, counterId in toReset do
+			counters[questId][counterId] = 0
+			publishCounter(questId, counterId)
 		end
 	end
-	return nil
-end
 
-function QuestService.getCounter(questId: string, counterId: string): number
-	local runtime = runtimes[questId]
-	return if runtime then (runtime.counters[counterId] or 0) else 0
-end
+	publishState(questId)
+	Log.info(TAG, string.format("state quest (%s): %s -> %s", questId, current, newState))
 
--- Dipanggil setelah intro Pemandu selesai dibaca. Hanya berlaku di LOBBY.
-function QuestService.startGame(): boolean
-	if GameManager.getState() ~= GameState.LOBBY then
-		Log.info(TAG, "startGame diabaikan: game sudah berjalan")
-		return false
+	for _, listener in listeners do
+		task.spawn(listener, questId, current, newState)
 	end
-	local firstId = QuestConfig.Order[1]
-	if not GameManager.transitionTo(GameState.INTRO) then
-		return false
-	end
-	if not GameManager.transitionTo(QuestConfig.Quests[firstId].gameState) then
-		return false
-	end
-	setState(firstId, ACTIVE)
 	return true
 end
 
--- Maju ke state BERIKUTNYA. expectedFrom (opsional) mencegah dobel-eksekusi dari event yang telat.
-function QuestService.advance(questId: string, toState: string, expectedFrom: string?): boolean
-	local def = QuestConfig.Quests[questId]
-	local runtime = runtimes[questId]
-	if not def or not runtime then
-		return reject("advance: quest tidak dikenal: " .. tostring(questId))
-	end
-	if expectedFrom ~= nil and runtime.state ~= expectedFrom then
-		return reject(string.format("advance %s ditolak: state sekarang %s, diharapkan %s", questId, runtime.state, expectedFrom))
-	end
-	if runtime.state == LOCKED then
-		return reject("advance ditolak: quest masih LOCKED: " .. questId)
-	end
-	if GameManager.getState() ~= def.gameState then
-		return reject(string.format("advance %s ditolak: GameState %s", questId, GameManager.getState()))
+-- Aktifkan quest: harus LOCKED, dan semua quest sebelumnya di urutan harus COMPLETE.
+function QuestService.activate(questId: string): boolean
+	if questStates[questId] ~= "LOCKED" then
+		Log.warn(TAG, string.format("activate ditolak (%s): state %s", tostring(questId), tostring(questStates[questId])))
+		return false
 	end
 
-	local currentIndex = indexOf(def.states, runtime.state) :: number
-	if def.states[currentIndex + 1] ~= toState then
-		return reject(string.format("transisi quest ditolak (%s): %s -> %s", questId, runtime.state, toState))
-	end
-
-	setState(questId, toState)
-	return true
-end
-
--- Tambah progres counter party. Mengembalikan nilai baru, atau nil jika ditolak.
-function QuestService.addProgress(questId: string, counterId: string, amount: number): number?
-	local def = QuestConfig.Quests[questId]
-	local runtime = runtimes[questId]
-	local counter = def and def.counters[counterId]
-	if not def or not runtime or not counter then
-		reject(string.format("addProgress: counter tidak dikenal: %s/%s", tostring(questId), tostring(counterId)))
-		return nil
-	end
-	if amount ~= math.floor(amount) or amount < 1 then
-		reject("addProgress: amount tidak valid")
-		return nil
-	end
-	if runtime.state ~= counter.whileState then
-		reject(string.format("addProgress %s/%s ditolak: state %s", questId, counterId, runtime.state))
-		return nil
-	end
-
-	local value = math.min(counter.target, (runtime.counters[counterId] or 0) + amount)
-	runtime.counters[counterId] = value
-	publish()
-	Log.info(TAG, string.format("progres %s/%s: %d/%d", questId, counterId, value, counter.target))
-
-	if value >= counter.target then
-		QuestService.advance(questId, counter.completeState, counter.whileState)
-	end
-	return value
-end
-
--- Transisi mundur yang didaftarkan di `resets` (contoh: party wipe Kantil). Counter quest dikosongkan.
-function QuestService.reset(questId: string, toState: string): boolean
-	local def = QuestConfig.Quests[questId]
-	local runtime = runtimes[questId]
-	if not def or not runtime then
-		return reject("reset: quest tidak dikenal: " .. tostring(questId))
-	end
-	if def.resets[runtime.state] ~= toState then
-		return reject(string.format("reset ditolak (%s): %s -> %s", questId, runtime.state, toState))
-	end
-
-	table.clear(runtime.counters)
-	table.clear(runtime.playersDone)
-	setState(questId, toState)
-	return true
-end
-
--- Daftar listener perubahan state untuk service lain (Phase 4+). Mengembalikan fungsi disconnect.
-function QuestService.onStateChanged(listener: Listener): () -> ()
-	table.insert(listeners, listener)
-	return function()
-		local index = table.find(listeners, listener)
-		if index then
-			table.remove(listeners, index)
+	for _, previousId in QuestConfig.ORDER do
+		if previousId == questId then
+			break
 		end
-	end
-end
-
--- Penanda per pemain (struktur untuk Kafan, Phase 7). Bukan state quest (ADR-020).
-function QuestService.markPlayerDone(questId: string, player: Player)
-	local runtime = runtimes[questId]
-	if runtime then
-		runtime.playersDone[player.UserId] = true
-	end
-end
-
-function QuestService.isPlayerDone(questId: string, player: Player): boolean
-	local runtime = runtimes[questId]
-	return runtime ~= nil and runtime.playersDone[player.UserId] == true
-end
-
--- true jika SEMUA pemain yang sedang ada sudah ditandai selesai (dan ada minimal 1 pemain).
-function QuestService.areAllPlayersDone(questId: string): boolean
-	local runtime = runtimes[questId]
-	if not runtime then
-		return false
-	end
-	local players = Players:GetPlayers()
-	if #players == 0 then
-		return false
-	end
-	for _, player in players do
-		if not runtime.playersDone[player.UserId] then
+		if questStates[previousId] ~= "COMPLETE" then
+			Log.warn(TAG, string.format("activate ditolak (%s): %s belum COMPLETE", questId, previousId))
 			return false
 		end
 	end
-	return true
+
+	return QuestService.transition(questId, "ACTIVE")
+end
+
+-- Tambah progres party. Hanya diterima saat quest berada di requiredState milik counter,
+-- dan nilai dibatasi sampai target. Saat target tercapai, quest otomatis pindah ke completeState.
+-- Return nilai counter terbaru, atau nil jika ditolak (state salah / counter tidak ada / amount tidak valid).
+function QuestService.addProgress(questId: string, counterId: string, amount: number): number?
+	local def = getDef(questId)
+	if not def then
+		Log.warn(TAG, "quest tidak dikenal: " .. tostring(questId))
+		return nil
+	end
+
+	local counterDef = def.counters[counterId]
+	if not counterDef then
+		Log.warn(TAG, string.format("counter tidak ada (%s.%s)", questId, tostring(counterId)))
+		return nil
+	end
+
+	if amount ~= amount or amount < 1 or amount % 1 ~= 0 then
+		Log.warn(TAG, string.format("amount tidak valid (%s.%s): %s", questId, counterId, tostring(amount)))
+		return nil
+	end
+
+	if questStates[questId] ~= counterDef.requiredState then
+		Log.warn(
+			TAG,
+			string.format(
+				"progres ditolak (%s.%s): state %s, butuh %s",
+				questId,
+				counterId,
+				tostring(questStates[questId]),
+				counterDef.requiredState
+			)
+		)
+		return nil
+	end
+
+	local value = math.min(counterDef.target, counters[questId][counterId] + amount)
+	counters[questId][counterId] = value
+	publishCounter(questId, counterId)
+	Log.info(TAG, string.format("progres (%s.%s): %d/%d", questId, counterId, value, counterDef.target))
+
+	if value >= counterDef.target then
+		QuestService.transition(questId, counterDef.completeState)
+	end
+	return value
 end
 
 return table.freeze(QuestService)

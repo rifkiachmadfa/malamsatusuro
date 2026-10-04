@@ -1,43 +1,81 @@
 # SESSION HANDOFF
 
-Last Updated: 2026-10-04
+Last Updated: 2026-10-05
 
 ## Ringkasan
-- Fase: Phase 2 SELESAI DENGAN CATATAN (T7-T9 belum dites). Siap masuk PHASE 3.
-- Repo: github.com/rifkiachmadfa/malamsatusuro (lokal: D:\roblox\malam-satu-suro)
-- AI tanpa MCP Studio. AI hanya melihat GitHub dan file yang dikirim; hasil test ditempel user.
-- Git hanya untuk script; map/objek Studio ada di place file lokal (ADR-011).
-- Alur kerja disepakati: AI audit repo -> rencana + pertanyaan -> user setuju -> kode -> user tes -> catat apa adanya.
+- Fase aktif: PHASE 4 — KERIS PUSAKA. Phase 2 selesai (1 dan 2 pemain); Phase 3 ItemService selesai. Task 4.1–4.2 (spawn + pickup Kelor) kode selesai, belum dites di Studio.
+- Repo: github.com/rifkiachmadfa/malamsatusuro (folder lokal: D:\roblox\malam-satu-suro)
+- `src/` berisi: shared (Config/GameConfig, Config/DialogueConfig, Util/Log, Util/Spatial, Util/Interactable, Remotes),
+  server (Services/GameManager, SpawnService, InteractionService, DialogueService, init.server),
+  client (Controllers/InteractionController, DialogueController, UI/Theme, init.client).
+- QuestService ada tapi belum dipanggil siapa pun. Inventory = Backpack Tool (ADR-018).
 
-## File src/ saat ini
-shared: Config/{GameConfig, QuestConfig, DialogueConfig}, Util/{Log, Spatial, Interactable}, Remotes
-server: init.server, Services/{GameManager, SpawnService, InteractionService, DialogueService, QuestService, PemanduService}
-client: init.client, Controllers/{InteractionController, DialogueController, QuestController}, UI/Theme
+## Cara kerja saat ini
+- Chat Claude TANPA MCP Studio. AI hanya melihat GitHub dan file yang dikirim; hasil test Studio/Output ditempel oleh user.
+- Git hanya untuk script. Map/objek Studio tetap di place file lokal (ADR-011). Place file di-ignore Git dan dicadangkan manual.
+- Editor: extension "Luau Language Server"; extension Lua (sumneko) dimatikan untuk workspace ini.
 
-## Pola yang harus diikuti
-- Objek interaktif: tag `Interactable` + `InteractionId`; `InteractionService.register(id, handler)` (ADR-016).
-- Progres quest HANYA lewat QuestService (advance/addProgress/reset). Jangan set state quest di tempat lain (ADR-018).
-- Service lain bereaksi ke quest lewat `QuestService.onStateChanged(fn)`.
-- Remote baru: tambah di `Remotes.Names`; validasi semua payload di server (ADR-013).
-- GUI lewat kode client + `UI/Theme` (ADR-017). Quest UI membaca Attribute `QuestSnapshot` (ADR-019).
-- Inventory (Phase 3) = per pemain. Progres quest = party. Jangan dicampur.
+## Objek Workspace yang dibuat user (di Studio, tidak ada di Git)
+- Workspace.SpawnPoints: Spawn1 (SpawnLocation)
+- Workspace.NPC.Pemandu: lihat CURRENT_STATE
 
-## Untuk Phase 3 (belum dikerjakan)
-Pertanyaan yang harus dijawab user sebelum kode:
-1. DaunKelor: Model atau Part? Sudah punya PrimaryPart / ProximityPrompt / tag / attribute? (kirim screenshot)
-2. Inventory perlu UI (hotbar sederhana) atau cukup notifikasi "Mendapat Daun Kelor"?
-3. Kunci dan Keris dimiliki satu pemain atau dibawa party?
-4. Kelor dan bunga: item masuk inventory pemain dulu, atau langsung menambah counter party saat diambil?
-Catatan desain awal: pengambilan item memakai state AVAILABLE -> COLLECTING -> COLLECTED di server (anti-duplikasi);
-ItemConfig memuat 10 item (Daun Kelor, Kunci Peti, Keris Pusaka, Mawar Merah, Mawar Putih, Melati, Kantil Kuning,
-Kembang Kantil Hitam, Minyak Zaitun, Kain Kafan). Serah-terima ke Pemandu (PemanduService) perlu ditambah
-pemeriksaan item setelah InventoryService ada.
+## Pola yang harus diikuti sistem berikutnya
+- Objek interaktif: tag `Interactable` + attribute `InteractionId`; daftarkan handler lewat `InteractionService.register(id, handler)` (ADR-016).
+- Remote baru: tambahkan nama di `Remotes.Names`; server memvalidasi semua payload.
+- GUI: dibangun lewat kode di client, pakai `UI/Theme` (ADR-017).
 
-## Test yang masih terbuka dari Phase 2
-T7 (Kantil -> Kafan -> FINAL_RITUAL), T8 (2-4 pemain di Studio), T9 (UI minimize, simbol, Device Emulator).
-Panduan lengkap ada di riwayat chat; ringkas: Clients and Servers 2 pemain, hanya Player A bicara ke Pemandu,
-cek panel muncul di layar Player B.
+## Uji Task 2.1 di Studio (Play Solo, Command Bar mode server)
+```lua
+local Q = require(game.ServerScriptService.Server.Services.QuestService)
+print(Q.activate("KANTIL"))                 -- harus false (KERIS belum COMPLETE)
+print(Q.activate("KERIS"))                  -- true; ReplicatedStorage.QuestState attribute KERIS_State = ACTIVE
+print(Q.addProgress("KERIS","Kelor",1))     -- nil (state belum SEARCHING_KELOR)
+print(Q.transition("KERIS","SEARCHING_KELOR"))
+print(Q.addProgress("KERIS","Kelor",1), Q.addProgress("KERIS","Kelor",2), Q.addProgress("KERIS","Kelor",1)) -- 1 3 4
+print(Q.getState("KERIS"))                  -- KELOR_COMPLETE
+print(Q.addProgress("KERIS","Kelor",1))     -- nil (progres berlebih ditolak)
+```
+Cek juga Output: tag [QuestService] tanpa error, dan Attribute di ReplicatedStorage.QuestState berubah.
+
+## Uji Task 2.3 di Studio
+1. Play Solo, dekati Pemandu, tekan [E], klik Next sampai dialog habis.
+2. Output harus menampilkan berurutan: `[GameFlowService] intro selesai oleh <nama>, memulai game`, `[GameManager] state game: LOBBY -> INTRO`, `INTRO -> QUEST_KERIS`, `[QuestService] state quest (KERIS): LOCKED -> ACTIVE`, `ACTIVE -> SEARCHING_KELOR`.
+3. Cek ReplicatedStorage.GameState = QUEST_KERIS dan ReplicatedStorage.QuestState.KERIS_State = SEARCHING_KELOR.
+4. Ulangi dialog: tidak boleh ada transisi baru. Tutup dialog di tengah (Close): game tidak boleh mulai.
+5. Multi-pemain: 2 pemain menamatkan dialog hampir bersamaan, transisi hanya terjadi sekali.
+
+## Uji Task 2.2 di Studio
+1. Play Solo: sebelum bicara ke Pemandu, panel quest TIDAK boleh tampil.
+2. Selesaikan dialog intro: panel muncul di kanan atas, di bawah menu Roblox: MALAM SURO, KERIS PUSAKA dengan "○ Kumpulkan Daun Kelor 0/4" dst, KANTIL dan KAFAN hanya 1 baris.
+3. Bicara ke Pemandu lagi: dialog baru (kelor), bukan intro.
+4. Command Bar (server): `local Q=require(game.ServerScriptService.Server.Services.QuestService); Q.addProgress("KERIS","Kelor",1)` -> panel berubah ke 1/4; sampai 4/4 baris jadi "✓" (abu-abu).
+5. Klik header untuk minimize/maximize. Tes di Device Emulator (HP): tidak menimpa tombol menu Roblox, teks terbaca.
+6. 2 pemain: progres sama di kedua layar.
+
+## Uji Task 3.1 di Studio (Play Solo, Command Bar mode server)
+```lua
+local I = require(game.ServerScriptService.Server.Services.ItemService)
+local p = game.Players:GetPlayers()[1]
+print(I.give(p, "DaunKelor", 2), I.count(p, "DaunKelor"))   -- true 2; Backpack: satu Tool "Daun Kelor x2"
+print(I.give(p, "DaunKelor"), I.count(p, "DaunKelor"))      -- true 3; tetap satu Tool, jadi x3
+print(I.consume(p, "DaunKelor", 5))                          -- false (kurang), jumlah tetap 3
+print(I.consume(p, "DaunKelor", 3), I.count(p, "DaunKelor")) -- true 0; Tool hilang
+print(I.give(p, "Palsu"))                                    -- false
+print(I.give(p, "KunciPeti"), I.give(p, "KunciPeti"))        -- true lalu false (unique), jika template ada
+```
+Cek juga: Output saat boot menulis `[ItemService] siap, tapi N/10 template belum ada ...` (daftar template yang belum dibuat);
+equip Tool (klik slot) lalu `give` lagi: jumlah tetap menyatu di satu Tool; tidak bisa di-drop (tekan Backspace).
+2 pemain: item pemain A tidak muncul di Backpack pemain B.
+
+## Uji Task 4.1–4.2 di Studio
+1. Play Solo, selesaikan dialog intro. Output: `[KerisQuestService] Kelor aktif (4/8 titik): KelorSpawn_a, ...`.
+2. Di Explorer: `Workspace.QuestRuntime` berisi 4 Model `Pickup_KelorSpawn_N`, tiap model muncul di titik spawn-nya. Hanya 4 dari 8 titik yang punya Kelor.
+3. Stop lalu Play lagi: set titik aktif harus berbeda (acak), ulangi 3 kali.
+4. Dekati satu Kelor: prompt `[E] Ambil / Daun Kelor`. Tekan E: Kelor hilang, Backpack berisi "Daun Kelor", panel quest 1/4. Ambil semua: 4/4 (Backpack "Daun Kelor x4" jika satu pemain), centang di panel, sisa pickup tidak ada, state KERIS = KELOR_COMPLETE.
+5. Spam E di satu Kelor: hanya 1 item dan +1 progres.
+6. 2 pemain: A ambil 1, B ambil 2, A ambil 1: kedua layar menampilkan 4/4; Backpack A dan B terpisah.
+7. Periksa tampilan: model Kelor tidak tenggelam ke tanah / tidak miring aneh (lapor jika ya).
 
 ## Langkah berikutnya
-1. AI: rencana Phase 3 + pertanyaan konfirmasi.
-2. User: jawab, setujui, lalu AI menulis kode.
+1. User: uji 2.1 di atas dan lapor Output; tinjau SkyboxInserter; siapkan naskah dialog Pemandu.
+2. Task 2.2 Quest UI, Task 2.3 alur Pemandu -> quest.

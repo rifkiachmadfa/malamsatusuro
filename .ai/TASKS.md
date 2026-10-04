@@ -54,23 +54,23 @@ DONE (2026-10-04)
 # PHASE 2 — QUEST SYSTEM
 
 Status:
-IMPLEMENTED — BELUM DITES DI STUDIO (2026-10-04)
+DONE (2026-10-05, diuji 1 dan 2 pemain; 3–4 pemain di Phase 10)
 
-- [x] 2.1 QuestConfig (kode ditulis)
-- [x] 2.2 QuestService + state machine + party progression (kode ditulis; tes mock 30/30)
-- [x] 2.3 Sinkronisasi lewat Attribute JSON QuestSnapshot (kode ditulis)
-- [x] 2.4 Quest UI (kode ditulis)
-- [x] 2.5 Pemandu terhubung ke state quest (kode ditulis)
+- [x] 2.1 QuestConfig + QuestService (state machine, counter party-wide, replikasi Attribute) — kode ditulis, logika lulus harness offline (32 cek); BELUM dites di Studio
+- [x] 2.2 Quest UI dasar (QuestView + QuestController, top-right, minimize) — DITES user di Studio 1 pemain 2026-10-05: panel muncul, addProgress via Command Bar mengubah panel, minimize berfungsi. Device Emulator dan 2+ pemain belum dilaporkan
+- [x] 2.3 Integrasi alur: dialog Pemandu -> GameManager (INTRO/QUEST_KERIS) + QuestService (GameFlowService, ADR-020) — DITES user di Studio 1 pemain 2026-10-05: urutan LOBBY->INTRO->QUEST_KERIS dan KERIS LOCKED->ACTIVE->SEARCHING_KELOR muncul di Output. Uji 2+ pemain belum
+- [x] Uji Studio 2 pemain: progres counter dan panel sama di kedua layar (dilaporkan user 2026-10-05); 3–4 pemain dijadwalkan Phase 10
 
 
 # PHASE 3 — INTERACTION & INVENTORY
 
 Status:
-NOT STARTED
+IN PROGRESS
+(ADR-018: tanpa InventoryService; item = Tool di Backpack, ItemService tipis. InteractionService sudah ada sejak Phase 1.)
 
-- [ ] InteractionService
-- [ ] InventoryService
-- [ ] Item configuration
+- [x] InteractionService (selesai di Phase 1)
+- [x] 3.1 ItemService (wrapper Backpack, ADR-018/022) + ItemConfig + pemeriksaan dependency QuestTemplates saat boot — pemeriksaan boot DITES user 2026-10-05 ("10 template item lengkap"); give/consume lulus harness offline (28 cek), diuji di Studio lewat pickup Kelor (Phase 4)
+- [ ] Uji Studio: give/count/consume via Command Bar, equip, 2 pemain
 - [ ] Server validation
 - [ ] Anti-duplication
 - [ ] Item collection
@@ -79,13 +79,11 @@ NOT STARTED
 # PHASE 4 — KERIS PUSAKA
 
 Status:
-NOT STARTED
+IN PROGRESS
 
-- [ ] Kelor spawn system
-- [ ] Server randomization
-- [ ] 4 active / 4 inactive
-- [ ] Kelor collection
-- [ ] Party progress
+- [x] 4.1 Kelor spawn system + server randomization + 4 active / 4 inactive (RandomSpawnService, KerisQuestService, ADR-023) — logika lulus harness offline (18 cek); BELUM dites di Studio
+- [x] 4.2 Kelor collection + party progress (pickup [E], ItemService.give, QuestService.addProgress) — idem
+- [ ] Uji Studio 4.1–4.2 (1 dan 2 pemain)
 - [ ] Key acquisition
 - [ ] Chest
 - [ ] Memory puzzle

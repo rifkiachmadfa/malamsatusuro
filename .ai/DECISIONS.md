@@ -245,51 +245,111 @@ Mobile-friendly tanpa asset Studio, mudah di-review di Git, dan tidak ada state 
 Status:
 ACCEPTED (diuji user di Device Emulator, 2026-10-04)
 
-## ADR-018 — QUESTSERVICE PEMILIK TUNGGAL STATE QUEST; TRANSISI LINEAR + RESETS
+
+
+## ADR-018 — INVENTORY = BACKPACK, ITEM = TOOL
 
 Decision:
 
-Hanya QuestService yang mengubah state quest. Transisi maju selalu ke state BERIKUTNYA pada daftar `states`
-di QuestConfig (tidak ada lompat). Transisi mundur hanya lewat `resets` (contoh: CANTIL_PUZZLE -> SEARCHING_FLOWERS
-untuk party wipe). LOCKED -> ACTIVE hanya dilakukan internal (startGame / quest sebelumnya COMPLETE).
-Quest COMPLETE otomatis membuka quest berikutnya dan memajukan GameState (ADR-009, ADR-014).
+Tidak ada inventory kustom. Item quest adalah Tool di `Player.Backpack`, di-clone server dari `ServerStorage.QuestTemplates` (template dibuat user di Studio, tidak masuk Git, ADR-011). Satu modul tipis `ItemService` (server, Phase 3) hanya membungkus Backpack: give, has, consume, dan pemeriksaan template saat boot.
 
-Status:
-ACCEPTED (diuji user di Studio 1 pemain, 2026-10-04: transisi, penolakan lompat state, reset Kantil)
+Rules:
 
-## ADR-019 — SINKRONISASI QUEST LEWAT ATTRIBUTE JSON, SNAPSHOT DIHITUNG SERVER
-
-Decision:
-
-Server menghitung snapshot (judul, objective, done, current/target) dan menulisnya sebagai JSON ke
-ReplicatedStorage Attribute `QuestSnapshot`. Client hanya merender. Quest LOCKED tidak dikirim (UI tidak spoiler).
+- Progres quest (mis. Daun Kelor 4/4) milik QuestService dan TIDAK dihitung dari jumlah Tool. Tool hanya barang fisik pemain.
+- Penyerahan ke Pemandu: server memastikan pemain memegang Tool-nya, menghapusnya, lalu memajukan state quest.
+- Pencarian Tool harus mengecek Backpack DAN Character (Tool yang di-equip berpindah ke Character).
+- Tool: `CanBeDropped = false`, Attribute `ItemId` diset server saat clone.
+- Objek pickup di dunia BUKAN Tool di Workspace (Roblox memungut Tool otomatis saat disentuh). Pickup hanya lewat [E] (ADR-016). Spawner punya state server AVAILABLE -> COLLECTING -> COLLECTED.
+- Spawn marker (KelorSpawn_N, FlowerSpawn_N) = penanda posisi; visual diambil dari template (asumsi, perlu dikonfirmasi saat Phase 4).
+- Backpack reset saat respawn. KNOCKED bukan kematian Humanoid; kasus mati sungguhan dibahas di Phase 5/6.
 
 Reason:
 
-Pemain yang join belakangan langsung menerima state; client tidak punya logika quest yang bisa menyimpang.
+Pilihan user. Memakai mekanisme bawaan Roblox, tanpa struktur data inventory baru. Menggantikan `InventoryService` pada rencana awal.
 
 Status:
-ACCEPTED (UI tersinkron di 1 pemain; pemain lain/late join belum dites di Studio)
+ACCEPTED (user, 2026-10-05)
 
-## ADR-020 — SKOR KAFAN PER PEMAIN BUKAN STATE QUEST
+
+
+## ADR-019 — MODEL STATE QUEST: STATE PARTY SAJA, COUNTER DI CONFIG
 
 Decision:
 
-State PLAYER_SCORE, SCORE>=80, PLAYER_COMPLETE, ALL_PLAYER_COMPLETE di GDD tidak dijadikan state quest.
-Quest tetap di GAMELAN_ACTIVE; penanda lolos per pemain disimpan di QuestService (markPlayerDone, areAllPlayersDone)
-dan quest maju ke KAIN_OBTAINED saat semua pemain yang ada lolos. Knock/revive adalah state pemain, bukan state quest.
+QuestService (src/server/Services/QuestService.luau) adalah satu-satunya pemilik state quest dan counter party. Definisi quest, transisi, dan counter ada di `shared/Config/QuestConfig` (data saja). State direplikasi lewat Attribute pada `ReplicatedStorage.QuestState` (`<QUEST>_State`, `<QUEST>_<Counter>`), mengikuti ADR-014.
+
+Rules:
+
+- Transisi hanya yang tercantum di QuestConfig (ADR-009). Gagal puzzle yang boleh coba lagi (CHEST_PUZZLE) tetap di state yang sama.
+- `addProgress` hanya diterima saat quest berada di `requiredState` milik counter; nilai dibatasi target; saat target tercapai quest otomatis pindah ke `completeState`. Ini juga menolak progres berlebih/duplikat.
+- Party wipe Kantil: transisi CANTIL_PUZZLE -> SEARCHING_FLOWERS, counter Flowers di-reset lewat `resetCountersOnEnter`. Quest lain tidak tersentuh.
+- Kafan: PLAYER_SCORE / SCORE>=80 / PLAYER_COMPLETE dari GDD adalah state PER PEMAIN (Phase 7), bukan state party. State party Kafan: FIND_GAMELAN -> GAMELAN_ACTIVE -> ALL_PLAYER_COMPLETE -> KAIN_OBTAINED -> KAIN_SUBMITTED -> COMPLETE.
+- Quest berikutnya hanya bisa activate jika semua quest sebelumnya COMPLETE.
+- Layanan lain bereaksi lewat `QuestService.onStateChanged`, tidak mengubah state sendiri.
 
 Status:
-ACCEPTED (struktur data ada; diimplementasi dan dites di Phase 7)
+ACCEPTED (menunggu uji Studio, Task 2.1)
 
-## ADR-021 — PEMANDU DATA-DRIVEN, TRANSISI SETELAH DIALOG SELESAI
+
+
+## ADR-020 — GAME DIMULAI OLEH PEMAIN PERTAMA YANG MENAMATKAN DIALOG INTRO
 
 Decision:
 
-Dialog Pemandu dipilih dari `QuestConfig.pemandu[state]`. Transisi dijalankan lewat callback `onFinished`
-DialogueService, hanya jika pemain membaca sampai baris terakhir dan state quest belum berubah sejak dialog dimulai.
-Phase 2 serah-terima memeriksa STATE saja; pemeriksaan kepemilikan item ditambahkan di Phase 3.
+`GameFlowService` (server) menjadi perekat peristiwa cerita ke GameManager dan QuestService. Saat pemain pertama menamatkan dialog `Pemandu_Intro` sampai baris terakhir (`DialogueService.onCompleted`), server menjalankan: GameManager LOBBY -> INTRO -> QUEST_KERIS, QuestService.activate("KERIS"), lalu KERIS -> SEARCHING_KELOR. Penyelesaian berikutnya diabaikan karena state game sudah bukan LOBBY. Menutup dialog di tengah (Close/menjauh) tidak memulai game.
+
+Reason:
+
+MVP sederhana untuk co-op. Kekurangan: pemain lain bisa melewatkan dialog intro. Alternatif (menunggu semua pemain selesai) ditunda karena pemain AFK bisa menahan party.
 
 Status:
-ACCEPTED (alur Brief dan Submit diuji user; dobel dialog 2+ pemain belum dites)
+ACCEPTED (menunggu uji Studio, Task 2.3)
 
+
+
+## ADR-021 — QUEST UI: QUESTVIEW MURNI + QUESTCONTROLLER, DIALOG PEMANDU MENURUT STATE
+
+Decision:
+
+- Quest UI dirender `client/Controllers/QuestController` dari Attribute `ReplicatedStorage.QuestState`. Logika "objective mana yang sudah selesai" ada di `shared/Util/QuestView` (fungsi murni, bisa dites tanpa Roblox) dan memakai urutan state + `objectives` di QuestConfig. Panel disembunyikan selama quest pertama masih LOCKED (game belum dimulai); quest LOCKED lain menampilkan objective pertama saja.
+- Panel memakai `ScreenInsets = TopbarSafeInsets` agar tidak menimpa menu Roblox, dan header 40 px sebagai tombol minimize.
+- Penyimpangan dari ADR-017: teks panel memakai TextSize tetap (15/16) + AutomaticSize, bukan TextScaled, karena TextScaled tidak cocok untuk daftar yang tinggi barisnya otomatis. Lebar panel tetap proporsional (28% layar, min 210, maks 340 px).
+- Pemandu memilih dialog lewat `GameFlowService.getPemanduDialogueId()` (LOBBY -> intro; KERIS SEARCHING_KELOR -> Pemandu_KerisSearch; lainnya -> tidak ada dialog sampai quest-nya dibuat).
+- Redaksi objective dan dialog adalah PLACEHOLDER; samakan dengan GDD.
+
+Status:
+ACCEPTED (menunggu uji Studio, Task 2.2)
+
+
+
+## ADR-022 — ITEMSERVICE: STACK LEWAT ATTRIBUTE COUNT, ITEM UNIQUE, ALL-OR-NOTHING
+
+Decision:
+
+`ItemService` (server) membungkus Backpack sesuai ADR-018; definisi item di `shared/Config/ItemConfig`.
+
+- Item stackable (Daun Kelor, bunga, Minyak Zaitun) = SATU Tool dengan Attribute `Count`; nama tampilan menjadi "Daun Kelor x3". Menghindari banyak slot hotbar untuk item yang sama. Pencarian selalu lewat Attribute `ItemId`, bukan nama Tool.
+- Item `unique` (Kunci Peti, Keris Pusaka, Kembang Kantil Hitam, Kain Kafan): pemain tidak bisa memegang lebih dari satu; `give` kedua ditolak. Ini lapisan anti-duplikasi tambahan di luar state spawner dan QuestService.
+- `give`/`consume` tanpa yield (atomik). `consume` semua-atau-tidak: ditolak jika jumlah kurang.
+- Backpack dan Character sama-sama dicek (Tool yang di-equip ada di Character).
+- Template yang belum ada atau bukan Tool: `give` ditolak + warning; `init` melaporkan daftar template yang hilang sebagai dependency (tidak membuat pengganti).
+- Belum ditangani: item hilang saat respawn (Backpack reset). Diputuskan di Phase 5/6 bersama knock/mati.
+
+Status:
+ACCEPTED (menunggu uji Studio, Task 3.1)
+
+
+
+## ADR-023 — PICKUP DUNIA = MODEL DARI TEMPLATE; RANDOMSPAWNSERVICE GENERIK + SERVICE PER QUEST
+
+Decision:
+
+- `RandomSpawnService` (server) generik: `pickSpawns` (pilih N titik berbeda, acak di server) dan `createPickup` (buat Model statis dari isi Tool template: Script dibuang, semua BasePart Anchored/CanCollide=false/CanTouch=false, PrimaryPart = Handle, di-pivot ke CFrame titik spawn, diberi tag Interactable + Attribute). Pickup dibuat di `Workspace.QuestRuntime` (folder dibuat server saat runtime, tidak masuk Git).
+- Logika per quest ada di service quest sendiri. `KerisQuestService` menangani Kelor sekarang (peti/kunci/puzzle/penyerahan menyusul) dan dipakai ulang polanya oleh quest Kantil.
+- Jumlah Kelor aktif = `target` counter Kelor di QuestConfig (satu sumber kebenaran).
+- Spawn dipicu `QuestService.onStateChanged` (masuk SEARCHING_KELOR), dibersihkan saat keluar dari state itu.
+- Pickup: tabel server `pickups[model] = {status}` dengan AVAILABLE -> COLLECTING -> COLLECTED. Diterima hanya jika objek terdaftar, status AVAILABLE, dan quest di SEARCHING_KELOR. Urutan: give item -> addProgress; jika addProgress ditolak, item dibatalkan (consume) dan pickup kembali AVAILABLE.
+- Titik spawn (KelorSpawn_N) hanya penanda; service tidak mengubah/menyembunyikannya. Model muncul dengan orientasi dan pusat titik spawn.
+
+Status:
+ACCEPTED (menunggu uji Studio, Task 4.1–4.4)
