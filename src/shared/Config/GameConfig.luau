@@ -27,4 +27,17 @@ GameConfig.PlayerState = table.freeze({
 	CUTSCENE = "CUTSCENE",
 })
 
+-- Sistem interaksi [E]. Objek interaktif = CollectionService tag + Attribute.
+GameConfig.Interaction = table.freeze({
+	TAG = "Interactable",
+	ATTR_ID = "InteractionId", -- wajib: dipetakan ke handler server
+	ATTR_ACTION_TEXT = "ActionText", -- contoh: "Bicara"
+	ATTR_OBJECT_TEXT = "ObjectText", -- contoh: "Pemandu"
+	ATTR_MAX_DISTANCE = "MaxDistance", -- opsional, studs
+	DEFAULT_DISTANCE = 10,
+	DISTANCE_TOLERANCE = 4, -- toleransi lag untuk validasi server
+	LEAVE_EXTRA_DISTANCE = 6, -- dialog ditutup server jika pemain menjauh sejauh ini
+	REQUEST_COOLDOWN = 0.3, -- detik, per pemain
+})
+
 return table.freeze(GameConfig)

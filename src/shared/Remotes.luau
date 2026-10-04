@@ -13,7 +13,9 @@ local Remotes = {}
 
 -- Daftar nama remote. Tambahkan di sini saat sistem barunya dibuat.
 Remotes.Names = table.freeze({
-	DebugPing = "DebugPing", -- SEMENTARA: hanya untuk tes Task 1.4, hapus di akhir Phase 1
+	InteractionRequest = "InteractionRequest", -- client -> server: (target: Instance)
+	DialogueUpdate = "DialogueUpdate", -- server -> client: { action = "Show" | "Close", ... }
+	DialogueAction = "DialogueAction", -- client -> server: "Next" | "Close"
 })
 
 -- Server only: buat folder dan semua RemoteEvent (aman dipanggil ulang).

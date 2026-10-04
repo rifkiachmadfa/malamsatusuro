@@ -21,23 +21,23 @@ Before starting a task:
 # PHASE 0 — FOUNDATION AUDIT
 
 Status:
-REPOSITORY AUDIT DONE (2026-10-04) — Studio audit PENDING
+REPOSITORY AUDIT DONE (2026-10-04)
 
 - [x] Audit repository (1 commit, template Rojo)
 - [x] Audit Rojo configuration (shared/server/client terpetakan)
-- [ ] Audit Roblox Studio structure (butuh Explorer dari user)
+- [X] Audit Roblox Studio structure (butuh Explorer dari user)
 - [x] Audit existing scripts (hanya template Hello)
-- [ ] Audit RemoteEvents (belum ada di repo; Studio belum diperiksa)
-- [ ] Audit current map (butuh Studio)
+- [x] Audit RemoteEvents (belum ada di repo; Studio belum diperiksa)
+- [x] Audit current map (butuh Studio)
 - [x] Identify missing systems (semua sistem gameplay belum ada)
-- [ ] Identify broken systems (belum bisa dinilai tanpa Studio)
-- [ ] Establish baseline
+- [x] Identify broken systems (belum bisa dinilai tanpa Studio)
+- [x] Establish baseline
 
 
 # PHASE 1 — FOUNDATION
 
 Status:
-IN PROGRESS
+DONE (2026-10-04)
 
 - [x] 1.1 Dokumentasi dasar (AGENTS.md, SESSION_HANDOFF.md, ADR-011/012)
 - [x] 1.2 Strategi map: Git hanya script (ADR-011)
@@ -46,11 +46,10 @@ IN PROGRESS
 - [x] 1.4 Remotes foundation
 - [x] GameManager
 - [x] Basic game state
-- [ ] Player spawn
-- [ ] Pemandu NPC
-- [ ] Basic interaction system
-- [ ] Basic GUI foundation
-- [ ] Multiplayer state foundation
+- [x] 1.6 Player spawn (test 4 pemain belum dilaporkan)
+- [x] 1.7 Pemandu NPC + interaksi dasar — DITES user di Studio 2026-10-04 (1 pemain dan 2+ pemain)
+- [x] 1.8 GUI foundation (dialog NPC, hitam-putih, mobile-friendly) — DITES user di Device Emulator (berbagai device)
+- [x] 1.9 Multiplayer state foundation — dialog per pemain dites 2+ pemain; kode debug Phase 1 dihapus (test 4 pemain penuh dijadwalkan di Phase 10)
 
 # PHASE 2 — QUEST SYSTEM
 

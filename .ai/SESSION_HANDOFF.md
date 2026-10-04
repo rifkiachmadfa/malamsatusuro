@@ -3,24 +3,27 @@
 Last Updated: 2026-10-04
 
 ## Ringkasan
-- Fase aktif: PHASE 1 — FOUNDATION (Task 1.1 sampai 1.6 selesai)
+- Fase aktif: Phase 1 SELESAI. Siap masuk PHASE 2 — QUEST SYSTEM.
 - Repo: github.com/rifkiachmadfa/malamsatusuro (folder lokal: D:\roblox\malam-satu-suro)
-- `src/` berisi: `shared/Config/GameConfig`, `shared/Util/Log`, `shared/Remotes`, `server/Services/GameManager`, `server/Services/SpawnService`, serta bootstrap `server/init.server` dan `client/init.client`.
+- `src/` berisi: shared (Config/GameConfig, Config/DialogueConfig, Util/Log, Util/Spatial, Util/Interactable, Remotes),
+  server (Services/GameManager, SpawnService, InteractionService, DialogueService, init.server),
+  client (Controllers/InteractionController, DialogueController, UI/Theme, init.client).
 - Belum ada logika quest/gameplay.
 
 ## Cara kerja saat ini
-- Chat Claude TANPA MCP Studio. AI hanya melihat GitHub; hasil test Studio/Output ditempel oleh user.
+- Chat Claude TANPA MCP Studio. AI hanya melihat GitHub dan file yang dikirim; hasil test Studio/Output ditempel oleh user.
 - Git hanya untuk script. Map/objek Studio tetap di place file lokal (ADR-011). Place file di-ignore Git dan dicadangkan manual.
-- Editor: pakai extension "Luau Language Server"; extension Lua (sumneko) dimatikan untuk workspace ini.
+- Editor: extension "Luau Language Server"; extension Lua (sumneko) dimatikan untuk workspace ini.
 
-## Objek Workspace yang sudah dibuat user (di Studio, tidak ada di Git)
-- Workspace.SpawnPoints: Spawn1 (SpawnLocation, satu titik spawn untuk semua pemain)
+## Objek Workspace yang dibuat user (di Studio, tidak ada di Git)
+- Workspace.SpawnPoints: Spawn1 (SpawnLocation)
+- Workspace.NPC.Pemandu: lihat CURRENT_STATE
 
-## Kode debug SEMENTARA (harus dihapus di akhir Phase 1)
-- DebugPing (remote + handler di init.server + FireServer di init.client)
-- Uji transisi state di init.server (task.delay + debugTestPlayerStates)
-- Log GameState di init.client
+## Pola yang harus diikuti sistem berikutnya
+- Objek interaktif: tag `Interactable` + attribute `InteractionId`; daftarkan handler lewat `InteractionService.register(id, handler)` (ADR-016).
+- Remote baru: tambahkan nama di `Remotes.Names`; server memvalidasi semua payload.
+- GUI: dibangun lewat kode di client, pakai `UI/Theme` (ADR-017).
 
 ## Langkah berikutnya
-1. Task 1.7: Pemandu NPC dan interaksi dasar (AI akan memberi daftar objek Workspace).
-2. Task 1.8: GUI foundation.
+1. User: tinjau SkyboxInserter; siapkan naskah dialog Pemandu.
+2. Phase 2: QuestService.

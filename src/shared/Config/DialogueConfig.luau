@@ -1,0 +1,21 @@
+--!strict
+-- DialogueConfig: data dialog NPC. Hanya data.
+-- CATATAN: teks di bawah adalah PLACEHOLDER netral. Ganti dengan naskah GDD yang disetujui.
+
+export type Dialogue = {
+	speaker: string,
+	lines: { string },
+}
+
+local DialogueConfig: { [string]: Dialogue } = {
+	Pemandu_Intro = {
+		speaker = "Pemandu",
+		lines = {
+			"Akhirnya kalian tiba. Dusun ini sudah lama menunggu.",
+			"Malam Suro bukan malam biasa. Jangan berpisah terlalu jauh dari kawan kalian.",
+			"Nanti akan kuberi tahu apa yang harus dicari. Bersiaplah.",
+		},
+	},
+}
+
+return table.freeze(DialogueConfig)

@@ -215,3 +215,32 @@ Mekanisme spawn bawaan Roblox sudah mendukung banyak pemain. Penugasan titik spa
 
 Status:
 ACCEPTED
+
+
+
+## ADR-016 — INTERAKSI LEWAT TAG + ATTRIBUTE, SATU HANDLER PER ID
+
+Decision:
+
+Objek interaktif ditandai CollectionService tag `Interactable` dengan Attribute `InteractionId`, `ActionText`, `ObjectText`, `MaxDistance` (opsional). Client hanya mengirim `InteractionRequest(target)`. InteractionService memvalidasi (tipe, tag, cooldown, state pemain NORMAL, jarak) lalu memanggil handler yang didaftarkan per `InteractionId`. Nama atribut dan konstanta ada di `GameConfig.Interaction`.
+
+Reason:
+
+Satu jalur interaksi yang konsisten untuk semua sistem (Kelor, bunga, peti, gamelan, revive) tanpa abstraksi berlebihan. Validasi keamanan ada di satu tempat (ADR-007).
+
+Status:
+ACCEPTED (diuji user di Studio, 2026-10-04)
+
+
+## ADR-017 — GUI DIBANGUN LEWAT KODE, TEMA HITAM-PUTIH, LAYOUT RESPONSIF
+
+Decision:
+
+GUI dibuat dari kode client (bukan objek StarterGui) agar masuk Git (ADR-011). Gaya terpusat di `client/UI/Theme`: hitam-putih, panel hitam semi transparan (transparansi 0.35), tanpa border. Responsif lewat Scale + TextScaled + UITextSizeConstraint + UISizeConstraint, dan `ScreenInsets = DeviceSafeInsets`. Target sentuh minimal 40–50 px. Dialog: server memegang indeks baris, client hanya menampilkan dan meminta Next/Close.
+
+Reason:
+
+Mobile-friendly tanpa asset Studio, mudah di-review di Git, dan tidak ada state dialog yang bisa dipalsukan client.
+
+Status:
+ACCEPTED (diuji user di Device Emulator, 2026-10-04)
