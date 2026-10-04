@@ -3,7 +3,7 @@
 Last Updated: 2026-10-04
 
 ## Ringkasan
-- Fase aktif: PHASE 1 — FOUNDATION (Task 1.1 selesai, menunggu commit)
+- Fase aktif: PHASE 1 — FOUNDATION (Task 1.1 selesai)
 - Repo: github.com/rifkiachmadfa/malamsatusuro (folder lokal: D:\roblox\malam-satu-suro)
 - Isi `src/` masih template Rojo (print "Hello"). Belum ada kode gameplay.
 

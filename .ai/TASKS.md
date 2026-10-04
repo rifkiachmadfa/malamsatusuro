@@ -39,7 +39,8 @@ REPOSITORY AUDIT DONE (2026-10-04) — Studio audit PENDING
 Status:
 IN PROGRESS
 
-- [x] 1.1 Dokumentasi dasar (AGENTS.md, SESSION_HANDOFF.md, ADR-011/012) — menunggu commit
+- [x] 1.1 Dokumentasi dasar (AGENTS.md, SESSION_HANDOFF.md, ADR-011/012)
+- [ ] Multiplayer state foundation
 - [x] 1.2 Strategi map: Git hanya script (ADR-011)
 - [ ] Finalize Rojo project structure
 - [ ] GameManager
