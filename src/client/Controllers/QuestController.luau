@@ -14,8 +14,14 @@ local Theme = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("Them
 local TAG = "QuestController"
 local FOLDER_TIMEOUT = 10
 local TITLE = "MALAM SURO"
-local ROW_TEXT_SIZE = 15
-local TITLE_TEXT_SIZE = 16
+local ROW_TEXT_SIZE = 13
+local TITLE_TEXT_SIZE = 14
+local HEADER_TEXT_SIZE = 14
+local HEADER_HEIGHT = 32 -- tetap bisa diketuk di mobile (setelah UIScale minimal ~27 px)
+local PANEL_WIDTH = 210 -- px sebelum UIScale
+local SCALE_REFERENCE_HEIGHT = 700 -- tinggi layar yang dianggap skala 1
+local SCALE_MIN = 0.85
+local SCALE_MAX = 1
 
 local localPlayer = Players.LocalPlayer
 
@@ -25,6 +31,7 @@ local stateFolder: Folder
 local gui: ScreenGui
 local header: TextButton
 local body: Frame
+local panelScale: UIScale
 
 local minimized = false
 local renderQueued = false
@@ -74,7 +81,7 @@ local function render()
 			label.TextColor3 = Theme.White
 			if index > 1 then
 				local padding = Instance.new("UIPadding")
-				padding.PaddingTop = UDim.new(0, 8)
+				padding.PaddingTop = UDim.new(0, 4)
 				padding.Parent = label
 			end
 		else
@@ -109,40 +116,39 @@ local function build()
 	panel.Name = "Panel"
 	panel.AnchorPoint = Vector2.new(1, 0)
 	panel.Position = UDim2.new(1, -8, 0, 8)
-	panel.Size = UDim2.fromScale(0.28, 0)
+	panel.Size = UDim2.new(0, PANEL_WIDTH, 0, 0)
 	panel.AutomaticSize = Enum.AutomaticSize.Y
 	panel.BackgroundColor3 = Theme.Black
 	panel.BackgroundTransparency = Theme.PanelTransparency
 	panel.BorderSizePixel = 0
 	panel.Parent = gui
 
-	local sizeLimit = Instance.new("UISizeConstraint")
-	sizeLimit.MinSize = Vector2.new(210, 0)
-	sizeLimit.MaxSize = Vector2.new(340, math.huge)
-	sizeLimit.Parent = panel
+	-- Skala mengikuti tinggi layar agar ukuran wajar di HP, tablet, dan PC.
+	panelScale = Instance.new("UIScale")
+	panelScale.Parent = panel
 
 	local padding = Instance.new("UIPadding")
-	padding.PaddingLeft = UDim.new(0, 10)
-	padding.PaddingRight = UDim.new(0, 10)
-	padding.PaddingTop = UDim.new(0, 4)
-	padding.PaddingBottom = UDim.new(0, 10)
+	padding.PaddingLeft = UDim.new(0, 8)
+	padding.PaddingRight = UDim.new(0, 8)
+	padding.PaddingTop = UDim.new(0, 2)
+	padding.PaddingBottom = UDim.new(0, 8)
 	padding.Parent = panel
 
 	local layout = Instance.new("UIListLayout")
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
-	layout.Padding = UDim.new(0, 4)
+	layout.Padding = UDim.new(0, 2)
 	layout.Parent = panel
 
-	-- Header = tombol penuh (tinggi 40 px) untuk minimize/maximize.
+	-- Header = tombol penuh (tinggi HEADER_HEIGHT) untuk minimize/maximize.
 	header = Instance.new("TextButton")
 	header.Name = "Header"
 	header.LayoutOrder = 0
-	header.Size = UDim2.new(1, 0, 0, 40)
+	header.Size = UDim2.new(1, 0, 0, HEADER_HEIGHT)
 	header.BackgroundTransparency = 1
 	header.BorderSizePixel = 0
 	header.AutoButtonColor = false
 	header.Font = Theme.FontBold
-	header.TextSize = 17
+	header.TextSize = HEADER_TEXT_SIZE
 	header.TextColor3 = Theme.White
 	header.TextXAlignment = Enum.TextXAlignment.Left
 	header.Parent = panel
@@ -159,7 +165,7 @@ local function build()
 
 	local bodyLayout = Instance.new("UIListLayout")
 	bodyLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	bodyLayout.Padding = UDim.new(0, 2)
+	bodyLayout.Padding = UDim.new(0, 1)
 	bodyLayout.Parent = body
 
 	header.Activated:Connect(function()
@@ -171,6 +177,14 @@ local function build()
 	gui.Parent = localPlayer:WaitForChild("PlayerGui")
 end
 
+local function updateScale()
+	local camera = workspace.CurrentCamera
+	if not camera then
+		return
+	end
+	panelScale.Scale = math.clamp(camera.ViewportSize.Y / SCALE_REFERENCE_HEIGHT, SCALE_MIN, SCALE_MAX)
+end
+
 function QuestController.init()
 	local folder = ReplicatedStorage:WaitForChild(QuestConfig.STATE_FOLDER, FOLDER_TIMEOUT)
 	if not folder or not folder:IsA("Folder") then
@@ -180,6 +194,11 @@ function QuestController.init()
 	stateFolder = folder
 
 	build()
+	updateScale()
+	local camera = workspace.CurrentCamera
+	if camera then
+		camera:GetPropertyChangedSignal("ViewportSize"):Connect(updateScale)
+	end
 	stateFolder.AttributeChanged:Connect(queueRender)
 	render()
 
