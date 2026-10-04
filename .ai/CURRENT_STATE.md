@@ -35,7 +35,7 @@ Windows
 
 ## CURRENT GAME IMPLEMENTATION
 
-Audit repository (2026-10-04): src/ hanya berisi template Rojo (print "Hello").
+Kerangka src/ sudah ada (GameConfig, Log, bootstrap server/client). Belum ada sistem gameplay.
 TIDAK ADA sistem gameplay, RemoteEvent, config, atau UI di repository.
 Kondisi Roblox Studio (map, objek, Output) BELUM diaudit — AI bekerja tanpa MCP (ADR-012).
 
