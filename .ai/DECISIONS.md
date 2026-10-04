@@ -200,3 +200,18 @@ Attribute otomatis sampai ke pemain yang join belakangan dan tidak bisa diubah c
 
 Status:
 ACCEPTED
+
+
+
+## ADR-015 — SPAWN LEWAT SPAWNLOCATION, SERVICE HANYA MEMERIKSA
+
+Decision:
+
+Titik spawn berupa SpawnLocation di Workspace.SpawnPoints (dibuat di Studio, tidak masuk Git). SpawnService (server) hanya memeriksa dependency dan mencatat posisi spawn; tidak memindahkan pemain.
+
+Reason:
+
+Mekanisme spawn bawaan Roblox sudah mendukung banyak pemain. Penugasan titik spawn per pemain (deterministik) baru dibuat bila terbukti perlu.
+
+Status:
+ACCEPTED

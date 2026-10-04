@@ -11,6 +11,7 @@ local Remotes = require(Shared:WaitForChild("Remotes") :: ModuleScript)
 
 local Services = script:WaitForChild("Services")
 local GameManager = require(Services:WaitForChild("GameManager") :: ModuleScript)
+local SpawnService = require(Services:WaitForChild("SpawnService") :: ModuleScript)
 
 Log.info("Server", string.format("Malam Suro server siap (MAX_PLAYERS=%d)", GameConfig.MAX_PLAYERS))
 

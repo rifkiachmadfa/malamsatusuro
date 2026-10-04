@@ -1,8 +1,7 @@
-# Project place file
-/malam-satu-suro.rbxlx
-
-# Roblox Studio lock files
-/*.rbxlx.lock
-/*.rbxl.lock
+# Place file / map TIDAK masuk Git (lihat ADR-011)
+*.rbxl
+*.rbxlx
+*.rbxl.lock
+*.rbxlx.lock
 
 sourcemap.json

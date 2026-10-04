@@ -3,20 +3,24 @@
 Last Updated: 2026-10-04
 
 ## Ringkasan
-- Fase aktif: PHASE 1 — FOUNDATION (Task 1.1, 1.2, 1.3 selesai)
+- Fase aktif: PHASE 1 — FOUNDATION (Task 1.1 sampai 1.6 selesai)
 - Repo: github.com/rifkiachmadfa/malamsatusuro (folder lokal: D:\roblox\malam-satu-suro)
-- `src/` berisi kerangka: `shared/Config/GameConfig`, `shared/Util/Log`, serta bootstrap `server/init.server` dan `client/init.client`. Belum ada kode gameplay.
+- `src/` berisi: `shared/Config/GameConfig`, `shared/Util/Log`, `shared/Remotes`, `server/Services/GameManager`, `server/Services/SpawnService`, serta bootstrap `server/init.server` dan `client/init.client`.
+- Belum ada logika quest/gameplay.
 
 ## Cara kerja saat ini
 - Chat Claude TANPA MCP Studio. AI hanya melihat GitHub; hasil test Studio/Output ditempel oleh user.
-- Git hanya untuk script. Map/objek Studio tetap di place file lokal (ADR-011).
-- Workspace Studio masih kosong. User membuat Part/objek sesuai daftar dari AI.
+- Git hanya untuk script. Map/objek Studio tetap di place file lokal (ADR-011). Place file di-ignore Git dan dicadangkan manual.
 - Editor: pakai extension "Luau Language Server"; extension Lua (sumneko) dimatikan untuk workspace ini.
 
-## Belum diverifikasi
-- Isi Explorer Studio selain Workspace kosong dan Output Rojo "Hello" (sudah dikonfirmasi user: aman).
+## Objek Workspace yang sudah dibuat user (di Studio, tidak ada di Git)
+- Workspace.SpawnPoints: Spawn1..Spawn4 (SpawnLocation)
+
+## Kode debug SEMENTARA (harus dihapus di akhir Phase 1)
+- DebugPing (remote + handler di init.server + FireServer di init.client)
+- Uji transisi state di init.server (task.delay + debugTestPlayerStates)
+- Log GameState di init.client
 
 ## Langkah berikutnya
-1. Task 1.4: Remotes foundation (pembuat RemoteEvent di server, nama sebagai konstanta).
-2. Task 1.5: GameManager (state game dan pemain, transisi eksplisit).
-3. Task 1.6: Player spawn (butuh objek Workspace; AI akan memberi daftar Part).
+1. Task 1.7: Pemandu NPC dan interaksi dasar (AI akan memberi daftar objek Workspace).
+2. Task 1.8: GUI foundation.
