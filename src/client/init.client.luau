@@ -1,5 +1,5 @@
 --!strict
--- Bootstrap client. Controller akan ditambahkan bertahap.
+-- Bootstrap client. Controller ditambahkan bertahap.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -14,3 +14,10 @@ Log.info("Client", string.format("Malam Suro client siap (MAX_PLAYERS=%d)", Game
 local debugPing = Remotes.get(Remotes.Names.DebugPing)
 debugPing:FireServer("halo")
 debugPing:FireServer(12345)
+
+-- SEMENTARA (Task 1.5): membuktikan state game sampai ke client lewat Attribute.
+local function logGameState()
+	Log.info("Client", "GameState = " .. tostring(ReplicatedStorage:GetAttribute("GameState")))
+end
+logGameState()
+ReplicatedStorage:GetAttributeChangedSignal("GameState"):Connect(logGameState)

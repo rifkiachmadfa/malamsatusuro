@@ -185,3 +185,18 @@ Mencegah nama remote tersebar sebagai string, dan menjaga boundary client-server
 
 Status:
 ACCEPTED
+
+
+
+## ADR-014 — GAME MANAGER DAN REPLIKASI STATE LEWAT ATTRIBUTE
+
+Decision:
+
+GameManager (src/server/Services/GameManager.luau) adalah satu-satunya pemilik state game dan state pemain. Transisi hanya lewat tabel yang eksplisit (ADR-009). State direplikasi ke client lewat Attribute (`ReplicatedStorage.GameState`, `Player.PlayerState`), bukan RemoteEvent.
+
+Reason:
+
+Attribute otomatis sampai ke pemain yang join belakangan dan tidak bisa diubah client untuk server. Aturan transisi pemain masih dasar dan akan ditinjau di Phase 6.
+
+Status:
+ACCEPTED

@@ -43,9 +43,9 @@ IN PROGRESS
 - [x] 1.2 Strategi map: Git hanya script (ADR-011)
 - [x] 1.3 Kerangka src/ (GameConfig, Log, bootstrap)
 - [x] Finalize Rojo project structure
-- [ ] 1.4 Remotes foundation
-- [ ] GameManager
-- [ ] Basic game state
+- [x] 1.4 Remotes foundation
+- [x] GameManager
+- [x] Basic game state
 - [ ] Player spawn
 - [ ] Pemandu NPC
 - [ ] Basic interaction system
