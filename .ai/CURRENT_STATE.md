@@ -5,88 +5,50 @@ Last Updated:
 
 ## CURRENT PHASE
 
-PHASE 1 — FOUNDATION (Task 1.1 selesai; Phase 0 repository audit selesai)
+PHASE 1 — FOUNDATION (Task 1.1 sampai 1.6 selesai)
 
 
-## DEVELOPMENT STATUS
+## TOOLCHAIN
 
-Project setup is currently in progress.
-
-Completed:
-
-- Roblox Studio installed
-- VS Code installed
-- Git installed
-- Rojo VS Code extension installed
-- Rokit installed
-- Rojo 7.7.1 installed
-- Rojo project initialized
-- Rojo server successfully connected to Roblox Studio
+Windows → VS Code → Rojo 7.7.1 → Roblox Studio → Git / GitHub
+AI bekerja tanpa MCP Studio (ADR-012): hasil test Studio/Output ditempel oleh user.
 
 
-## CURRENT TOOLCHAIN
+## SISTEM YANG SUDAH ADA DAN SUDAH DITES
 
-Windows
-→ VS Code
-→ Rojo 7.7.1
-→ Roblox Studio
-→ Git / GitHub
+- Kerangka src/: shared/Config/GameConfig, shared/Util/Log, bootstrap server dan client
+- shared/Remotes: pembuat dan pengambil RemoteEvent (ADR-013)
+- server/Services/GameManager: state game dan pemain dengan transisi eksplisit, direplikasi lewat Attribute (ADR-014)
+- server/Services/SpawnService: pemeriksaan dependency SpawnPoints dan log posisi spawn (ADR-015)
+
+Hasil test: 1 pemain lulus. Test 2 pemain lulus untuk GameManager. Test 4 pemain untuk SpawnService belum dilaporkan.
 
 
-## CURRENT GAME IMPLEMENTATION
+## OBJEK WORKSPACE (di Studio, tidak ada di Git)
 
-Kerangka src/ sudah ada (GameConfig, Log, bootstrap server/client). Belum ada sistem gameplay.
-TIDAK ADA sistem gameplay, RemoteEvent, config, atau UI di repository.
-Kondisi Roblox Studio (map, objek, Output) BELUM diaudit — AI bekerja tanpa MCP (ADR-012).
+- Workspace.SpawnPoints: Spawn1 (SpawnLocation)
+- Map desa belum ada (hanya Baseplate dari Rojo dan titik spawn)
 
-Do NOT assume that gameplay systems listed in GAME_CONTEXT.md already exist.
 
-Sistem berikut belum ada di repository (status Studio belum diaudit):
+## KODE DEBUG SEMENTARA (hapus di akhir Phase 1)
 
-- GameManager
-- QuestService
-- PartyService
-- InventoryService
-- InteractionService
-- RandomSpawnService
-- Chest system
-- Kelor system
-- Keris quest
-- Flower system
-- Kantil puzzle
-- Knock system
-- Revive system
-- Gamelan system
-- Kain Kafan quest
-- Final Ritual
-- Quest UI
-- Cutscenes
-- Horror systems
+- DebugPing (Remotes.Names, handler di init.server, FireServer di init.client)
+- Uji transisi state di init.server
+- Log GameState di init.client
+
+
+## BELUM ADA
+
+QuestService, PartyService, InventoryService, InteractionService, RandomSpawnService, chest, Kelor, quest Keris, bunga, puzzle Kantil, knock, revive, gamelan, quest Kafan, ritual akhir, Quest UI, cutscene, efek horor, Pemandu NPC.
 
 
 ## NEXT ACTION
 
-1. Commit dokumen Task 1.1.
-2. User menempelkan struktur Explorer Studio untuk menyelesaikan audit Studio.
-3. Task 1.3: kerangka folder src/ (tanpa logika gameplay).
-
-Audit Studio yang masih tertunda:
-
-1. ReplicatedStorage
-2. ServerScriptService
-3. StarterPlayer
-4. StarterGui
-5. Workspace
-6. RemoteEvents
-7. Attributes
-8. CollectionService tags
-9. Output/errors
+1. Task 1.7: Pemandu NPC dan interaksi dasar [E] tervalidasi server.
+2. Task 1.8: GUI foundation.
 
 
 ## IMPORTANT
 
-This document represents the last known state.
-
-After significant development work, update this file.
-
-Never leave it claiming that a system works if it has not been tested.
+Dokumen ini adalah kondisi terakhir yang diketahui. Perbarui setelah pekerjaan signifikan.
+Jangan menulis bahwa sebuah sistem berfungsi kalau belum dites.

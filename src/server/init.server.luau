@@ -17,6 +17,7 @@ Log.info("Server", string.format("Malam Suro server siap (MAX_PLAYERS=%d)", Game
 
 Remotes.init()
 GameManager.init()
+SpawnService.init()
 
 -- SEMENTARA (Task 1.4): contoh pola "client meminta, server memvalidasi".
 local debugPing = Remotes.get(Remotes.Names.DebugPing)

@@ -207,7 +207,7 @@ ACCEPTED
 
 Decision:
 
-Titik spawn berupa SpawnLocation di Workspace.SpawnPoints (dibuat di Studio, tidak masuk Git). SpawnService (server) hanya memeriksa dependency dan mencatat posisi spawn; tidak memindahkan pemain.
+Titik spawn berupa satu SpawnLocation (`Spawn1`) di Workspace.SpawnPoints (dibuat di Studio, tidak masuk Git); semua pemain spawn di area yang sama. SpawnService (server) hanya memeriksa dependency dan mencatat posisi spawn; tidak memindahkan pemain.
 
 Reason:
 

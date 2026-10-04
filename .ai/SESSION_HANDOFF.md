@@ -14,7 +14,7 @@ Last Updated: 2026-10-04
 - Editor: pakai extension "Luau Language Server"; extension Lua (sumneko) dimatikan untuk workspace ini.
 
 ## Objek Workspace yang sudah dibuat user (di Studio, tidak ada di Git)
-- Workspace.SpawnPoints: Spawn1..Spawn4 (SpawnLocation)
+- Workspace.SpawnPoints: Spawn1 (SpawnLocation, satu titik spawn untuk semua pemain)
 
 ## Kode debug SEMENTARA (harus dihapus di akhir Phase 1)
 - DebugPing (remote + handler di init.server + FireServer di init.client)
