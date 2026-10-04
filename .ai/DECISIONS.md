@@ -244,3 +244,52 @@ Mobile-friendly tanpa asset Studio, mudah di-review di Git, dan tidak ada state 
 
 Status:
 ACCEPTED (diuji user di Device Emulator, 2026-10-04)
+
+## ADR-018 — QUESTSERVICE PEMILIK TUNGGAL STATE QUEST; TRANSISI LINEAR + RESETS
+
+Decision:
+
+Hanya QuestService yang mengubah state quest. Transisi maju selalu ke state BERIKUTNYA pada daftar `states`
+di QuestConfig (tidak ada lompat). Transisi mundur hanya lewat `resets` (contoh: CANTIL_PUZZLE -> SEARCHING_FLOWERS
+untuk party wipe). LOCKED -> ACTIVE hanya dilakukan internal (startGame / quest sebelumnya COMPLETE).
+Quest COMPLETE otomatis membuka quest berikutnya dan memajukan GameState (ADR-009, ADR-014).
+
+Status:
+ACCEPTED (diuji user di Studio 1 pemain, 2026-10-04: transisi, penolakan lompat state, reset Kantil)
+
+## ADR-019 — SINKRONISASI QUEST LEWAT ATTRIBUTE JSON, SNAPSHOT DIHITUNG SERVER
+
+Decision:
+
+Server menghitung snapshot (judul, objective, done, current/target) dan menulisnya sebagai JSON ke
+ReplicatedStorage Attribute `QuestSnapshot`. Client hanya merender. Quest LOCKED tidak dikirim (UI tidak spoiler).
+
+Reason:
+
+Pemain yang join belakangan langsung menerima state; client tidak punya logika quest yang bisa menyimpang.
+
+Status:
+ACCEPTED (UI tersinkron di 1 pemain; pemain lain/late join belum dites di Studio)
+
+## ADR-020 — SKOR KAFAN PER PEMAIN BUKAN STATE QUEST
+
+Decision:
+
+State PLAYER_SCORE, SCORE>=80, PLAYER_COMPLETE, ALL_PLAYER_COMPLETE di GDD tidak dijadikan state quest.
+Quest tetap di GAMELAN_ACTIVE; penanda lolos per pemain disimpan di QuestService (markPlayerDone, areAllPlayersDone)
+dan quest maju ke KAIN_OBTAINED saat semua pemain yang ada lolos. Knock/revive adalah state pemain, bukan state quest.
+
+Status:
+ACCEPTED (struktur data ada; diimplementasi dan dites di Phase 7)
+
+## ADR-021 — PEMANDU DATA-DRIVEN, TRANSISI SETELAH DIALOG SELESAI
+
+Decision:
+
+Dialog Pemandu dipilih dari `QuestConfig.pemandu[state]`. Transisi dijalankan lewat callback `onFinished`
+DialogueService, hanya jika pemain membaca sampai baris terakhir dan state quest belum berubah sejak dialog dimulai.
+Phase 2 serah-terima memeriksa STATE saja; pemeriksaan kepemilikan item ditambahkan di Phase 3.
+
+Status:
+ACCEPTED (alur Brief dan Submit diuji user; dobel dialog 2+ pemain belum dites)
+

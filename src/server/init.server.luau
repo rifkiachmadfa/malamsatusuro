@@ -13,6 +13,8 @@ local GameManager = require(Services:WaitForChild("GameManager") :: ModuleScript
 local SpawnService = require(Services:WaitForChild("SpawnService") :: ModuleScript)
 local InteractionService = require(Services:WaitForChild("InteractionService") :: ModuleScript)
 local DialogueService = require(Services:WaitForChild("DialogueService") :: ModuleScript)
+local QuestService = require(Services:WaitForChild("QuestService") :: ModuleScript)
+local PemanduService = require(Services:WaitForChild("PemanduService") :: ModuleScript)
 
 Log.info("Server", string.format("Malam Suro server siap (MAX_PLAYERS=%d)", GameConfig.MAX_PLAYERS))
 
@@ -21,8 +23,5 @@ GameManager.init()
 SpawnService.init()
 InteractionService.init()
 DialogueService.init()
-
--- Pemandu: objek Workspace.NPC.Pemandu (dibuat di Studio) ber-tag Interactable dengan InteractionId = "Pemandu".
-InteractionService.register("Pemandu", function(player: Player, target: Instance)
-	DialogueService.start(player, "Pemandu_Intro", target)
-end)
+QuestService.init()
+PemanduService.init() -- mendaftarkan InteractionId "Pemandu" (Workspace.NPC.Pemandu ber-tag Interactable)

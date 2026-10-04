@@ -24,6 +24,7 @@ type Session = {
 	dialogueId: string,
 	index: number,
 	npc: Instance,
+	onFinished: (() -> ())?,
 }
 
 local DialogueService = {}
@@ -53,7 +54,9 @@ local function closeSession(player: Player, notifyClient: boolean)
 end
 
 -- Mulai dialog untuk pemain. Dipanggil dari handler InteractionService (sudah tervalidasi).
-function DialogueService.start(player: Player, dialogueId: string, npc: Instance)
+-- onFinished (opsional) dipanggil HANYA jika pemain membaca sampai baris terakhir
+-- (bukan saat ditutup dini, menjauh, atau disconnect).
+function DialogueService.start(player: Player, dialogueId: string, npc: Instance, onFinished: (() -> ())?)
 	if sessions[player] then
 		return
 	end
@@ -64,7 +67,7 @@ function DialogueService.start(player: Player, dialogueId: string, npc: Instance
 		return
 	end
 
-	local session: Session = { dialogueId = dialogueId, index = 1, npc = npc }
+	local session: Session = { dialogueId = dialogueId, index = 1, npc = npc, onFinished = onFinished }
 	sessions[player] = session
 	sendLine(player, session)
 end
@@ -99,7 +102,11 @@ local function onAction(player: Player, action: unknown)
 	session.index += 1
 	local dialogue = DialogueConfig[session.dialogueId]
 	if session.index > #dialogue.lines then
+		local onFinished = session.onFinished
 		closeSession(player, true)
+		if onFinished then
+			task.spawn(onFinished)
+		end
 		return
 	end
 	sendLine(player, session)

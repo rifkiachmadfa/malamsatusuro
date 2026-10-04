@@ -54,14 +54,13 @@ DONE (2026-10-04)
 # PHASE 2 — QUEST SYSTEM
 
 Status:
-NOT STARTED
+IMPLEMENTED — BELUM DITES DI STUDIO (2026-10-04)
 
-- [ ] QuestService
-- [ ] Quest configuration
-- [ ] Party progression
-- [ ] Quest state machine
-- [ ] Quest synchronization
-- [ ] Quest UI
+- [x] 2.1 QuestConfig (kode ditulis)
+- [x] 2.2 QuestService + state machine + party progression (kode ditulis; tes mock 30/30)
+- [x] 2.3 Sinkronisasi lewat Attribute JSON QuestSnapshot (kode ditulis)
+- [x] 2.4 Quest UI (kode ditulis)
+- [x] 2.5 Pemandu terhubung ke state quest (kode ditulis)
 
 
 # PHASE 3 — INTERACTION & INVENTORY
