@@ -104,7 +104,7 @@ QuestConfig.Quests = table.freeze({
 		states = kerisStates,
 		objectives = {
 			{ text = "Kumpulkan Daun Kelor", doneAt = "KELOR_COMPLETE", counter = "Kelor" },
-			{ text = "Dapatkan Kunci", doneAt = "KEY_OBTAINED" },
+			{ text = "Dapatkan Kunci dari Pemandu", doneAt = "KEY_OBTAINED" },
 			{ text = "Buka Peti", doneAt = "KERIS_OBTAINED" },
 			{ text = "Serahkan Keris", doneAt = "KERIS_SUBMITTED" },
 		},

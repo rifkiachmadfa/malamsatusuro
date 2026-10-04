@@ -76,6 +76,16 @@ equip Tool (klik slot) lalu `give` lagi: jumlah tetap menyatu di satu Tool; tida
 6. 2 pemain: A ambil 1, B ambil 2, A ambil 1: kedua layar menampilkan 4/4; Backpack A dan B terpisah.
 7. Periksa tampilan: model Kelor tidak tenggelam ke tanah / tidak miring aneh (lapor jika ya).
 
+## Uji Task 4.3 di Studio
+Prasyarat: Tool `KunciPeti` (dengan Handle, atau RequiresHandle=false) di ServerStorage.QuestTemplates.
+1. Kumpulkan Kelor 4/4. Panel: "Dapatkan Kunci dari Pemandu" belum tercentang.
+2. Bicara ke Pemandu, tamatkan dialog. Output: `state quest (KERIS): KELOR_COMPLETE -> KEY_OBTAINED`, `[KerisQuestService] ... Kunci Peti diberikan ke <nama>`.
+3. Backpack: "Daun Kelor" hilang di SEMUA pemain; "Kunci Peti" hanya di satu pemain.
+4. Bicara ke Pemandu lagi: dialog Pemandu_KerisChest, tidak ada kunci kedua.
+5. 2-4 pemain: ulangi beberapa kali, pemegang kunci harus bervariasi; dua pemain menamatkan dialog bersamaan = tetap satu kunci.
+6. Pemegang kunci keluar (sebelum peti): kunci pindah ke pemain lain.
+7. Tanpa template KunciPeti: Output warning, state tetap KELOR_COMPLETE, Kelor tidak terhapus.
+
 ## Langkah berikutnya
 1. User: uji 2.1 di atas dan lapor Output; tinjau SkyboxInserter; siapkan naskah dialog Pemandu.
 2. Task 2.2 Quest UI, Task 2.3 alur Pemandu -> quest.

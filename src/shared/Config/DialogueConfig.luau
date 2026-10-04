@@ -24,6 +24,24 @@ local DialogueConfig: { [string]: Dialogue } = {
 			"Jangan terlalu jauh dari kawan kalian.",
 		},
 	},
+	-- Dipakai saat KERIS di KELOR_COMPLETE. Setelah dialog selesai, server memberi Kunci Peti ke SATU pemain acak
+	-- dan menghapus semua Daun Kelor. PLACEHOLDER: ganti dengan naskah GDD.
+	Pemandu_KerisKey = {
+		speaker = "Pemandu",
+		lines = {
+			"Empat helai kelor sudah terkumpul. Serahkan semuanya padaku.",
+			"Kunci peti kuberikan pada salah satu dari kalian. Hanya dia yang bisa membuka peti itu.",
+			"Carilah peti itu bersama-sama.",
+		},
+	},
+	-- Dipakai saat KERIS di KEY_OBTAINED / CHEST_AVAILABLE. PLACEHOLDER: ganti dengan naskah GDD.
+	Pemandu_KerisChest = {
+		speaker = "Pemandu",
+		lines = {
+			"Kunci sudah ada pada salah satu dari kalian.",
+			"Temukan peti itu dan bukalah.",
+		},
+	},
 }
 
 return table.freeze(DialogueConfig)

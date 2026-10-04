@@ -84,7 +84,7 @@ IN PROGRESS
 - [x] 4.1 Kelor spawn system + server randomization + 4 active / 4 inactive (RandomSpawnService, KerisQuestService, ADR-023) — logika lulus harness offline (18 cek); BELUM dites di Studio
 - [x] 4.2 Kelor collection + party progress (pickup [E], ItemService.give, QuestService.addProgress) — idem
 - [ ] Uji Studio 4.1–4.2 (1 dan 2 pemain)
-- [ ] Key acquisition
+- [x] 4.3 Key acquisition: Pemandu_KerisKey -> KunciPeti ke 1 pemain acak, Kelor semua pemain dihapus (KerisQuestService) — syntax OK (luau-compile); BELUM dites di Studio. Butuh template ServerStorage.QuestTemplates.KunciPeti (Tool)
 - [ ] Chest
 - [ ] Memory puzzle
 - [ ] Keris reward

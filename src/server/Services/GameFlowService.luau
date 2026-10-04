@@ -17,6 +17,14 @@ local INTRO_DIALOGUE_ID = "Pemandu_Intro"
 
 local GameState = GameConfig.GameState
 
+-- Dialog Pemandu per state quest KERIS. State yang belum tercantum belum punya dialog (task berikutnya).
+local KERIS_DIALOGUES: { [string]: string } = {
+	SEARCHING_KELOR = "Pemandu_KerisSearch",
+	KELOR_COMPLETE = "Pemandu_KerisKey", -- serah-terima kunci ditangani KerisQuestService
+	KEY_OBTAINED = "Pemandu_KerisChest",
+	CHEST_AVAILABLE = "Pemandu_KerisChest",
+}
+
 local GameFlowService = {}
 
 -- Pemain pertama yang menamatkan dialog intro memulai game untuk seluruh party.
@@ -49,10 +57,8 @@ function GameFlowService.getPemanduDialogueId(): string?
 	if GameManager.getState() == GameState.LOBBY then
 		return INTRO_DIALOGUE_ID
 	end
-	if QuestService.getState("KERIS") == "SEARCHING_KELOR" then
-		return "Pemandu_KerisSearch"
-	end
-	return nil
+	local kerisState = QuestService.getState("KERIS")
+	return kerisState and KERIS_DIALOGUES[kerisState] or nil
 end
 
 function GameFlowService.init()

@@ -64,6 +64,9 @@ memuat modul dari asset ID luar. Bukan kode project. Perlu ditinjau/dihapus user
 ItemService (ADR-018, tanpa InventoryService), chest, Kelor, quest Keris, bunga, puzzle Kantil, knock, revive, gamelan, quest Kafan, ritual akhir, cutscene, efek horor.
 
 
+## UPDATE 2026-10-05 (Task 4.3)
+Key acquisition: kode selesai, syntax OK, BELUM dites di Studio. Dialog Pemandu di KELOR_COMPLETE -> KunciPeti ke 1 pemain acak (server), semua Daun Kelor dihapus, KERIS -> KEY_OBTAINED. DEPENDENCY: template Tool `KunciPeti` di ServerStorage.QuestTemplates (tanpa itu give ditolak dan quest tetap di KELOR_COMPLETE; Output: "gagal memberi KunciPeti").
+
 ## NEXT ACTION
 
 1. User: uji Kelor di Studio (lihat SESSION_HANDOFF), lapor Output dan tampilan (posisi/orientasi model Kelor).
