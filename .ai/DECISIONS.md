@@ -170,3 +170,18 @@ Pilihan user. MCP dapat dipertimbangkan lagi nanti (Studio built-in MCP + Claude
 
 Status:
 ACCEPTED (dapat ditinjau ulang)
+
+
+
+## ADR-013 — REMOTES LEWAT SATU MODUL
+
+Decision:
+
+Semua RemoteEvent dibuat oleh server lewat `Remotes.init()` (src/shared/Remotes.luau) dan diambil lewat `Remotes.get()`. Nama remote hanya didefinisikan di `Remotes.Names`.
+
+Reason:
+
+Mencegah nama remote tersebar sebagai string, dan menjaga boundary client-server tetap jelas dan tervalidasi (ADR-007).
+
+Status:
+ACCEPTED
