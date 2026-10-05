@@ -79,17 +79,29 @@ IN PROGRESS
 # PHASE 4 — KERIS PUSAKA
 
 Status:
-IN PROGRESS
+DONE dengan catatan (2026-10-05, ditutup atas instruksi user; lihat catatan di bawah)
 
-- [x] 4.1 Kelor spawn system + server randomization + 4 active / 4 inactive (RandomSpawnService, KerisQuestService, ADR-023) — logika lulus harness offline (18 cek); BELUM dites di Studio
-- [x] 4.2 Kelor collection + party progress (pickup [E], ItemService.give, QuestService.addProgress) — idem
-- [ ] Uji Studio 4.1–4.2 (1 dan 2 pemain)
-- [x] 4.3 Key acquisition: Pemandu_KerisKey -> KunciPeti ke 1 pemain acak, Kelor semua pemain dihapus (KerisQuestService) — syntax OK (luau-compile); BELUM dites di Studio. Butuh template ServerStorage.QuestTemplates.KunciPeti (Tool)
-- [ ] Chest
-- [ ] Memory puzzle
-- [ ] Keris reward
-- [ ] NPC submission
-- [ ] Quest completion
+- [x] 4.1 Kelor spawn system + server randomization + 4 active / 4 inactive (RandomSpawnService, KerisQuestService, ADR-023)
+- [x] 4.2 Kelor collection + party progress (pickup [E], ItemService.give, QuestService.addProgress)
+- [x] 4.3 Key acquisition: Pemandu_KerisKey -> KunciPeti ke 1 pemain acak, Kelor semua pemain dihapus (fix BUG-001)
+- [x] 4.4 Peti: Workspace.QuestObjects.Chest interaktif hanya saat CHEST_AVAILABLE/PUZZLE, hanya pemegang KunciPeti
+- [x] 4.5 Memory puzzle HA NA CA RA KA (MemoryPuzzleService + MemoryPuzzleController, ADR-024)
+- [x] 4.6 Keris Pusaka (template KerisPusaka)
+- [x] 4.7 Quest selesai saat keris disimpan di RitualCollection; Pemandu hanya melapor (RitualCollectionService, ADR-026)
+- [x] 4.8 Notifikasi lewat NoticeService (ADR-025): notifyParty, toast bertumpuk, notifikasi Kelor/kunci/keris/ritual
+- [x] Quest UI satu quest aktif, ukuran lebih kecil (UIScale)
+
+Verifikasi:
+- Harness offline (stub Roblox): 48 cek lulus untuk alur kunci, peti, puzzle, keris, ritual, notifikasi pihak-party.
+- User melaporkan update 4.3–4.6 "sudah oke" di Studio (2026-10-05). Revisi 4.7–4.8 (RitualCollection + notifikasi) belum dilaporkan terperinci.
+
+Catatan / utang yang dibawa:
+- Uji 3–4 pemain (pemegang kunci acak, sesi puzzle bergantian, notifikasi) dijadwalkan di Phase 10.
+- Pemegang kunci mati lalu respawn = Backpack reset, kunci hilang (ADR-018). Ditangani di Phase 5/6 (knock/respawn).
+- Setelah KERIS COMPLETE, quest KANTIL belum aktif: pemicunya ditentukan di Phase 5.
+- Teks dialog/notifikasi masih PLACEHOLDER; ganti dengan naskah GDD.
+- `PemanduService.luau` adalah kode mati (tidak di-require); usul dihapus.
+- Visual simpanan di RitualCollection (item tampil di altar) belum ada; opsional, Phase 9.
 
 
 # PHASE 5 — KEMBANG KANTIL HITAM
@@ -109,7 +121,8 @@ NOT STARTED
 - [ ] Party wipe
 - [ ] Flower reset
 - [ ] Black Kantil reward
-- [ ] NPC submission
+- [ ] Simpan di RitualCollection (ADR-026; Pemandu hanya melapor)
+- [ ] Notifikasi lewat NoticeService untuk semua kejadian (ADR-025)
 
 
 # PHASE 6 — KNOCK / REVIVE
@@ -141,7 +154,8 @@ NOT STARTED
 - [ ] Player completion
 - [ ] All-player completion
 - [ ] Reward
-- [ ] NPC submission
+- [ ] Simpan di RitualCollection (ADR-026; Pemandu hanya melapor)
+- [ ] Notifikasi lewat NoticeService (ADR-025)
 
 
 # PHASE 8 — FINAL RITUAL
@@ -150,7 +164,7 @@ Status:
 NOT STARTED
 
 - [ ] Ritual requirements
-- [ ] Item submission validation
+- [ ] Validasi simpanan di RitualCollection (RitualCollectionService.getStoredCount, ADR-026)
 - [ ] Party gathering
 - [ ] Readiness tracking
 - [ ] Pemandu sequence

@@ -3,7 +3,8 @@
 Last Updated: 2026-10-05
 
 ## Ringkasan
-- Fase aktif: PHASE 4 — KERIS PUSAKA. Phase 2 selesai (1 dan 2 pemain); Phase 3 ItemService selesai. Task 4.1–4.2 (spawn + pickup Kelor) kode selesai, belum dites di Studio.
+- Fase aktif: PHASE 5 — KEMBANG KANTIL HITAM (belum dimulai). Phase 1–4 selesai (Phase 4 dengan catatan: 3–4 pemain di Phase 10). Quest KERIS lengkap: Kelor -> kunci -> peti -> memory puzzle -> keris -> simpan di RitualCollection.
+- Aturan wajib: semua notifikasi lewat NoticeService (ADR-025); quest selesai saat item disimpan di RitualCollection, Pemandu hanya melapor (ADR-026). Lihat AGENTS.md.
 - Repo: github.com/rifkiachmadfa/malamsatusuro (folder lokal: D:\roblox\malam-satu-suro)
 - `src/` berisi: shared (Config/GameConfig, Config/DialogueConfig, Util/Log, Util/Spatial, Util/Interactable, Remotes),
   server (Services/GameManager, SpawnService, InteractionService, DialogueService, init.server),
@@ -86,14 +87,23 @@ Prasyarat: Tool `KunciPeti` (dengan Handle, atau RequiresHandle=false) di Server
 6. Pemegang kunci keluar (sebelum peti): kunci pindah ke pemain lain.
 7. Tanpa template KunciPeti: Output warning, state tetap KELOR_COMPLETE, Kelor tidak terhapus.
 
-<<<<<<< HEAD
 ## Uji Quest UI satu-quest di Studio
 1. Sebelum intro: panel tidak tampil. Setelah intro: hanya KERIS PUSAKA (4 objective), tanpa KANTIL/KAFAN.
 2. Ubah state via Command Bar (server) untuk cek quest lain, mis. selesaikan KERIS lalu `QuestService.activate("KANTIL")`: panel hanya KEMBANG KANTIL HITAM.
 3. Device Emulator: PC, tablet, HP landscape. Panel lebih kecil dari sebelumnya, teks terbaca, header bisa diketuk, tidak menimpa tombol menu Roblox.
 
-=======
->>>>>>> fix: BUG-001 dialog Pemandu KELOR_COMPLETE; Task 4.3 serah-terima kunci acak
+## Uji Studio 4.4–4.6 (peti, puzzle, keris)
+Prasyarat: Tool `KunciPeti` dan `KerisPusaka` (Handle) di ServerStorage.QuestTemplates; `Workspace.QuestObjects.Chest` ada.
+1. Selesaikan Kelor -> Pemandu: toast "Kamu memegang Kunci Peti" (pemegang) / "<nama> memegang Kunci Peti" (lainnya).
+2. Pemain tanpa kunci mendekati peti: prompt "Buka" muncul, ditekan -> toast "Peti terkunci".
+3. Pemegang kunci: buka peti -> overlay "INGAT URUTAN INI" 6 detik (5 suku kata), lalu "SUSUN URUTANNYA": ketuk token ke slot, ketuk slot untuk mengembalikan, PERIKSA.
+4. Salah: "URUTAN SALAH", buka lagi -> urutan baru. Benar: "PETI TERBUKA", Keris ada di Backpack, kunci hilang, peti tak bisa dibuka lagi.
+5. Saat satu pemain bermain, pemain lain buka peti -> toast "<nama> sedang membuka peti".
+6. Pemegang keris bicara ke Pemandu: hanya petunjuk, keris TETAP di Backpack, quest belum selesai.
+7. Pemegang keris ke `QuestObjects.RitualCollection`: prompt "Simpan" -> keris hilang, quest COMPLETE (semua tercentang), toast "Kamu menyimpan Keris Pusaka di tempat ritual (1/3)" untuk pelaku dan "<nama> menyimpan ..." untuk rekan. Non-pemegang menekan prompt: toast "tidak membawa benda ritual". Setelah itu Pemandu melapor (Pemandu_KerisDone).
+8. Notifikasi: ambil Kelor -> pelaku "Kamu mendapatkan Daun Kelor (n/4)", rekan "<nama> mendapatkan ..."; 4/4 -> toast "Daun Kelor sudah lengkap. Kembali ke Pemandu." Toast beruntun menumpuk, tidak saling menimpa.
+9. Device Emulator HP: tile terbaca, semua bisa diketuk. Tutup dengan BATAL: sesi berakhir, bisa coba lagi. Pemegang keluar game: kunci/keris pindah ke pemain lain.
+
 ## Langkah berikutnya
 1. User: uji 2.1 di atas dan lapor Output; tinjau SkyboxInserter; siapkan naskah dialog Pemandu.
 2. Task 2.2 Quest UI, Task 2.3 alur Pemandu -> quest.

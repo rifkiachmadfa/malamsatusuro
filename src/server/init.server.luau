@@ -16,6 +16,9 @@ local DialogueService = require(Services:WaitForChild("DialogueService") :: Modu
 local QuestService = require(Services:WaitForChild("QuestService") :: ModuleScript)
 local ItemService = require(Services:WaitForChild("ItemService") :: ModuleScript)
 local GameFlowService = require(Services:WaitForChild("GameFlowService") :: ModuleScript)
+local NoticeService = require(Services:WaitForChild("NoticeService") :: ModuleScript)
+local MemoryPuzzleService = require(Services:WaitForChild("MemoryPuzzleService") :: ModuleScript)
+local RitualCollectionService = require(Services:WaitForChild("RitualCollectionService") :: ModuleScript)
 local KerisQuestService = require(Services:WaitForChild("KerisQuestService") :: ModuleScript)
 
 Log.info("Server", string.format("Malam Suro server siap (MAX_PLAYERS=%d)", GameConfig.MAX_PLAYERS))
@@ -28,11 +31,14 @@ SpawnService.init()
 InteractionService.init()
 DialogueService.init()
 GameFlowService.init()
+NoticeService.init()
+MemoryPuzzleService.init()
 KerisQuestService.init()
+RitualCollectionService.init()
 
 -- Pemandu: objek Workspace.NPC.Pemandu (dibuat di Studio) ber-tag Interactable dengan InteractionId = "Pemandu".
 InteractionService.register("Pemandu", function(player: Player, target: Instance)
-	local dialogueId = GameFlowService.getPemanduDialogueId()
+	local dialogueId = GameFlowService.getPemanduDialogueId(player)
 	if dialogueId then
 		DialogueService.start(player, dialogueId, target)
 	end

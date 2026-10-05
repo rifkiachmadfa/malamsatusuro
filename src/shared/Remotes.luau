@@ -16,6 +16,9 @@ Remotes.Names = table.freeze({
 	InteractionRequest = "InteractionRequest", -- client -> server: (target: Instance)
 	DialogueUpdate = "DialogueUpdate", -- server -> client: { action = "Show" | "Close", ... }
 	DialogueAction = "DialogueAction", -- client -> server: "Next" | "Close"
+	MemoryPuzzleUpdate = "MemoryPuzzleUpdate", -- server -> client: { action = "Start" | "Result" | "Close", ... }
+	MemoryPuzzleAction = "MemoryPuzzleAction", -- client -> server: { action = "Submit", answer = { string } } | { action = "Cancel" }
+	Notice = "Notice", -- server -> client: (text: string), pesan singkat
 })
 
 -- Server only: buat folder dan semua RemoteEvent (aman dipanggil ulang).

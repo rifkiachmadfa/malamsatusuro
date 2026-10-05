@@ -42,6 +42,29 @@ local DialogueConfig: { [string]: Dialogue } = {
 			"Temukan peti itu dan bukalah.",
 		},
 	},
+	-- Dipakai saat KERIS di KERIS_OBTAINED untuk pemegang keris. Hanya petunjuk: keris disimpan di RitualCollection. PLACEHOLDER.
+	Pemandu_KerisStore = {
+		speaker = "Pemandu",
+		lines = {
+			"Itu keris pusaka dusun ini.",
+			"Simpanlah di tempat ritual. Aku hanya bisa menyaksikan.",
+		},
+	},
+	-- Dipakai saat KERIS di KERIS_OBTAINED untuk pemain yang TIDAK memegang keris. PLACEHOLDER.
+	Pemandu_KerisWait = {
+		speaker = "Pemandu",
+		lines = {
+			"Keris itu ada pada salah satu kawanmu. Suruh dia menyimpannya di tempat ritual.",
+		},
+	},
+	-- Pemandu MELAPOR: keris sudah tersimpan di tempat ritual (KERIS COMPLETE). PLACEHOLDER.
+	Pemandu_KerisDone = {
+		speaker = "Pemandu",
+		lines = {
+			"Keris Pusaka sudah tersimpan di tempat ritual. Satu pusaka telah kembali.",
+			"Tunggulah, pencarian berikutnya akan segera dimulai.",
+		},
+	},
 }
 
 return table.freeze(DialogueConfig)

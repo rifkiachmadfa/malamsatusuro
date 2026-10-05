@@ -340,6 +340,47 @@ ACCEPTED (menunggu uji Studio, Task 3.1)
 
 
 
+## ADR-026 — QUEST SELESAI = ITEM DISIMPAN DI RITUALCOLLECTION; PEMANDU HANYA MELAPOR
+
+Decision:
+
+- Item akhir quest (Keris Pusaka, Kembang Kantil Hitam, Kain Kafan) disimpan di `Workspace.QuestObjects.RitualCollection` (Model) lewat satu prompt [E] Simpan. Saat disimpan: item dihapus dari Backpack -> state `*_SUBMITTED` -> `COMPLETE`.
+- `RitualCollectionService` generik; daftar persembahan di `RitualConfig.Offerings` (questId, itemId, obtainedState, submittedState). Server memilih persembahan dari state quest dan isi Backpack pemain; client tidak menentukan apa pun.
+- Prompt hanya aktif (tag) saat ada quest yang itemnya sudah didapat tetapi belum disimpan.
+- Pemandu tidak lagi menyelesaikan quest. Dialognya: `Pemandu_KerisStore` (petunjuk untuk pemegang), `Pemandu_KerisWait` (non-pemegang), `Pemandu_KerisDone` (melapor setelah COMPLETE). Menggantikan alur "serahkan ke Pemandu" di Task 4.6.
+- `getStoredCount()` dipakai Phase 8 (ritual akhir) untuk memastikan ketiga persembahan sudah tersimpan.
+- Aktivasi quest berikutnya setelah COMPLETE belum ditentukan (Phase 5).
+
+Status:
+ACCEPTED (Phase 4 ditutup 2026-10-05)
+
+## ADR-025 — SEMUA NOTIFIKASI LEWAT NOTICESERVICE
+
+Decision:
+
+- `NoticeService` (server) + `NoticeController` (client) adalah satu-satunya jalur notifikasi gameplay. Dilarang membuat jalur lain.
+- API: `send(player, text)`, `broadcast(text)`, `notifyParty(actor, selfText, othersText)` (pelaku "Kamu ...", rekan "<nama> ...").
+- Notifikasi wajib untuk item didapat (pemain dan rekan), progres party, perpindahan kunci/keris, knock, revive, party wipe, quest selesai, pemain keluar yang memengaruhi quest, dan penolakan aksi yang perlu penjelasan.
+- Client menumpuk hingga 4 toast (terbaru di bawah, 4 detik) agar pesan beruntun tidak saling menimpa.
+- Notifikasi hanya tampilan; tidak membawa keputusan gameplay.
+
+Status:
+ACCEPTED
+
+## ADR-024 — MEMORY PUZZLE PETI: SESI SERVER, GUI TAP, SATU SESI PER PARTY
+
+Decision:
+
+- Minigame ingat-dan-susun suku kata HA NA CA RA KA. Server membuat urutan acak (MemoryPuzzleConfig.SYLLABLES), client menampilkannya MEMORIZE_SECONDS lalu menyembunyikannya; pemain menyusun ulang dengan mengetuk token.
+- `MemoryPuzzleService` generik (callback onCorrect milik pemanggil). Server memvalidasi: pemain, sesi aktif, cooldown aksi, fase hafalan sudah lewat, format jawaban (5 token unik dikenal), lalu membandingkan dengan urutan soal. Timeout sesi di server.
+- Satu sesi aktif per party; pemain berstatus MINIGAME selama sesi (interaksi lain terblokir oleh InteractionService).
+- Gagal = tidak ada hukuman, state tetap CHEST_PUZZLE, peti bisa dibuka lagi (urutan baru). Peti hanya interaktif saat CHEST_AVAILABLE/CHEST_PUZZLE (tag diatur server).
+- Item unik (KunciPeti, KerisPusaka) dilacak di `holders`; jika pemegang keluar game, dipindah ke pemain acak lain.
+- GUI memakai tombol (bukan keyboard) agar sama di PC dan mobile. Aksara Jawa tidak dipakai (font Roblox tidak menjamin glyph); teks latin.
+
+Status:
+ACCEPTED (Phase 4 ditutup 2026-10-05)
+
 ## ADR-023 — PICKUP DUNIA = MODEL DARI TEMPLATE; RANDOMSPAWNSERVICE GENERIK + SERVICE PER QUEST
 
 Decision:
@@ -352,4 +393,4 @@ Decision:
 - Titik spawn (KelorSpawn_N) hanya penanda; service tidak mengubah/menyembunyikannya. Model muncul dengan orientasi dan pusat titik spawn.
 
 Status:
-ACCEPTED (menunggu uji Studio, Task 4.1–4.4)
+ACCEPTED (Phase 4 ditutup 2026-10-05)

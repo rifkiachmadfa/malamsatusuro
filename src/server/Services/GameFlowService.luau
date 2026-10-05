@@ -11,6 +11,7 @@ local Log = require(Shared:WaitForChild("Util"):WaitForChild("Log") :: ModuleScr
 local GameManager = require(script.Parent:WaitForChild("GameManager") :: ModuleScript)
 local QuestService = require(script.Parent:WaitForChild("QuestService") :: ModuleScript)
 local DialogueService = require(script.Parent:WaitForChild("DialogueService") :: ModuleScript)
+local ItemService = require(script.Parent:WaitForChild("ItemService") :: ModuleScript)
 
 local TAG = "GameFlowService"
 local INTRO_DIALOGUE_ID = "Pemandu_Intro"
@@ -23,6 +24,9 @@ local KERIS_DIALOGUES: { [string]: string } = {
 	KELOR_COMPLETE = "Pemandu_KerisKey", -- serah-terima kunci ditangani KerisQuestService
 	KEY_OBTAINED = "Pemandu_KerisChest",
 	CHEST_AVAILABLE = "Pemandu_KerisChest",
+	CHEST_PUZZLE = "Pemandu_KerisChest",
+	COMPLETE = "Pemandu_KerisDone",
+	-- KERIS_OBTAINED ditentukan per pemain (pemegang keris atau bukan), lihat getPemanduDialogueId.
 }
 
 local GameFlowService = {}
@@ -53,11 +57,17 @@ end
 
 -- Dialog Pemandu menurut state saat ini. Return nil jika belum ada dialog untuk state tersebut
 -- (dialog state lain ditambahkan bersama quest-nya di Phase 4 dst.).
-function GameFlowService.getPemanduDialogueId(): string?
+function GameFlowService.getPemanduDialogueId(player: Player?): string?
 	if GameManager.getState() == GameState.LOBBY then
 		return INTRO_DIALOGUE_ID
 	end
 	local kerisState = QuestService.getState("KERIS")
+	if kerisState == "KERIS_OBTAINED" then
+		if player and ItemService.has(player, "KerisPusaka") then
+			return "Pemandu_KerisStore"
+		end
+		return "Pemandu_KerisWait"
+	end
 	return kerisState and KERIS_DIALOGUES[kerisState] or nil
 end
 

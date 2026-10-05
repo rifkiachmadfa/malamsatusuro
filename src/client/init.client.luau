@@ -11,9 +11,15 @@ local Controllers = script:WaitForChild("Controllers")
 local DialogueController = require(Controllers:WaitForChild("DialogueController") :: ModuleScript)
 local InteractionController = require(Controllers:WaitForChild("InteractionController") :: ModuleScript)
 local QuestController = require(Controllers:WaitForChild("QuestController") :: ModuleScript)
+local NoticeController = require(Controllers:WaitForChild("NoticeController") :: ModuleScript)
+local MemoryPuzzleController = require(Controllers:WaitForChild("MemoryPuzzleController") :: ModuleScript)
 
 Log.info("Client", string.format("Malam Suro client siap (MAX_PLAYERS=%d)", GameConfig.MAX_PLAYERS))
 
 DialogueController.init()
-InteractionController.init(DialogueController.isOpen)
+InteractionController.init(function(): boolean
+	return DialogueController.isOpen() or MemoryPuzzleController.isOpen()
+end)
 QuestController.init()
+NoticeController.init()
+MemoryPuzzleController.init()

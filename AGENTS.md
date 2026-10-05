@@ -17,6 +17,17 @@ Project: MALAM SURO: DUSUN KELABU (Roblox, horor co-op 1–4 pemain, bahasa Indo
 - Script dikelola Rojo (`src/` -> Studio). Jangan membuat script duplikat langsung di Studio.
 - Map dan objek Studio TIDAK ada di Git (lihat ADR-011). Objek yang belum ada = dependency, bukan alasan membuat pengganti.
 
+## Aturan notifikasi (ADR-025)
+- SEMUA pemberitahuan ke pemain lewat `NoticeService` (toast di client). Dilarang membuat toast/label/print/GUI notifikasi sendiri.
+- Wajib ada notifikasi untuk: pemain atau rekan mendapat item, progres party (mis. Kelor 3/4), kunci/keris berpindah pemegang, knock, revive, party wipe, quest selesai, pemain keluar yang memengaruhi quest, dan penolakan aksi yang perlu penjelasan (mis. "Peti terkunci").
+- Pakai `NoticeService.notifyParty(pelaku, "Kamu ...", "<nama> ...")` untuk kejadian pemain; `broadcast` untuk kejadian party; `send` untuk satu pemain.
+- Teks Bahasa Indonesia, singkat, sebut nama pemain dan progres (n/N) bila relevan. Fitur baru (knock, revive, Kantil, Gamelan, ritual akhir) harus menyertakan notifikasi sejak awal.
+
+## Aturan penyelesaian quest (ADR-026)
+- Quest SELESAI saat item quest disimpan di `Workspace.QuestObjects.RitualCollection` (RitualCollectionService, daftar di RitualConfig), BUKAN saat bicara ke Pemandu.
+- Pemandu hanya MELAPOR/memberi petunjuk (dialog). Jangan menaruh logika penyelesaian quest di dialog Pemandu.
+- Item akhir: Keris Pusaka, Kembang Kantil Hitam, Kain Kafan. Phase 8 (ritual akhir) membaca status simpanan dari sini.
+
 ## Alur task
 AUDIT -> CURRENT STATE -> PLAN -> IMPLEMENT -> TEST -> DEBUG -> REVIEW DIFF -> UPDATE .ai/ -> COMMIT -> HANDOFF
 

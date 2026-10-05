@@ -8,7 +8,8 @@ Last Updated:
 PHASE 1 — FOUNDATION: SELESAI.
 PHASE 2 — QUEST SYSTEM: SELESAI (diuji 1 dan 2 pemain).
 PHASE 3 — INTERACTION & INVENTORY: ItemService selesai (boot diuji; give/consume diuji lewat Phase 4).
-PHASE 4 — KERIS PUSAKA: SEDANG BERJALAN (4.1 spawn Kelor + 4.2 pickup/progres: kode selesai, belum dites di Studio).
+PHASE 4 — KERIS PUSAKA: SELESAI dengan catatan (alur Kelor -> kunci -> peti -> puzzle -> keris -> simpan di RitualCollection; 3–4 pemain di Phase 10).
+PHASE 5 — KEMBANG KANTIL HITAM: BERIKUTNYA (belum dimulai).
 
 
 ## TOOLCHAIN
@@ -67,11 +68,18 @@ ItemService (ADR-018, tanpa InventoryService), chest, Kelor, quest Keris, bunga,
 ## UPDATE 2026-10-05 (Task 4.3)
 Key acquisition: kode selesai, syntax OK, BELUM dites di Studio. Dialog Pemandu di KELOR_COMPLETE -> KunciPeti ke 1 pemain acak (server), semua Daun Kelor dihapus, KERIS -> KEY_OBTAINED. DEPENDENCY: template Tool `KunciPeti` di ServerStorage.QuestTemplates (tanpa itu give ditolak dan quest tetap di KELOR_COMPLETE; Output: "gagal memberi KunciPeti").
 
+## UPDATE 2026-10-05 (Task 4.4–4.6)
+Quest KERIS lengkap secara kode: Kelor -> kunci -> peti -> memory puzzle -> keris -> penyerahan -> COMPLETE. Harness offline 36 cek lulus; BELUM ada tes Studio/GUI. DEPENDENCY: template Tool `KunciPeti` dan `KerisPusaka` di ServerStorage.QuestTemplates; objek `Workspace.QuestObjects.Chest` (Model/Part, jarak interaksi 12 dari pivot). Setelah KERIS COMPLETE belum ada lanjutan (aktivasi KANTIL = Phase 5).
+
+## UPDATE 2026-10-05 (ADR-025, ADR-026)
+Penyelesaian quest Keris kini di RitualCollection (bukan Pemandu). Semua notifikasi lewat NoticeService. DEPENDENCY baru: `Workspace.QuestObjects.RitualCollection` (Model, jarak interaksi 14 dari pivot). Belum ada tes Studio.
+
 ## NEXT ACTION
 
-1. User: uji Kelor di Studio (lihat SESSION_HANDOFF), lapor Output dan tampilan (posisi/orientasi model Kelor).
-2. Task 4.3: kunci peti setelah 4/4 (KELOR_COMPLETE -> KEY_OBTAINED), lalu peti dan memory puzzle.
-3. User (masih terbuka): tinjau SkyboxInserter; ganti teks placeholder dengan naskah GDD.
+1. Phase 5 (Kantil), Task 5.1: spawn bunga (8 titik, 4 aktif) memakai RandomSpawnService yang sudah generik. Detail yang dibutuhkan dari user: Workspace.QuestObjects.FlowerSpawns (titik, atribut tipe bunga), makam (GravePuzzle), template Mawar Merah/Putih, Melati, Kantil Kuning, Kembang Kantil Hitam, Minyak Zaitun.
+2. Tentukan pemicu aktivasi quest KANTIL setelah KERIS COMPLETE (belum ada).
+3. Aturan wajib: semua notifikasi lewat NoticeService (ADR-025); quest selesai di RitualCollection (ADR-026).
+4. User (masih terbuka): ganti teks placeholder dengan naskah GDD; tinjau SkyboxInserter.
 
 ## IMPORTANT
 

@@ -106,7 +106,7 @@ QuestConfig.Quests = table.freeze({
 			{ text = "Kumpulkan Daun Kelor", doneAt = "KELOR_COMPLETE", counter = "Kelor" },
 			{ text = "Dapatkan Kunci dari Pemandu", doneAt = "KEY_OBTAINED" },
 			{ text = "Buka Peti", doneAt = "KERIS_OBTAINED" },
-			{ text = "Serahkan Keris", doneAt = "KERIS_SUBMITTED" },
+			{ text = "Simpan Keris di tempat ritual", doneAt = "KERIS_SUBMITTED" },
 		},
 		initialState = "LOCKED",
 		transitions = kerisTransitions,
@@ -122,7 +122,7 @@ QuestConfig.Quests = table.freeze({
 		objectives = {
 			{ text = "Cari 4 Bunga", doneAt = "FLOWERS_COMPLETE", counter = "Flowers" },
 			{ text = "Selesaikan teka-teki makam", doneAt = "CANTIL_BLACK_OBTAINED" },
-			{ text = "Serahkan Kembang Kantil Hitam", doneAt = "CANTIL_SUBMITTED" },
+			{ text = "Simpan Kembang Kantil Hitam di tempat ritual", doneAt = "CANTIL_SUBMITTED" },
 		},
 		initialState = "LOCKED",
 		transitions = kantilTransitions,
@@ -140,7 +140,7 @@ QuestConfig.Quests = table.freeze({
 		objectives = {
 			{ text = "Cari tempat gamelan", doneAt = "GAMELAN_ACTIVE" },
 			{ text = "Mainkan gamelan (skor 80+)", doneAt = "ALL_PLAYER_COMPLETE" },
-			{ text = "Serahkan Kain Kafan", doneAt = "KAIN_SUBMITTED" },
+			{ text = "Simpan Kain Kafan di tempat ritual", doneAt = "KAIN_SUBMITTED" },
 		},
 		initialState = "LOCKED",
 		transitions = kafanTransitions,

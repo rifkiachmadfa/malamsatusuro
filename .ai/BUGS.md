@@ -14,7 +14,7 @@ WONT_FIX
 ## BUG-001 — Dialog Pemandu tidak muncul/buntu setelah Kelor 4/4
 
 Status:
-FIXED (kode diubah, BELUM VERIFIED di Studio)
+VERIFIED (user melaporkan alur Kelor -> kunci berjalan di Studio, 2026-10-05)
 
 Severity:
 HIGH (quest Keris tidak bisa lanjut)
@@ -38,7 +38,7 @@ Fix:
 Peta state->dialog (KERIS_DIALOGUES), dialog Pemandu_KerisKey, handOverKey di KerisQuestService.
 
 Verification:
-Belum. Lihat "Uji Task 4.3" di SESSION_HANDOFF.
+Dilaporkan lulus oleh user (2026-10-05); uji 3–4 pemain di Phase 10.
 
 Affected Players:
 1 / 2 / 3 / 4
