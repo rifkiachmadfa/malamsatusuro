@@ -84,7 +84,7 @@ GravePuzzleService (ADR-029): placement bunga (equip + [E] di makam) dan validas
 
 1. User: cocokkan GravePuzzleConfig.ANSWER dengan clue SurfaceGui lalu set ANSWER_CONFIRMED=true; pastikan Graves/Grave_1..4 dan template KembangKantilHitam ada; cek Handle.Anchored=false di semua template Tool.
 2. User: uji Studio (lihat SESSION_HANDOFF "Uji Studio Task 5.7–5.8") dan lapor Output.
-3. Keputusan desain: kontrol giliran tunggal (Task 5.9) dan penanganan bunga saat pemain mati.
+3. Kontrol giliran tunggal (Task 5.9): DIPUTUSKAN dikerjakan bersama knock/revive di Phase 6. Masih terbuka: penanganan bunga saat pemain mati/respawn.
 4. Phase 6: knock (pasang di GravePuzzleService.onWrong), Minyak Zaitun/revive, party wipe, flower reset.
 5. Aturan wajib: semua notifikasi lewat NoticeService (ADR-025); quest selesai di RitualCollection (ADR-026).
 6. User (masih terbuka): ganti teks placeholder dengan naskah GDD; tinjau SkyboxInserter.

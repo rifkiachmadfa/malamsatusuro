@@ -104,7 +104,7 @@ IN PROGRESS (2026-10-10). Kode 5.1–5.8 ada; SEMUANYA belum dites di Studio. Kn
 - [x] 5.6 Grave clue — TANPA KODE: clue = SurfaceGui di makam (dibuat user di Studio). Dependency Studio, belum diverifikasi AI
 - [x] 5.7 Flower placement (GravePuzzleService, ADR-029): equip bunga + [E] di makam; harness offline 47 cek; BELUM dites di Studio
 - [x] 5.8 Puzzle validation (server, jawaban di server/Config/GravePuzzleConfig) — idem. JAWABAN MASIH PLACEHOLDER (ANSWER_CONFIRMED=false)
-- [ ] 5.9 Turn/attempt control (satu pemain aktif) — KEPUTUSAN: bunga terbagi antar pemain, kunci giliran tunggal bertabrakan; belum diputuskan
+- [ ] 5.9 Turn/attempt control (satu pemain aktif) — DIPUTUSKAN user 2026-10-10: dikerjakan bersama sistem knock/revive di Phase 6 (bukan sekarang). Catatan desain: bunga terbagi antar pemain, jadi kunci giliran tidak boleh membatasi siapa yang meletakkan bunga; rancang bersama aturan knock pada pemain yang gagal
 - [ ] Knock system (hook GravePuzzleService.onWrong sudah ada)
 - [ ] Revive (Minyak Zaitun)
 - [ ] Party wipe (CANTIL_PUZZLE -> SEARCHING_FLOWERS; makam otomatis dikosongkan, bunga di Backpack belum dihapus)

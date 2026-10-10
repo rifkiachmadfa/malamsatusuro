@@ -352,7 +352,7 @@ Decision:
 - Hook `GravePuzzleService.onWrong(listener)` dipanggil dengan penempat terakhir; knock (Phase 6) dipasang di sini.
 - Bunga pemain yang keluar game dipindah ke pemain lain (state pencarian s.d. puzzle). Pemegang hadiah yang keluar: hadiah dipindah.
 - Party wipe (masuk SEARCHING_FLOWERS) mengosongkan slot makam. Penghapusan sisa bunga dari Backpack = task Flower reset.
-- DITUNDA: kontrol giliran tunggal. Bunga terbagi antar pemain sehingga satu pemain tidak bisa menempatkan semuanya; setiap [E] atomik di server. Perlu keputusan desain.
+- DITUNDA (diputuskan user 2026-10-10): kontrol giliran tunggal dikerjakan bersama sistem knock/revive di Phase 6. Sementara itu setiap [E] atomik di server dan bunga terbagi antar pemain, jadi tidak ada kunci giliran. Titik sambung: hook onWrong.
 - Duplikasi kecil `pickPlayer` (mirip `pickHolder` KerisQuestService); kandidat util bersama saat ada pemakai ketiga.
 
 Status:
