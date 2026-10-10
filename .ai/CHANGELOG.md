@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 2026-10-10 — Phase 5: placement bunga dan validasi puzzle makam (belum dites di Studio)
+- Baru: GravePuzzleService, server/Config/GravePuzzleConfig (jawaban sisi server), ADR-029; registrasi di init.server
+- Dialog baru (placeholder): Pemandu_KantilPuzzle, Pemandu_KantilStore; GameFlowService memetakan FLOWERS_PLACEMENT, CANTIL_PUZZLE, CANTIL_BLACK_OBTAINED
+- Docs: status Phase 4 di TASKS.md dipulihkan ke DONE dengan catatan; Phase 5 diselaraskan dengan kode aktual
+- Verifikasi AI: luau-compile semua file berubah; harness offline 47 cek lulus (jalur benar 2 pemain, makam ganda ditolak, salah+kembali+coba lagi, hook onWrong, template hadiah hilang, pemain/pemegang keluar, reset makam, Graves hilang). Tidak ada tes Studio
+- Temuan: grave clue/placement belum ada sebelum task ini (tercatat "dibuat" oleh user); alur Kantil buntu di FLOWERS_COMPLETE
+
 ## 2026-10-05 — Phase 5 mulai: CollectibleService generik + pencarian bunga Kantil (belum dites di Studio)
 - Baru: CollectibleService, CollectionConfig (Kelor dan Flowers), ADR-027/028
 - Refactor: logika Kelor dipindah dari KerisQuestService ke CollectibleService (perilaku sama); GameFlowService generik (QUEST_FLOW, QUEST_DIALOGUES, REPORT_DIALOGUES): Pemandu melapor KERIS selesai lalu memberi quest KANTIL

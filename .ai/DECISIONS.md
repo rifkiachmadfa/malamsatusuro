@@ -340,6 +340,24 @@ ACCEPTED (menunggu uji Studio, Task 3.1)
 
 
 
+## ADR-029 — GRAVEPUZZLESERVICE: PLACEMENT BUNGA DI MAKAM, JAWABAN DI SERVER
+
+Decision:
+
+- Clue = SurfaceGui di makam (dibuat user di Studio, ADR-011). Kode tidak menampilkan/mengirim clue (tidak ada Task 5.6 berkode).
+- Placement: pemain MEMEGANG (equip) bunga lalu [E] "Letakkan Bunga" di makam `Workspace.QuestObjects.Graves.<Grave_N>`. Tanpa GUI/Remote baru. Server membaca Tool yang di-equip, bukan client.
+- ASUMSI (belum diputuskan di GDD): 4 makam, tiap bunga dicocokkan ke makam yang benar (jumlah makam = jumlah entri `GravePuzzleConfig.ANSWER`). Jawaban benar = peta makam -> ItemId di `src/server/Config/GravePuzzleConfig.luau` (sisi server agar tidak terreplikasi). ANSWER saat ini PLACEHOLDER (`ANSWER_CONFIRMED=false`, ada warn saat boot).
+- State: FLOWERS_COMPLETE -> (bunga pertama) FLOWERS_PLACEMENT -> (makam penuh) CANTIL_PUZZLE -> BENAR: CANTIL_BLACK_OBTAINED. SALAH: state tetap CANTIL_PUZZLE, bunga dikembalikan ke penempatnya, makam dikosongkan, boleh coba lagi (pola sama seperti CHEST_PUZZLE).
+- Hadiah Kembang Kantil Hitam ke penempat bunga terakhir. Template hadiah dicek SEBELUM bunga terakhir dipakai. Gagal di tengah = rollback.
+- Hook `GravePuzzleService.onWrong(listener)` dipanggil dengan penempat terakhir; knock (Phase 6) dipasang di sini.
+- Bunga pemain yang keluar game dipindah ke pemain lain (state pencarian s.d. puzzle). Pemegang hadiah yang keluar: hadiah dipindah.
+- Party wipe (masuk SEARCHING_FLOWERS) mengosongkan slot makam. Penghapusan sisa bunga dari Backpack = task Flower reset.
+- DITUNDA: kontrol giliran tunggal. Bunga terbagi antar pemain sehingga satu pemain tidak bisa menempatkan semuanya; setiap [E] atomik di server. Perlu keputusan desain.
+- Duplikasi kecil `pickPlayer` (mirip `pickHolder` KerisQuestService); kandidat util bersama saat ada pemakai ketiga.
+
+Status:
+PROPOSED (menunggu uji Studio dan konfirmasi jawaban)
+
 ## ADR-028 — GAMEFLOWSERVICE GENERIK: PEMANDU MELAPOR QUEST SELESAI LALU MEMBERI QUEST BERIKUTNYA
 
 Decision:

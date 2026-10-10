@@ -46,6 +46,9 @@ local QUEST_DIALOGUES: { [string]: { [string]: DialogueRule } } = {
 	KANTIL = {
 		SEARCHING_FLOWERS = "Pemandu_KantilSearch",
 		FLOWERS_COMPLETE = "Pemandu_KantilGrave",
+		FLOWERS_PLACEMENT = "Pemandu_KantilPuzzle",
+		CANTIL_PUZZLE = "Pemandu_KantilPuzzle",
+		CANTIL_BLACK_OBTAINED = "Pemandu_KantilStore",
 	},
 }
 

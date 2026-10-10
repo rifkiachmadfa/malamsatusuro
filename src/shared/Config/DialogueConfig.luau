@@ -75,11 +75,26 @@ local DialogueConfig: { [string]: Dialogue } = {
 			"Jangan berpisah terlalu jauh.",
 		},
 	},
-	-- Dipakai saat KANTIL di FLOWERS_COMPLETE (petunjuk saja; makam dibuat di task berikutnya). PLACEHOLDER.
+	-- Dipakai saat KANTIL di FLOWERS_COMPLETE (petunjuk saja). PLACEHOLDER.
 	Pemandu_KantilGrave = {
 		speaker = "Pemandu",
 		lines = {
 			"Bunga sudah lengkap. Bawalah ke makam di ujung dusun.",
+		},
+	},
+	-- Dipakai saat KANTIL di FLOWERS_PLACEMENT / CANTIL_PUZZLE. PLACEHOLDER.
+	Pemandu_KantilPuzzle = {
+		speaker = "Pemandu",
+		lines = {
+			"Baca petunjuk di makam, lalu letakkan setiap bunga di makam yang tepat.",
+			"Pegang bunganya, lalu tekan E di dekat makam.",
+		},
+	},
+	-- Dipakai saat KANTIL di CANTIL_BLACK_OBTAINED (petunjuk saja; penyimpanan di RitualCollection, ADR-026). PLACEHOLDER.
+	Pemandu_KantilStore = {
+		speaker = "Pemandu",
+		lines = {
+			"Kembang kantil hitam sudah muncul. Simpan di tempat ritual.",
 		},
 	},
 }

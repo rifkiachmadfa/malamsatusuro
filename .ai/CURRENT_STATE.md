@@ -1,7 +1,7 @@
 # CURRENT PROJECT STATE
 
 Last Updated:
-2026-10-05
+2026-10-10
 
 ## CURRENT PHASE
 
@@ -9,7 +9,7 @@ PHASE 1 — FOUNDATION: SELESAI.
 PHASE 2 — QUEST SYSTEM: SELESAI (diuji 1 dan 2 pemain).
 PHASE 3 — INTERACTION & INVENTORY: ItemService selesai (boot diuji; give/consume diuji lewat Phase 4).
 PHASE 4 — KERIS PUSAKA: SELESAI dengan catatan (alur Kelor -> kunci -> peti -> puzzle -> keris -> simpan di RitualCollection; 3–4 pemain di Phase 10).
-PHASE 5 — KEMBANG KANTIL HITAM: SEDANG BERJALAN (5.1–5.5 kode selesai, belum dites di Studio).
+PHASE 5 — KEMBANG KANTIL HITAM: SEDANG BERJALAN (5.1–5.8 kode selesai, belum dites di Studio; knock/revive/wipe/flower reset = Phase 6).
 
 
 ## TOOLCHAIN
@@ -77,12 +77,17 @@ Penyelesaian quest Keris kini di RitualCollection (bukan Pemandu). Semua notifik
 ## UPDATE 2026-10-05 (Phase 5 awal)
 CollectibleService (ADR-027) menjalankan Kelor dan bunga dari CollectionConfig. GameFlowService generik (ADR-028): setelah KERIS COMPLETE, Pemandu melapor (Pemandu_KerisDone) dan menamatkan dialog itu memulai KANTIL (SEARCHING_FLOWERS). DEPENDENCY BARU: Workspace.QuestObjects.FlowerSpawns (8 Part/Model), template Tool MawarMerah, MawarPutih, Melati, KantilKuning (sudah dicek ItemService saat boot). Belum ada tes Studio.
 
+## UPDATE 2026-10-10 (Task 5.6–5.8)
+GravePuzzleService (ADR-029): placement bunga (equip + [E] di makam) dan validasi jawaban di server; hadiah Kembang Kantil Hitam ke penempat terakhir. Clue = SurfaceGui buatan user (tanpa kode). Harness offline 47 cek lulus; BELUM dites di Studio. DEPENDENCY: Workspace.QuestObjects.Graves/Grave_1..4 (SurfaceGui clue), template Tool KembangKantilHitam. JAWABAN (GravePuzzleConfig.ANSWER) masih PLACEHOLDER dan harus dicocokkan dengan clue. Risiko terbuka: bunga di Backpack hilang jika pemain mati/respawn (ADR-018); kontrol giliran tunggal belum diputuskan.
+
 ## NEXT ACTION
 
-1. Phase 5 (Kantil), Task 5.1: spawn bunga (8 titik, 4 aktif) memakai RandomSpawnService yang sudah generik. Detail yang dibutuhkan dari user: Workspace.QuestObjects.FlowerSpawns (titik, atribut tipe bunga), makam (GravePuzzle), template Mawar Merah/Putih, Melati, Kantil Kuning, Kembang Kantil Hitam, Minyak Zaitun.
-2. Tentukan pemicu aktivasi quest KANTIL setelah KERIS COMPLETE (belum ada).
-3. Aturan wajib: semua notifikasi lewat NoticeService (ADR-025); quest selesai di RitualCollection (ADR-026).
-4. User (masih terbuka): ganti teks placeholder dengan naskah GDD; tinjau SkyboxInserter.
+1. User: cocokkan GravePuzzleConfig.ANSWER dengan clue SurfaceGui lalu set ANSWER_CONFIRMED=true; pastikan Graves/Grave_1..4 dan template KembangKantilHitam ada; cek Handle.Anchored=false di semua template Tool.
+2. User: uji Studio (lihat SESSION_HANDOFF "Uji Studio Task 5.7–5.8") dan lapor Output.
+3. Keputusan desain: kontrol giliran tunggal (Task 5.9) dan penanganan bunga saat pemain mati.
+4. Phase 6: knock (pasang di GravePuzzleService.onWrong), Minyak Zaitun/revive, party wipe, flower reset.
+5. Aturan wajib: semua notifikasi lewat NoticeService (ADR-025); quest selesai di RitualCollection (ADR-026).
+6. User (masih terbuka): ganti teks placeholder dengan naskah GDD; tinjau SkyboxInserter.
 
 ## IMPORTANT
 

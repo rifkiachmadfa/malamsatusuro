@@ -21,6 +21,7 @@ local MemoryPuzzleService = require(Services:WaitForChild("MemoryPuzzleService")
 local RitualCollectionService = require(Services:WaitForChild("RitualCollectionService") :: ModuleScript)
 local CollectibleService = require(Services:WaitForChild("CollectibleService") :: ModuleScript)
 local KerisQuestService = require(Services:WaitForChild("KerisQuestService") :: ModuleScript)
+local GravePuzzleService = require(Services:WaitForChild("GravePuzzleService") :: ModuleScript)
 
 Log.info("Server", string.format("Malam Suro server siap (MAX_PLAYERS=%d)", GameConfig.MAX_PLAYERS))
 
@@ -37,6 +38,7 @@ MemoryPuzzleService.init()
 CollectibleService.init()
 KerisQuestService.init()
 RitualCollectionService.init()
+GravePuzzleService.init()
 
 -- Pemandu: objek Workspace.NPC.Pemandu (dibuat di Studio) ber-tag Interactable dengan InteractionId = "Pemandu".
 InteractionService.register("Pemandu", function(player: Player, target: Instance)

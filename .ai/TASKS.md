@@ -78,7 +78,7 @@ IN PROGRESS
 # PHASE 4 — KERIS PUSAKA
 
 Status:
-IN PROGRESS
+DONE dengan catatan (2026-10-05, ditutup atas instruksi user; commit 0d8dfa2). Status ini sempat termundur di commit 6acfb27 dan dipulihkan 2026-10-10. Uji 3–4 pemain di Phase 10.
 
 - [x] 4.1 Kelor spawn system + server randomization + 4 active / 4 inactive (RandomSpawnService, KerisQuestService, ADR-023) — logika lulus harness offline (18 cek); BELUM dites di Studio
 - [x] 4.2 Kelor collection + party progress (pickup [E], ItemService.give, QuestService.addProgress) — idem
@@ -94,22 +94,23 @@ IN PROGRESS
 # PHASE 5 — KEMBANG KANTIL HITAM
 
 Status:
-NOT STARTED
+IN PROGRESS (2026-10-10). Kode 5.1–5.8 ada; SEMUANYA belum dites di Studio. Knock/revive/party wipe/flower reset menunggu Phase 6.
 
-- [ ] Flower spawn system
-- [ ] Server randomization
-- [ ] Flower collection
-- [ ] Party progress
-- [ ] Grave clue
-- [ ] Flower placement
-- [ ] Puzzle validation
-- [ ] Knock system
-- [ ] Revive
-- [ ] Party wipe
-- [ ] Flower reset
-- [ ] Black Kantil reward
-- [ ] NPC submission
-
+- [x] 5.1 Flower spawn system (CollectibleService + CollectionConfig, ADR-027) — harness offline; BELUM dites di Studio
+- [x] 5.2 Server randomization (4 dari 8 titik, 4 jenis berbeda) — idem
+- [x] 5.3 Flower collection — idem
+- [x] 5.4 Party progress (counter Flowers 4/4) — idem
+- [x] 5.5 Alur Pemandu: KERIS selesai -> laporan -> KANTIL (GameFlowService, ADR-028) — idem
+- [x] 5.6 Grave clue — TANPA KODE: clue = SurfaceGui di makam (dibuat user di Studio). Dependency Studio, belum diverifikasi AI
+- [x] 5.7 Flower placement (GravePuzzleService, ADR-029): equip bunga + [E] di makam; harness offline 47 cek; BELUM dites di Studio
+- [x] 5.8 Puzzle validation (server, jawaban di server/Config/GravePuzzleConfig) — idem. JAWABAN MASIH PLACEHOLDER (ANSWER_CONFIRMED=false)
+- [ ] 5.9 Turn/attempt control (satu pemain aktif) — KEPUTUSAN: bunga terbagi antar pemain, kunci giliran tunggal bertabrakan; belum diputuskan
+- [ ] Knock system (hook GravePuzzleService.onWrong sudah ada)
+- [ ] Revive (Minyak Zaitun)
+- [ ] Party wipe (CANTIL_PUZZLE -> SEARCHING_FLOWERS; makam otomatis dikosongkan, bunga di Backpack belum dihapus)
+- [ ] Flower reset (hapus sisa bunga dari semua Backpack saat wipe)
+- [x] Black Kantil reward (diberikan ke penempat bunga terakhir saat jawaban benar) — harness offline
+- [x] NPC submission = simpan di RitualCollection (sudah ada di RitualConfig sejak ADR-026; belum dites untuk Kantil)
 
 # PHASE 6 — KNOCK / REVIVE
 
