@@ -8,6 +8,10 @@ local GameConfig = require(Shared:WaitForChild("Config"):WaitForChild("GameConfi
 local Log = require(Shared:WaitForChild("Util"):WaitForChild("Log") :: ModuleScript)
 local Remotes = require(Shared:WaitForChild("Remotes") :: ModuleScript)
 
+-- Remote dibuat PERTAMA, sebelum require service. Jika satu service gagal dimuat, client tidak ikut macet
+-- menunggu folder Remotes (error "Folder Remotes tidak ditemukan"); error asli tetap muncul di Output server.
+Remotes.init()
+
 local Services = script:WaitForChild("Services")
 local GameManager = require(Services:WaitForChild("GameManager") :: ModuleScript)
 local SpawnService = require(Services:WaitForChild("SpawnService") :: ModuleScript)
@@ -27,7 +31,6 @@ local KnockConfig = require(script:WaitForChild("Config"):WaitForChild("KnockCon
 
 Log.info("Server", string.format("Malam Suro server siap (MAX_PLAYERS=%d)", GameConfig.MAX_PLAYERS))
 
-Remotes.init()
 GameManager.init()
 QuestService.init()
 ItemService.init()

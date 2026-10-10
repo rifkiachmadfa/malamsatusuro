@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## 2026-10-10 — Bootstrap: Remotes.init() dipindah ke paling awal (belum dites di Studio)
+- init.server: Remotes.init() sebelum require service, agar kegagalan satu service tidak membuat client macet ("Folder Remotes tidak ditemukan"). Tidak memperbaiki penyebab error server; itu menunggu Output server dari user
+
 ## 2026-10-10 — Phase 6 Task 6.1: KnockService (state knock di server) (belum dites di Studio)
 - Baru: server/Services/KnockService, server/Config/KnockConfig, ADR-031. API: knock(player, reason), recover(player), isKnocked, getKnockedCount, onKnocked/onRecovered/onAllKnocked
 - Knock: state pemain NORMAL -> KNOCKED, HumanoidRootPart di-Anchor dan berbaring telentang di lantai (raycast), WalkSpeed/Jump 0, tool dilepas dan tidak bisa di-equip, respawn/reset saat knock dikembalikan ke titik knock, notifikasi lewat NoticeService
