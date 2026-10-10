@@ -136,6 +136,34 @@ function QuestService.activate(questId: string): boolean
 	return QuestService.transition(questId, "ACTIVE")
 end
 
+-- Ulangi quest dari awal: kembali ke state awal (LOCKED), semua counter 0. Bukan transisi biasa; dipakai
+-- kegagalan solo (FailureService, ADR-032). Quest COMPLETE atau yang sudah di state awal ditolak.
+function QuestService.reset(questId: string): boolean
+	local def = getDef(questId)
+	local current = questStates[questId]
+	if not def or not current then
+		Log.warn(TAG, "quest tidak dikenal: " .. tostring(questId))
+		return false
+	end
+	if current == def.initialState or current == "COMPLETE" then
+		Log.warn(TAG, string.format("reset ditolak (%s): state %s", questId, current))
+		return false
+	end
+
+	questStates[questId] = def.initialState
+	for counterId in def.counters do
+		counters[questId][counterId] = 0
+		publishCounter(questId, counterId)
+	end
+	publishState(questId)
+	Log.info(TAG, string.format("quest direset (%s): %s -> %s", questId, current, def.initialState))
+
+	for _, listener in listeners do
+		task.spawn(listener, questId, current, def.initialState)
+	end
+	return true
+end
+
 -- Tambah progres party. Hanya diterima saat quest berada di requiredState milik counter,
 -- dan nilai dibatasi sampai target. Saat target tercapai, quest otomatis pindah ke completeState.
 -- Return nilai counter terbaru, atau nil jika ditolak (state salah / counter tidak ada / amount tidak valid).

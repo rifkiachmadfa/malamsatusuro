@@ -340,6 +340,21 @@ ACCEPTED (menunggu uji Studio, Task 3.1)
 
 
 
+## ADR-032 — KEGAGALAN SOLO = JUMPSCARE + RESPAWN + RESET QUEST; MULTIPLAYER = KNOCK
+
+Decision (arahan user 2026-10-10, MENGGANTIKAN bagian solo di ADR-030):
+
+- Solo (tersisa 1 pemain): kegagalan = jumpscare (6.2) -> respawn -> quest yang gagal di-reset dari awal -> pemain bertemu Pemandu lagi untuk memulai. Solo TIDAK di-knock (tidak ada rekan untuk revive, pemain terjebak).
+- Multiplayer (2+ pemain): kegagalan = jumpscare -> knock. Rekan menyadarkan dengan Minyak Zaitun. Semua knock = party wipe (6.5, quest KANTIL -> SEARCHING_FLOWERS) tidak berubah.
+- `FailureService.fail(player, reason, questId)` = satu-satunya pintu untuk semua penyebab gagal (bunga salah sekarang, hantu nanti). Memilih jalur lewat `PartyService.isSolo()`.
+- Reset quest: `QuestService.reset(questId)` mengembalikan quest ke LOCKED + counter 0 (bukan transisi biasa; COMPLETE ditolak). Karena KERIS sudah COMPLETE dan state game tetap QUEST_KANTIL, dialog laporan Pemandu (Pemandu_KerisDone) memicu `startQuest("KANTIL")` seperti biasa. Teks dialog ulang masih memakai dialog laporan lama (placeholder); dialog khusus "ulangi" bisa ditambah nanti.
+- Selama urutan solo gagal, pemain berstatus CUTSCENE (interaksi diblokir), kembali NORMAL setelah respawn. Item quest dibersihkan eksplisit; Backpack juga reset oleh respawn (ADR-018).
+- `PartyService` sekarang = jumlah pemain di server. Rencana lobby (TASKS "Lobby & matchmaking") akan memasok mode dari TeleportData; pemanggil tidak perlu berubah.
+- Risiko terbuka: pemain knock yang rekan-rekannya keluar sampai tersisa satu (solo mendadak) perlu ditangani di 6.5 lewat onAllKnocked (jalur solo = soloFail, bukan wipe biasa).
+
+Status:
+PROPOSED (menunggu uji Studio)
+
 ## ADR-031 — PHASE 6 DIPECAH BERTAHAP; KNOCKSERVICE TIDAK TAHU PENYEBAB; JUMPSCARE = VIEWPORT 3D LOKAL
 
 Decision (arahan user 2026-10-10):
@@ -361,8 +376,8 @@ Decision (pola dari user 2026-10-10, dibangun di Phase 6):
 
 - Meletakkan bunga yang SALAH di sebuah makam langsung memicu jumpscare lalu knock pada pemain itu.
 - Multiplayer: pemain di-knock; bunga yang salah kembali ke pemain itu dan bunga yang sudah benar tetap di makam (jawaban user). Rekan yang berdiri melanjutkan; revive dengan Minyak Zaitun.
-- Solo: setelah jumpscare, game over lalu quest KANTIL mulai lagi dari SEARCHING_FLOWERS (quest 2 dari awal; Keris yang sudah disimpan tidak ikut reset).
-- Disatukan: setelah pelaku di-knock, jika tidak ada lagi pemain NORMAL (semua knock) = party wipe (CANTIL_PUZZLE -> SEARCHING_FLOWERS, makam kosong, bunga di Backpack dihapus lalu di-spawn ulang lewat CollectibleService). Solo = satu pemain = selalu wipe; tanpa cabang khusus solo.
+- [DIGANTI ADR-032 2026-10-10] Solo: jumpscare -> respawn -> quest KANTIL direset ke LOCKED dan dimulai lagi lewat Pemandu (Keris yang sudah disimpan tidak ikut reset).
+- Disatukan: setelah pelaku di-knock, jika tidak ada lagi pemain NORMAL (semua knock) = party wipe (CANTIL_PUZZLE -> SEARCHING_FLOWERS, makam kosong, bunga di Backpack dihapus lalu di-spawn ulang lewat CollectibleService). [Solo = cabang khusus, lihat ADR-032.]
 - Jumpscare = presentasi client (event dari server, visual/audio Phase 9). Kontrol giliran tunggal (Task 5.9) dirancang bersama paket ini.
 - Titik sambung di kode: `GravePuzzleService.onWrong(player, graveName, itemId)`. TIDAK perlu mengubah QuestConfig (wipe dari CANTIL_PUZZLE sudah ada).
 

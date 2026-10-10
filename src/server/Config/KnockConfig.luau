@@ -10,10 +10,6 @@ KnockConfig.Reason = table.freeze({
 	GHOST = "GHOST", -- RESERVED: diserang hantu
 })
 
--- Saklar sementara: bunga salah di makam langsung knock pemain (Task 6.1, belum ada jumpscare).
--- Task 6.2 mengganti jalurnya menjadi: jumpscare -> knock. Set false jika ingin menguji makam tanpa hukuman.
-KnockConfig.KNOCK_ON_WRONG_FLOWER = true
-
 -- Pose berbaring (telentang, menghadap atas). Posisi dihitung dari lantai di bawah pemain (raycast).
 KnockConfig.FLOOR_RAY_LENGTH = 12 -- studs ke bawah dari HumanoidRootPart
 KnockConfig.LIE_HEIGHT = 0.6 -- tinggi pusat HumanoidRootPart dari lantai saat berbaring

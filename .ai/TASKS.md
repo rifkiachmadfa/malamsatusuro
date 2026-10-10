@@ -118,6 +118,7 @@ Status:
 IN PROGRESS (2026-10-10). Dikerjakan bertahap sesuai ADR-031; user memvalidasi tiap tahap.
 
 - [x] 6.1 Knock state (KnockService, server): berbaring + tidak bisa bergerak/berinteraksi, knock dari bunga salah — kode ditulis, luau-compile OK; BELUM dites di Studio
+- [x] 6.1b Kegagalan solo vs multiplayer (FailureService, ADR-032): solo = respawn + reset quest 2 + mulai lagi dari Pemandu; multiplayer = knock — kode ditulis, luau-compile OK; BELUM dites di Studio
 - [ ] 6.2 Jumpscare client-only (ViewportFrame model 3D berrig + efek layar, hanya untuk pemain yang kena) lalu knock
 - [ ] 6.3 Knock UI (overlay pemain knock, penanda untuk rekan)
 - [ ] 6.4 Ramuan Minyak Zaitun tersebar di map (Tool) + revive (equip + dekat korban, kurangi 1, validasi server)
@@ -127,6 +128,20 @@ IN PROGRESS (2026-10-10). Dikerjakan bertahap sesuai ADR-031; user memvalidasi t
 Catatan masa depan (belum dikerjakan, JANGAN dilupakan):
 - Serangan hantu: knock via jalur yang sama (jumpscare -> KnockService.knock(player, "GHOST")). Perlu: AI hantu, deteksi serangan, knock saat pemain MINIGAME/dialog (batalkan sesi puzzle/dialog dulu).
 - Aset jumpscare (model 3D berrig + animasi) disiapkan user; ID aset dikonfigurasi di Config.
+- Dialog Pemandu khusus "ulangi quest" setelah solo gagal (sekarang memakai dialog laporan Pemandu_KerisDone).
+- Pemain knock yang rekan-rekannya keluar hingga tersisa satu: tangani di 6.5 (onAllKnocked -> jalur solo).
+
+# LOBBY & MATCHMAKING (DIJADWALKAN, belum dikerjakan — catatan arahan user 2026-10-10)
+
+Alur target: pemain masuk ke PLACE LOBBY terpisah (belum dibuat) -> memilih area Solo / 2 Pemain / 3 Pemain / 4 Pemain -> di-teleport ke place game ini (Malam Suro: Dusun Kelabu).
+
+- [ ] Buat place lobby (Roblox place terpisah dalam satu experience) dengan 4 area pilihan (Solo, 2P, 3P, 4P)
+- [ ] Area menahan pemain sampai jumlah terpenuhi (atau tombol mulai), lalu TeleportService:ReserveServer + TeleportAsync dengan TeleportData { mode / partySize }
+- [ ] Place game membaca TeleportData: PartyService.getSize() memakai ukuran yang dipilih (bukan sekadar jumlah pemain live); batasi masuk sesuai ukuran, tolak pemain asing
+- [ ] Fallback saat tes di Studio (tanpa TeleportData): pakai jumlah pemain live (perilaku sekarang)
+- [ ] Penanganan pemain keluar di tengah game (party berkurang -> isSolo berubah, lihat ADR-032), pemain kembali ke lobby saat game selesai
+- [ ] Pastikan semua sistem yang bergantung ukuran party (FailureService solo/multi, party wipe, gathering ritual akhir 1/1..4/4, Gamelan semua pemain) membaca PartyService
+- [ ] Update GameConfig.MAX_PLAYERS dan dokumentasi; uji teleport antar place (hanya bisa di game yang dipublish, tidak di Studio Play Solo)
 
 # PHASE 7 — KAIN KAFAN / GAMELAN
 

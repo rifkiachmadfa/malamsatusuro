@@ -352,10 +352,10 @@ function GravePuzzleService.init()
 			return
 		end
 		-- Party wipe (CANTIL_PUZZLE -> SEARCHING_FLOWERS) atau reset: makam dikosongkan.
-		if toState == "SEARCHING_FLOWERS" then
+		if toState == "SEARCHING_FLOWERS" or toState == "LOCKED" then
 			table.clear(slots)
 		end
-		if toState == "CANTIL_SUBMITTED" or toState == "COMPLETE" then
+		if toState == "CANTIL_SUBMITTED" or toState == "COMPLETE" or toState == "LOCKED" then
 			rewardHolder = nil
 		end
 		refreshGraves()

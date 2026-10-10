@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 2026-10-10 — Kegagalan solo vs multiplayer (ADR-032) (belum dites di Studio)
+- Baru: FailureService + FailureConfig (satu pintu `fail(player, reason, questId)`), PartyService (getSize/isSolo dari jumlah pemain)
+- Solo: bunga salah -> pemain dikunci (CUTSCENE) -> jeda -> item quest dibersihkan -> QuestService.reset("KANTIL") -> respawn -> NORMAL; Pemandu memulai ulang quest. Multiplayer: knock
+- QuestService.reset(questId) baru (kembali ke LOCKED, counter 0, ditolak untuk COMPLETE/state awal). GravePuzzleService mengosongkan makam saat LOCKED
+- Saklar bunga salah pindah dari KnockConfig ke FailureConfig.FAIL_ON_WRONG_FLOWER
+- Catatan masa depan ditulis: lobby place + pilih Solo/2/3/4 + teleport (TASKS)
+- Verifikasi AI: luau-compile semua file berubah OK. Tidak ada tes Studio
+
 ## 2026-10-10 — Bootstrap: Remotes.init() dipindah ke paling awal (belum dites di Studio)
 - init.server: Remotes.init() sebelum require service, agar kegagalan satu service tidak membuat client macet ("Folder Remotes tidak ditemukan"). Tidak memperbaiki penyebab error server; itu menunggu Output server dari user
 

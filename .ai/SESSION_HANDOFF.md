@@ -135,9 +135,21 @@ print(K.knock(p, "TEST"))   -- true
 3. `print(K.knock(p, "TEST"))` lagi -> false (sudah KNOCKED), Output warn ditolak.
 4. Tekan tombol Reset karakter (Esc > Reset): karakter baru muncul dan dikembalikan ke titik knock, tetap berbaring (Output "respawn saat knock").
 5. `print(K.recover(p))` -> true: berdiri di tempat knock, bisa jalan/lompat normal, toast "Kamu sadar kembali". `print(K.recover(p))` lagi -> false.
-6. Makam: setelah FLOWERS_COMPLETE letakkan bunga SALAH -> toast salah + toast pingsan, pemain berbaring (solo: terjebak sampai recover manual; ini normal sampai 6.4/6.5). Set `KnockConfig.KNOCK_ON_WRONG_FLOWER = false` untuk menonaktifkan.
+6. Makam: setelah FLOWERS_COMPLETE letakkan bunga SALAH -> toast salah + toast pingsan, pemain berbaring. Ini hanya terjadi saat MULTIPLAYER (2+ pemain); solo lihat uji 6.1b. Set `FailureConfig.FAIL_ON_WRONG_FLOWER = false` untuk menonaktifkan hukuman.
 7. 2 pemain (Test > Clients 2): knock pemain 1 -> pemain 2 tetap bisa bergerak, melihat pemain 1 berbaring, toast "<nama> pingsan!". Knock pemain 2 juga -> Output `semua pemain knock (2/2)`. Pemain 1 keluar saat knock: tidak ada error.
 Laporkan: berbaringnya terlihat benar (tidak tenggelam/melayang/miring), serta Output/error.
+
+## Uji Studio Task 6.1b (solo gagal = respawn + reset quest 2)
+Play Solo (1 pemain). Jalankan sampai 4 bunga terkumpul (FLOWERS_COMPLETE).
+1. EXPECTED: letakkan bunga SALAH di makam -> toast "bunga tidak cocok", toast "Kamu gagal. Kembali ke Pemandu ...". Pemain TIDAK berbaring/knock. Output: `[FailureService] solo gagal (WRONG_FLOWER, quest KANTIL)`, `state pemain: NORMAL -> CUTSCENE`.
+2. Setelah ~1,5 detik: Output `quest direset (KANTIL): <state> -> LOCKED`, karakter respawn di titik spawn, `CUTSCENE -> NORMAL`, Backpack kosong dari bunga.
+3. Panel Quest tidak lagi menampilkan KANTIL aktif (KANTIL LOCKED). Bunga di map hilang, makam kosong dan tanpa prompt.
+4. Bicara ke Pemandu: dialog laporan (Pemandu_KerisDone). Tamatkan dialog -> Output `memulai quest KANTIL`, state LOCKED -> ACTIVE -> SEARCHING_FLOWERS, 4 bunga baru muncul acak, counter 0/4.
+5. Selesaikan quest dengan benar sampai Kembang Kantil Hitam: tidak ada sisa state lama (makam penuh/hadiah ganda).
+6. Spam bunga salah beberapa kali cepat: hanya satu urutan gagal berjalan (tidak ada reset ganda/error).
+7. Gagal di tengah (sebagian bunga sudah benar di makam): setelah reset, makam kosong dan semua mulai dari 0.
+8. 2 pemain (Test > Clients 2): bunga salah -> pemain itu knock (BUKAN respawn); quest tidak direset. Pemain 2 keluar sehingga tersisa 1: bunga salah berikutnya = jalur solo.
+Laporkan Output dan apakah panel Quest/dialog Pemandu terlihat benar setelah reset.
 
 ## Langkah berikutnya
 1. User: uji 2.1 di atas dan lapor Output; tinjau SkyboxInserter; siapkan naskah dialog Pemandu.
