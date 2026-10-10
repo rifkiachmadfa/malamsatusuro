@@ -102,12 +102,12 @@ IN PROGRESS (2026-10-10). Kode 5.1–5.8 ada; SEMUANYA belum dites di Studio. Kn
 - [x] 5.4 Party progress (counter Flowers 4/4) — idem
 - [x] 5.5 Alur Pemandu: KERIS selesai -> laporan -> KANTIL (GameFlowService, ADR-028) — idem
 - [x] 5.6 Grave clue — TANPA KODE: clue = SurfaceGui di makam (dibuat user di Studio). Dependency Studio, belum diverifikasi AI
-- [x] 5.7 Flower placement (GravePuzzleService, ADR-029): equip bunga + [E] di makam; harness offline 47 cek; BELUM dites di Studio
-- [x] 5.8 Puzzle validation (server, jawaban di server/Config/GravePuzzleConfig) — idem. JAWABAN MASIH PLACEHOLDER (ANSWER_CONFIRMED=false)
+- [x] 5.7 Flower placement (GravePuzzleService, ADR-029): equip bunga + [E] di makam; harness offline 55 cek; BELUM dites di Studio
+- [x] 5.8 Puzzle validation PER BUNGA (server; bunga salah tidak dipakai + hook onWrong; benar tetap di makam) — idem. JAWABAN MASIH PLACEHOLDER (ANSWER_CONFIRMED=false)
 - [ ] 5.9 Turn/attempt control (satu pemain aktif) — DIPUTUSKAN user 2026-10-10: dikerjakan bersama sistem knock/revive di Phase 6 (bukan sekarang). Catatan desain: bunga terbagi antar pemain, jadi kunci giliran tidak boleh membatasi siapa yang meletakkan bunga; rancang bersama aturan knock pada pemain yang gagal
-- [ ] Knock system (hook GravePuzzleService.onWrong sudah ada)
+- [ ] Knock system + jumpscare pada bunga salah (ADR-030; hook GravePuzzleService.onWrong(player, graveName, itemId) sudah ada)
 - [ ] Revive (Minyak Zaitun)
-- [ ] Party wipe (CANTIL_PUZZLE -> SEARCHING_FLOWERS; makam otomatis dikosongkan, bunga di Backpack belum dihapus)
+- [ ] Party wipe (semua knock = wipe; solo = langsung wipe; CANTIL_PUZZLE -> SEARCHING_FLOWERS; makam otomatis dikosongkan, bunga di Backpack belum dihapus)
 - [ ] Flower reset (hapus sisa bunga dari semua Backpack saat wipe)
 - [x] Black Kantil reward (diberikan ke penempat bunga terakhir saat jawaban benar) — harness offline
 - [x] NPC submission = simpan di RitualCollection (sudah ada di RitualConfig sejak ADR-026; belum dites untuk Kantil)

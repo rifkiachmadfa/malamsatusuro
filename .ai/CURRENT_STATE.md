@@ -78,14 +78,14 @@ Penyelesaian quest Keris kini di RitualCollection (bukan Pemandu). Semua notifik
 CollectibleService (ADR-027) menjalankan Kelor dan bunga dari CollectionConfig. GameFlowService generik (ADR-028): setelah KERIS COMPLETE, Pemandu melapor (Pemandu_KerisDone) dan menamatkan dialog itu memulai KANTIL (SEARCHING_FLOWERS). DEPENDENCY BARU: Workspace.QuestObjects.FlowerSpawns (8 Part/Model), template Tool MawarMerah, MawarPutih, Melati, KantilKuning (sudah dicek ItemService saat boot). Belum ada tes Studio.
 
 ## UPDATE 2026-10-10 (Task 5.6–5.8)
-GravePuzzleService (ADR-029): placement bunga (equip + [E] di makam) dan validasi jawaban di server; hadiah Kembang Kantil Hitam ke penempat terakhir. Clue = SurfaceGui buatan user (tanpa kode). Harness offline 47 cek lulus; BELUM dites di Studio. DEPENDENCY: Workspace.QuestObjects.Graves/Grave_1..4 (SurfaceGui clue), template Tool KembangKantilHitam. JAWABAN (GravePuzzleConfig.ANSWER) masih PLACEHOLDER dan harus dicocokkan dengan clue. Risiko terbuka: bunga di Backpack hilang jika pemain mati/respawn (ADR-018); kontrol giliran tunggal belum diputuskan.
+GravePuzzleService (ADR-029): placement bunga (equip + [E] di makam) dengan validasi PER BUNGA di server (salah = bunga tidak dipakai + hook onWrong, benar = tetap di makam); hadiah Kembang Kantil Hitam ke penempat terakhir. Clue = SurfaceGui buatan user (tanpa kode). Harness offline 55 cek lulus; BELUM dites di Studio. DEPENDENCY: Workspace.QuestObjects.Graves/Grave_1..4 (SurfaceGui clue), template Tool KembangKantilHitam. JAWABAN (GravePuzzleConfig.ANSWER) masih PLACEHOLDER dan harus dicocokkan dengan clue. Risiko terbuka: bunga di Backpack hilang jika pemain mati/respawn (ADR-018); kontrol giliran tunggal belum diputuskan.
 
 ## NEXT ACTION
 
 1. User: cocokkan GravePuzzleConfig.ANSWER dengan clue SurfaceGui lalu set ANSWER_CONFIRMED=true; pastikan Graves/Grave_1..4 dan template KembangKantilHitam ada; cek Handle.Anchored=false di semua template Tool.
 2. User: uji Studio (lihat SESSION_HANDOFF "Uji Studio Task 5.7–5.8") dan lapor Output.
 3. Kontrol giliran tunggal (Task 5.9): DIPUTUSKAN dikerjakan bersama knock/revive di Phase 6. Masih terbuka: penanganan bunga saat pemain mati/respawn.
-4. Phase 6: knock (pasang di GravePuzzleService.onWrong), Minyak Zaitun/revive, party wipe, flower reset.
+4. Phase 6 (ADR-030): jumpscare + knock di GravePuzzleService.onWrong, Minyak Zaitun/revive, party wipe (semua knock; solo langsung wipe), flower reset, giliran tunggal.
 5. Aturan wajib: semua notifikasi lewat NoticeService (ADR-025); quest selesai di RitualCollection (ADR-026).
 6. User (masih terbuka): ganti teks placeholder dengan naskah GDD; tinjau SkyboxInserter.
 

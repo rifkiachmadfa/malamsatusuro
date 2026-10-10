@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 2026-10-10 — Task 5.8 direvisi: validasi PER BUNGA (pola desain user), ADR-030 (belum dites di Studio)
+- GravePuzzleService: bunga dinilai saat diletakkan. Benar = dipakai dan tetap di makam; salah = tidak dipakai (tetap di Backpack), makam tidak berubah, hook onWrong(player, graveName, itemId). Percobaan pertama memajukan state sampai CANTIL_PUZZLE. Validasi di akhir dan pengembalian massal dihapus
+- ADR-029 diperbarui; ADR-030 (bunga salah = jumpscare + knock; semua knock = wipe; solo = langsung wipe) PROPOSED untuk Phase 6
+- Verifikasi AI: luau-compile; harness offline 55 cek lulus. Tidak ada tes Studio. Sampai Phase 6 bunga salah belum berhukuman
+
 ## 2026-10-10 — Phase 5: placement bunga dan validasi puzzle makam (belum dites di Studio)
 - Baru: GravePuzzleService, server/Config/GravePuzzleConfig (jawaban sisi server), ADR-029; registrasi di init.server
 - Dialog baru (placeholder): Pemandu_KantilPuzzle, Pemandu_KantilStore; GameFlowService memetakan FLOWERS_PLACEMENT, CANTIL_PUZZLE, CANTIL_BLACK_OBTAINED

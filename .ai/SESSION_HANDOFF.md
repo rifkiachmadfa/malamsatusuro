@@ -116,9 +116,9 @@ Prasyarat: Workspace.QuestObjects.FlowerSpawns berisi 8 Part/Model (nama bebas);
 Prasyarat: Workspace.QuestObjects.Graves berisi Grave_1..4 (Model/Part, SurfaceGui clue); template KembangKantilHitam; GravePuzzleConfig.ANSWER dicocokkan dengan clue. Output boot: `[GravePuzzleService] siap, 4/4 makam terdaftar` (dan warn PLACEHOLDER selama ANSWER_CONFIRMED=false).
 1. Selesaikan sampai 4 bunga terkumpul (FLOWERS_COMPLETE). Keempat makam menampilkan prompt "Letakkan Bunga / Makam"; sebelum itu tidak ada prompt.
 2. Tekan E tanpa bunga: toast "Kamu tidak membawa bunga". Bawa bunga tapi tidak di-equip: toast "Pegang bunga ...".
-3. Equip satu bunga, E di makam: bunga hilang, toast (n/4) untuk pelaku dan rekan, prompt makam itu hilang, state KANTIL = FLOWERS_PLACEMENT (Output).
-4. Letakkan semua sesuai clue: state CANTIL_PUZZLE lalu CANTIL_BLACK_OBTAINED, penempat terakhir memegang Kembang Kantil Hitam (toast), panel quest tercentang "Selesaikan teka-teki makam". Pemandu: dialog Pemandu_KantilStore. Simpan di RitualCollection menyelesaikan quest.
-5. Susun SALAH: toast "Bunga tidak cocok ...", semua bunga kembali ke Backpack penempatnya, makam kosong dan berprompt lagi, state tetap CANTIL_PUZZLE. Coba lagi dengan benar: berhasil.
+3. Equip satu bunga yang BENAR, E di makam: bunga hilang, toast (n/4) untuk pelaku dan rekan, prompt makam itu hilang. Output: state KANTIL FLOWERS_COMPLETE -> FLOWERS_PLACEMENT -> CANTIL_PUZZLE (puzzle berjalan sejak percobaan pertama).
+4. Letakkan semua sesuai clue: state CANTIL_BLACK_OBTAINED, penempat terakhir memegang Kembang Kantil Hitam (toast), panel quest tercentang "Selesaikan teka-teki makam". Pemandu: dialog Pemandu_KantilStore. Simpan di RitualCollection menyelesaikan quest.
+5. Bunga SALAH di sebuah makam: toast "<bunga> tidak cocok di makam ini!" (rekan: "<nama> meletakkan ... di makam yang salah!"), bunga TETAP di Backpack pemain itu, makam tetap kosong dan berprompt, bunga yang benar sebelumnya tetap di makam. Belum ada jumpscare/knock (Phase 6, ADR-030). Lanjutkan dengan bunga benar sampai selesai: tidak ada bunga yang hilang.
 6. 2 pemain menekan E di makam yang sama bersamaan: hanya satu bunga terpakai. Pemain yang memegang bunga keluar: bunganya muncul di Backpack pemain lain.
 7. Tanpa template KembangKantilHitam: bunga terakhir TIDAK terpakai, Output warn dependency.
 8. Equip bunga lalu karakter freeze? Cek Handle.Anchored template (lihat catatan Daun Kelor).

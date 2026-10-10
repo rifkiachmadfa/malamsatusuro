@@ -340,6 +340,20 @@ ACCEPTED (menunggu uji Studio, Task 3.1)
 
 
 
+## ADR-030 — POLA KEGAGALAN KANTIL: BUNGA SALAH = JUMPSCARE + KNOCK; SEMUA KNOCK = WIPE (SOLO = LANGSUNG WIPE)
+
+Decision (pola dari user 2026-10-10, dibangun di Phase 6):
+
+- Meletakkan bunga yang SALAH di sebuah makam langsung memicu jumpscare lalu knock pada pemain itu.
+- Multiplayer: pemain di-knock; bunga yang salah kembali ke pemain itu dan bunga yang sudah benar tetap di makam (jawaban user). Rekan yang berdiri melanjutkan; revive dengan Minyak Zaitun.
+- Solo: setelah jumpscare, game over lalu quest KANTIL mulai lagi dari SEARCHING_FLOWERS (quest 2 dari awal; Keris yang sudah disimpan tidak ikut reset).
+- Disatukan: setelah pelaku di-knock, jika tidak ada lagi pemain NORMAL (semua knock) = party wipe (CANTIL_PUZZLE -> SEARCHING_FLOWERS, makam kosong, bunga di Backpack dihapus lalu di-spawn ulang lewat CollectibleService). Solo = satu pemain = selalu wipe; tanpa cabang khusus solo.
+- Jumpscare = presentasi client (event dari server, visual/audio Phase 9). Kontrol giliran tunggal (Task 5.9) dirancang bersama paket ini.
+- Titik sambung di kode: `GravePuzzleService.onWrong(player, graveName, itemId)`. TIDAK perlu mengubah QuestConfig (wipe dari CANTIL_PUZZLE sudah ada).
+
+Status:
+PROPOSED (Phase 6, belum dibangun)
+
 ## ADR-029 — GRAVEPUZZLESERVICE: PLACEMENT BUNGA DI MAKAM, JAWABAN DI SERVER
 
 Decision:
@@ -347,9 +361,9 @@ Decision:
 - Clue = SurfaceGui di makam (dibuat user di Studio, ADR-011). Kode tidak menampilkan/mengirim clue (tidak ada Task 5.6 berkode).
 - Placement: pemain MEMEGANG (equip) bunga lalu [E] "Letakkan Bunga" di makam `Workspace.QuestObjects.Graves.<Grave_N>`. Tanpa GUI/Remote baru. Server membaca Tool yang di-equip, bukan client.
 - ASUMSI (belum diputuskan di GDD): 4 makam, tiap bunga dicocokkan ke makam yang benar (jumlah makam = jumlah entri `GravePuzzleConfig.ANSWER`). Jawaban benar = peta makam -> ItemId di `src/server/Config/GravePuzzleConfig.luau` (sisi server agar tidak terreplikasi). ANSWER saat ini PLACEHOLDER (`ANSWER_CONFIRMED=false`, ada warn saat boot).
-- State: FLOWERS_COMPLETE -> (bunga pertama) FLOWERS_PLACEMENT -> (makam penuh) CANTIL_PUZZLE -> BENAR: CANTIL_BLACK_OBTAINED. SALAH: state tetap CANTIL_PUZZLE, bunga dikembalikan ke penempatnya, makam dikosongkan, boleh coba lagi (pola sama seperti CHEST_PUZZLE).
+- Validasi PER BUNGA (diperbarui 2026-10-10 sesuai pola desain user): setiap bunga dinilai saat diletakkan. Percobaan pertama memajukan state FLOWERS_COMPLETE -> FLOWERS_PLACEMENT -> CANTIL_PUZZLE (puzzle berjalan; wipe dari CANTIL_PUZZLE sudah valid di QuestConfig). BENAR: bunga dipakai dan tetap di makam, progres (n/4). SALAH: bunga TIDAK dipakai (tetap di Backpack pemain, tidak ada bunga hilang), makam tidak berubah, hook onWrong(player, graveName, itemId). Makam penuh -> CANTIL_BLACK_OBTAINED.
 - Hadiah Kembang Kantil Hitam ke penempat bunga terakhir. Template hadiah dicek SEBELUM bunga terakhir dipakai. Gagal di tengah = rollback.
-- Hook `GravePuzzleService.onWrong(listener)` dipanggil dengan penempat terakhir; knock (Phase 6) dipasang di sini.
+- Hook `GravePuzzleService.onWrong(listener)` dipanggil per bunga salah; jumpscare + knock (Phase 6, ADR-030) dipasang di sini. SAMPAI PHASE 6 bunga salah belum berhukuman (hanya notifikasi).
 - Bunga pemain yang keluar game dipindah ke pemain lain (state pencarian s.d. puzzle). Pemegang hadiah yang keluar: hadiah dipindah.
 - Party wipe (masuk SEARCHING_FLOWERS) mengosongkan slot makam. Penghapusan sisa bunga dari Backpack = task Flower reset.
 - DITUNDA (diputuskan user 2026-10-10): kontrol giliran tunggal dikerjakan bersama sistem knock/revive di Phase 6. Sementara itu setiap [E] atomik di server dan bunga terbagi antar pemain, jadi tidak ada kunci giliran. Titik sambung: hook onWrong.

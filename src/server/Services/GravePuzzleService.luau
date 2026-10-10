@@ -2,12 +2,13 @@
 -- GravePuzzleService: placement bunga di makam dan validasi jawaban quest Kantil (Task 5.7-5.8, ADR-029).
 -- Clue = SurfaceGui di makam (Studio); kode hanya mengurus penempatan dan pengecekan, semuanya di server.
 --
--- Alur:
---   FLOWERS_COMPLETE -> pemain MEMEGANG (equip) bunga lalu [E] di makam -> bunga dipakai (dihapus dari Backpack),
---   state FLOWERS_PLACEMENT. Setelah semua makam terisi -> CANTIL_PUZZLE -> jawaban dicek:
---     BENAR -> pemain yang meletakkan bunga terakhir menerima Kembang Kantil Hitam -> CANTIL_BLACK_OBTAINED.
---     SALAH -> bunga dikembalikan ke penempatnya, makam dikosongkan, state tetap CANTIL_PUZZLE (coba lagi),
---              hook onWrong dipanggil (Phase 6 memasang knock di sini).
+-- Alur (validasi PER BUNGA, ADR-029/030):
+--   FLOWERS_COMPLETE -> pemain MEMEGANG (equip) bunga lalu [E] di makam. Percobaan pertama memajukan state
+--   sampai CANTIL_PUZZLE (puzzle berjalan). Setiap bunga dinilai saat itu juga:
+--     BENAR -> bunga dipakai (tetap di makam), progres (n/4). Makam penuh -> pemain terakhir menerima
+--              Kembang Kantil Hitam -> CANTIL_BLACK_OBTAINED.
+--     SALAH -> bunga TIDAK dipakai (tetap di Backpack pemain itu, tidak ada bunga hilang), makam tidak berubah,
+--              hook onWrong dipanggil (Phase 6: jumpscare + knock; semua knock = party wipe).
 -- Semua langkah tanpa yield, sehingga dua pemain yang menekan [E] bersamaan tidak bisa mengisi satu makam dua kali.
 
 local CollectionService = game:GetService("CollectionService")
@@ -35,7 +36,7 @@ type Slot = {
 	placer: Player,
 }
 
-export type WrongListener = (player: Player) -> ()
+export type WrongListener = (player: Player, graveName: string, itemId: string) -> ()
 
 local GravePuzzleService = {}
 
@@ -129,13 +130,13 @@ local function refreshGraves()
 	end
 end
 
-local function fireWrong(player: Player)
+local function fireWrong(player: Player, graveName: string, itemId: string)
 	for _, listener in wrongListeners do
-		task.spawn(listener, player)
+		task.spawn(listener, player, graveName, itemId)
 	end
 end
 
--- Hook jawaban salah (Phase 6: knock). Diberi pemain yang meletakkan bunga terakhir.
+-- Hook bunga SALAH di makam (Phase 6: jumpscare + knock pemain itu; semua knock = party wipe).
 function GravePuzzleService.onWrong(listener: WrongListener)
 	table.insert(wrongListeners, listener)
 end
@@ -155,32 +156,15 @@ local function returnFlowers()
 	table.clear(slots)
 end
 
-local function isCorrect(): boolean
-	for graveName, flowerId in Config.ANSWER do
-		local slot = slots[graveName]
-		if not slot or slot.itemId ~= flowerId then
-			return false
-		end
-	end
-	return true
-end
-
+-- Rollback hadiah gagal: kembalikan bunga di makam ke penempatnya lalu kosongkan makam.
 local function rollbackAll(): ()
 	returnFlowers()
 	refreshGraves()
 end
 
--- Dipanggil saat semua makam terisi. state sudah CANTIL_PUZZLE.
-local function validate(lastPlacer: Player)
-	if not isCorrect() then
-		rollbackAll()
-		Log.info(TAG, string.format("jawaban salah (penempat terakhir: %s)", lastPlacer.Name))
-		NoticeService.broadcast("Bunga tidak cocok dengan makamnya. Bunga dikembalikan, coba lagi.")
-		fireWrong(lastPlacer)
-		return
-	end
-
-	-- Benar: beri hadiah dulu, baru pindah state. Gagal di tengah = hadiah dibatalkan dan bunga dikembalikan.
+-- Dipanggil saat semua makam terisi benar. state sudah CANTIL_PUZZLE.
+local function complete(lastPlacer: Player)
+	-- Beri hadiah dulu, baru pindah state. Gagal di tengah = hadiah dibatalkan dan bunga dikembalikan.
 	local recipient: Player? = lastPlacer
 	if lastPlacer.Parent ~= Players or not ItemService.give(lastPlacer, Config.REWARD_ITEM_ID, 1) then
 		recipient = pickPlayer(nil)
@@ -200,12 +184,23 @@ local function validate(lastPlacer: Player)
 
 	table.clear(slots) -- bunga sudah terpakai; tidak dikembalikan
 	rewardHolder = winner
-	Log.info(TAG, string.format("jawaban benar; %s menerima %s", winner.Name, Config.REWARD_ITEM_ID))
+	Log.info(TAG, string.format("makam lengkap; %s menerima %s", winner.Name, Config.REWARD_ITEM_ID))
 	NoticeService.notifyParty(
 		winner,
 		"Kembang Kantil Hitam muncul dan kamu memegangnya. Simpan di tempat ritual.",
 		string.format("%s memegang Kembang Kantil Hitam. Simpan di tempat ritual.", winner.Name)
 	)
+end
+
+-- Majukan state sampai CANTIL_PUZZLE pada percobaan pertama. Return false jika ada transisi yang ditolak.
+local function beginPuzzle(): boolean
+	if QuestService.getState(QUEST_ID) == "FLOWERS_COMPLETE" and not QuestService.transition(QUEST_ID, "FLOWERS_PLACEMENT") then
+		return false
+	end
+	if QuestService.getState(QUEST_ID) == "FLOWERS_PLACEMENT" and not QuestService.transition(QUEST_ID, "CANTIL_PUZZLE") then
+		return false
+	end
+	return QuestService.getState(QUEST_ID) == "CANTIL_PUZZLE"
 end
 
 local function onGraveInteract(player: Player, target: Instance)
@@ -232,27 +227,40 @@ local function onGraveInteract(player: Player, target: Instance)
 		return
 	end
 
+	local correct = Config.ANSWER[graveName] == itemId
+
 	-- Hadiah harus bisa dibuat SEBELUM bunga terakhir dipakai (jangan sampai bunga habis tanpa hadiah).
-	local isLast = slotCount() + 1 == totalGraves
+	local isLast = correct and slotCount() + 1 == totalGraves
 	if isLast and not ItemService.getTemplate(Config.REWARD_ITEM_ID) then
 		Log.warn(TAG, "dependency belum ada: template " .. Config.REWARD_ITEM_ID .. " di ServerStorage.QuestTemplates")
 		NoticeService.send(player, "Makam belum bisa diselesaikan.")
 		return
 	end
 
+	if not beginPuzzle() then
+		Log.warn(TAG, "gagal memulai puzzle makam (state " .. tostring(QuestService.getState(QUEST_ID)) .. ")")
+		return
+	end
+
+	local name = displayName(itemId)
+	if not correct then
+		-- Bunga tetap di Backpack pemain (tidak dipakai); makam tidak berubah. Hukuman = hook (Phase 6).
+		Log.info(TAG, string.format("%s meletakkan %s di %s: SALAH", player.Name, itemId, graveName))
+		NoticeService.notifyParty(
+			player,
+			string.format("%s tidak cocok di makam ini!", name),
+			string.format("%s meletakkan %s di makam yang salah!", player.Name, name)
+		)
+		fireWrong(player, graveName, itemId)
+		return
+	end
+
 	if not ItemService.consume(player, itemId, 1) then
 		return
 	end
-	if state == "FLOWERS_COMPLETE" and not QuestService.transition(QUEST_ID, "FLOWERS_PLACEMENT") then
-		ItemService.give(player, itemId, 1)
-		return
-	end
-
 	slots[graveName] = { itemId = itemId, placer = player }
 	local placed = slotCount()
-	Log.info(TAG, string.format("%s meletakkan %s di %s (%d/%d)", player.Name, itemId, graveName, placed, totalGraves))
-
-	local name = displayName(itemId)
+	Log.info(TAG, string.format("%s meletakkan %s di %s: benar (%d/%d)", player.Name, itemId, graveName, placed, totalGraves))
 	NoticeService.notifyParty(
 		player,
 		string.format("Kamu meletakkan %s di makam (%d/%d).", name, placed, totalGraves),
@@ -263,13 +271,7 @@ local function onGraveInteract(player: Player, target: Instance)
 		refreshGraves()
 		return
 	end
-
-	if QuestService.getState(QUEST_ID) == "FLOWERS_PLACEMENT" and not QuestService.transition(QUEST_ID, "CANTIL_PUZZLE") then
-		Log.warn(TAG, "gagal masuk CANTIL_PUZZLE; bunga dikembalikan")
-		rollbackAll()
-		return
-	end
-	validate(player)
+	complete(player)
 end
 
 -- Pemain keluar membawa bunga: pindahkan ke pemain lain agar quest tidak buntu (Backpack hilang bersama pemain).
