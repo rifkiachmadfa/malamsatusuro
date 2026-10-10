@@ -105,7 +105,7 @@ IN PROGRESS (2026-10-10). Kode 5.1–5.8 ada; SEMUANYA belum dites di Studio. Kn
 - [x] 5.7 Flower placement (GravePuzzleService, ADR-029): equip bunga + [E] di makam; harness offline 55 cek; BELUM dites di Studio
 - [x] 5.8 Puzzle validation PER BUNGA (server; bunga salah tidak dipakai + hook onWrong; benar tetap di makam) — idem. JAWABAN MASIH PLACEHOLDER (ANSWER_CONFIRMED=false)
 - [ ] 5.9 Turn/attempt control (satu pemain aktif) — DIPUTUSKAN user 2026-10-10: dikerjakan bersama sistem knock/revive di Phase 6 (bukan sekarang). Catatan desain: bunga terbagi antar pemain, jadi kunci giliran tidak boleh membatasi siapa yang meletakkan bunga; rancang bersama aturan knock pada pemain yang gagal
-- [ ] Knock system + jumpscare pada bunga salah (ADR-030; hook GravePuzzleService.onWrong(player, graveName, itemId) sudah ada)
+- [ ] Knock system + jumpscare pada bunga salah (ADR-030/031): knock = Task 6.1 (kode ada), jumpscare = 6.2; hook GravePuzzleService.onWrong sudah tersambung ke KnockService
 - [ ] Revive (Minyak Zaitun)
 - [ ] Party wipe (semua knock = wipe; solo = langsung wipe; CANTIL_PUZZLE -> SEARCHING_FLOWERS; makam otomatis dikosongkan, bunga di Backpack belum dihapus)
 - [ ] Flower reset (hapus sisa bunga dari semua Backpack saat wipe)
@@ -115,15 +115,18 @@ IN PROGRESS (2026-10-10). Kode 5.1–5.8 ada; SEMUANYA belum dites di Studio. Kn
 # PHASE 6 — KNOCK / REVIVE
 
 Status:
-NOT STARTED
+IN PROGRESS (2026-10-10). Dikerjakan bertahap sesuai ADR-031; user memvalidasi tiap tahap.
 
-- [ ] Knock state
-- [ ] Knock UI
-- [ ] Revive interaction
-- [ ] Revive validation
-- [ ] Party wipe detection
-- [ ] Kantil-specific reset
+- [x] 6.1 Knock state (KnockService, server): berbaring + tidak bisa bergerak/berinteraksi, knock dari bunga salah — kode ditulis, luau-compile OK; BELUM dites di Studio
+- [ ] 6.2 Jumpscare client-only (ViewportFrame model 3D berrig + efek layar, hanya untuk pemain yang kena) lalu knock
+- [ ] 6.3 Knock UI (overlay pemain knock, penanda untuk rekan)
+- [ ] 6.4 Ramuan Minyak Zaitun tersebar di map (Tool) + revive (equip + dekat korban, kurangi 1, validasi server)
+- [ ] 6.5 Giliran tunggal (Task 5.9) + party wipe (semua knock) + reset bunga Kantil (hapus bunga di Backpack, spawn ulang)
+- [ ] Uji 1/2/3/4 pemain knock (jadwalkan di Phase 10 untuk 3–4 pemain)
 
+Catatan masa depan (belum dikerjakan, JANGAN dilupakan):
+- Serangan hantu: knock via jalur yang sama (jumpscare -> KnockService.knock(player, "GHOST")). Perlu: AI hantu, deteksi serangan, knock saat pemain MINIGAME/dialog (batalkan sesi puzzle/dialog dulu).
+- Aset jumpscare (model 3D berrig + animasi) disiapkan user; ID aset dikonfigurasi di Config.
 
 # PHASE 7 — KAIN KAFAN / GAMELAN
 

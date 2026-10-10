@@ -123,6 +123,22 @@ Prasyarat: Workspace.QuestObjects.Graves berisi Grave_1..4 (Model/Part, SurfaceG
 7. Tanpa template KembangKantilHitam: bunga terakhir TIDAK terpakai, Output warn dependency.
 8. Equip bunga lalu karakter freeze? Cek Handle.Anchored template (lihat catatan Daun Kelor).
 
+## Uji Studio Task 6.1 (KnockService)
+Server Command Bar (Play Solo, mode server). Prasyarat tidak ada; tidak perlu template baru.
+```lua
+local K = require(game.ServerScriptService.Server.Services.KnockService)
+local p = game.Players:GetPlayers()[1]
+print(K.knock(p, "TEST"))   -- true
+```
+1. EXPECTED knock: karakter berbaring telentang di lantai, tidak bisa jalan/lompat/berputar, tool yang dipegang terlepas, toast "Kamu pingsan ...", Output `[KnockService] <nama> knock (TEST)` dan `state pemain: NORMAL -> KNOCKED`, lalu `semua pemain knock (1/1)` (solo).
+2. Prompt [E] tidak muncul saat knock (jaga: hidden di client, server menolak). Coba equip tool dari hotbar: langsung terlepas.
+3. `print(K.knock(p, "TEST"))` lagi -> false (sudah KNOCKED), Output warn ditolak.
+4. Tekan tombol Reset karakter (Esc > Reset): karakter baru muncul dan dikembalikan ke titik knock, tetap berbaring (Output "respawn saat knock").
+5. `print(K.recover(p))` -> true: berdiri di tempat knock, bisa jalan/lompat normal, toast "Kamu sadar kembali". `print(K.recover(p))` lagi -> false.
+6. Makam: setelah FLOWERS_COMPLETE letakkan bunga SALAH -> toast salah + toast pingsan, pemain berbaring (solo: terjebak sampai recover manual; ini normal sampai 6.4/6.5). Set `KnockConfig.KNOCK_ON_WRONG_FLOWER = false` untuk menonaktifkan.
+7. 2 pemain (Test > Clients 2): knock pemain 1 -> pemain 2 tetap bisa bergerak, melihat pemain 1 berbaring, toast "<nama> pingsan!". Knock pemain 2 juga -> Output `semua pemain knock (2/2)`. Pemain 1 keluar saat knock: tidak ada error.
+Laporkan: berbaringnya terlihat benar (tidak tenggelam/melayang/miring), serta Output/error.
+
 ## Langkah berikutnya
 1. User: uji 2.1 di atas dan lapor Output; tinjau SkyboxInserter; siapkan naskah dialog Pemandu.
 2. Task 2.2 Quest UI, Task 2.3 alur Pemandu -> quest.

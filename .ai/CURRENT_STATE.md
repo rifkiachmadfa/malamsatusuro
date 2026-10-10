@@ -10,6 +10,7 @@ PHASE 2 — QUEST SYSTEM: SELESAI (diuji 1 dan 2 pemain).
 PHASE 3 — INTERACTION & INVENTORY: ItemService selesai (boot diuji; give/consume diuji lewat Phase 4).
 PHASE 4 — KERIS PUSAKA: SELESAI dengan catatan (alur Kelor -> kunci -> peti -> puzzle -> keris -> simpan di RitualCollection; 3–4 pemain di Phase 10).
 PHASE 5 — KEMBANG KANTIL HITAM: SEDANG BERJALAN (5.1–5.8 kode selesai, belum dites di Studio; knock/revive/wipe/flower reset = Phase 6).
+PHASE 6 — KNOCK / REVIVE: SEDANG BERJALAN, bertahap (6.1 KnockService kode selesai, BELUM dites di Studio; 6.2–6.5 belum).
 
 
 ## TOOLCHAIN
@@ -79,6 +80,9 @@ CollectibleService (ADR-027) menjalankan Kelor dan bunga dari CollectionConfig. 
 
 ## UPDATE 2026-10-10 (Task 5.6–5.8)
 GravePuzzleService (ADR-029): placement bunga (equip + [E] di makam) dengan validasi PER BUNGA di server (salah = bunga tidak dipakai + hook onWrong, benar = tetap di makam); hadiah Kembang Kantil Hitam ke penempat terakhir. Clue = SurfaceGui buatan user (tanpa kode). Harness offline 55 cek lulus; BELUM dites di Studio. DEPENDENCY: Workspace.QuestObjects.Graves/Grave_1..4 (SurfaceGui clue), template Tool KembangKantilHitam. JAWABAN (GravePuzzleConfig.ANSWER) masih PLACEHOLDER dan harus dicocokkan dengan clue. Risiko terbuka: bunga di Backpack hilang jika pemain mati/respawn (ADR-018); kontrol giliran tunggal belum diputuskan.
+
+## UPDATE 2026-10-10 (Task 6.1)
+KnockService + KnockConfig (ADR-031): `knock(player, reason)` / `recover(player)`. Knock = state KNOCKED, root di-Anchor berbaring, tidak bisa gerak/equip/interaksi, respawn dikembalikan ke titik knock. Bunga salah di makam langsung knock (saklar `KnockConfig.KNOCK_ON_WRONG_FLOWER`). SOLO: pemain yang knock akan terjebak sampai Task 6.4/6.5 (revive/wipe); pulihkan manual lewat Command Bar `require(game.ServerScriptService.Server.Services.KnockService).recover(game.Players:GetPlayers()[1])`. Syntax OK (luau-compile); logika BELUM dites. Belum ada: jumpscare, UI knock, ramuan, revive, party wipe, giliran tunggal, reset bunga.
 
 ## NEXT ACTION
 

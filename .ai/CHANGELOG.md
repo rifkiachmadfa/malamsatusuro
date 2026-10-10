@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 2026-10-10 — Phase 6 Task 6.1: KnockService (state knock di server) (belum dites di Studio)
+- Baru: server/Services/KnockService, server/Config/KnockConfig, ADR-031. API: knock(player, reason), recover(player), isKnocked, getKnockedCount, onKnocked/onRecovered/onAllKnocked
+- Knock: state pemain NORMAL -> KNOCKED, HumanoidRootPart di-Anchor dan berbaring telentang di lantai (raycast), WalkSpeed/Jump 0, tool dilepas dan tidak bisa di-equip, respawn/reset saat knock dikembalikan ke titik knock, notifikasi lewat NoticeService
+- init.server: bunga salah (GravePuzzleService.onWrong) -> KnockService.knock, dengan saklar KnockConfig.KNOCK_ON_WRONG_FLOWER. Belum ada jumpscare, UI knock, revive, party wipe
+- Verifikasi AI: luau-compile 3 file berubah OK. Tidak ada tes Studio dan tidak ada harness logika
+
 ## 2026-10-10 — Task 5.8 direvisi: validasi PER BUNGA (pola desain user), ADR-030 (belum dites di Studio)
 - GravePuzzleService: bunga dinilai saat diletakkan. Benar = dipakai dan tetap di makam; salah = tidak dipakai (tetap di Backpack), makam tidak berubah, hook onWrong(player, graveName, itemId). Percobaan pertama memajukan state sampai CANTIL_PUZZLE. Validasi di akhir dan pengembalian massal dihapus
 - ADR-029 diperbarui; ADR-030 (bunga salah = jumpscare + knock; semua knock = wipe; solo = langsung wipe) PROPOSED untuk Phase 6

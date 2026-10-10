@@ -22,6 +22,8 @@ local RitualCollectionService = require(Services:WaitForChild("RitualCollectionS
 local CollectibleService = require(Services:WaitForChild("CollectibleService") :: ModuleScript)
 local KerisQuestService = require(Services:WaitForChild("KerisQuestService") :: ModuleScript)
 local GravePuzzleService = require(Services:WaitForChild("GravePuzzleService") :: ModuleScript)
+local KnockService = require(Services:WaitForChild("KnockService") :: ModuleScript)
+local KnockConfig = require(script:WaitForChild("Config"):WaitForChild("KnockConfig") :: ModuleScript)
 
 Log.info("Server", string.format("Malam Suro server siap (MAX_PLAYERS=%d)", GameConfig.MAX_PLAYERS))
 
@@ -39,6 +41,14 @@ CollectibleService.init()
 KerisQuestService.init()
 RitualCollectionService.init()
 GravePuzzleService.init()
+KnockService.init()
+
+-- Bunga salah di makam -> knock pemain itu (ADR-030). Task 6.2 menyisipkan jumpscare sebelum knock.
+GravePuzzleService.onWrong(function(player: Player, _graveName: string, _itemId: string)
+	if KnockConfig.KNOCK_ON_WRONG_FLOWER then
+		KnockService.knock(player, KnockConfig.Reason.WRONG_FLOWER)
+	end
+end)
 
 -- Pemandu: objek Workspace.NPC.Pemandu (dibuat di Studio) ber-tag Interactable dengan InteractionId = "Pemandu".
 InteractionService.register("Pemandu", function(player: Player, target: Instance)

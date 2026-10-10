@@ -340,6 +340,21 @@ ACCEPTED (menunggu uji Studio, Task 3.1)
 
 
 
+## ADR-031 — PHASE 6 DIPECAH BERTAHAP; KNOCKSERVICE TIDAK TAHU PENYEBAB; JUMPSCARE = VIEWPORT 3D LOKAL
+
+Decision (arahan user 2026-10-10):
+
+- Phase 6 dikerjakan bertahap, tiap tahap divalidasi user sebelum lanjut: 6.1 KnockService (server) -> 6.2 jumpscare (client) lalu knock -> 6.3 Knock UI -> 6.4 ramuan di map + revive -> 6.5 giliran tunggal, party wipe, flower reset.
+- `KnockService` generik: `knock(player, reason)`. Penyebab (bunga salah, hantu penyerang di masa depan) hanya memanggil API ini. Pemulihan `recover(player)` TANPA validasi revive; syarat revive (ramuan di-equip, dekat korban, sekali pakai) milik ReviveService (6.4).
+- Pose knock: HumanoidRootPart di-Anchor di server, badan berbaring telentang; WalkSpeed/Jump 0; tool dilepas. Anchor di server membuat client tidak bisa menggeser karakter. Reset/mati saat knock tidak membebaskan: CharacterAdded mengembalikan ke titik knock. Catatan: Backpack tetap reset saat respawn (ADR-018).
+- Jumpscare (Task 6.2): presentasi CLIENT-ONLY pada pemain yang terkena saja: model 3D berrig + animasi di ViewportFrame layar pemain itu, dengan efek layar. Server hanya mengirim event ke satu pemain (Remote baru) dan menunggu durasi tetap sebelum memanggil knock; client tidak menentukan hasil gameplay. Urutan: onWrong -> jumpscare -> knock. Pemain lain tidak melihat jumpscare.
+- Revive (Task 6.4): ramuan = item `MinyakZaitun` (sudah ada di ItemConfig, stackable) berupa Tool; disebar di map lewat CollectibleService. Syarat: penolong punya MinyakZaitun di Backpack DAN meng-equip-nya, dekat pemain knock; berhasil -> kurangi 1 (Tool hilang jika habis) -> recover(korban).
+- Serangan hantu BELUM dibuat: dicatat di TASKS sebagai pekerjaan masa depan. Karena knock berbasis `reason`, hantu cukup memanggil jalur jumpscare + knock yang sama.
+- Batasan 6.1: `knock` hanya menerima pemain berstatus NORMAL. Knock saat MINIGAME/dialog (mis. hantu menyerang saat puzzle) butuh pembatalan sesi MemoryPuzzleService; ditunda sampai hantu dibuat.
+
+Status:
+PROPOSED (6.1 menunggu uji Studio)
+
 ## ADR-030 — POLA KEGAGALAN KANTIL: BUNGA SALAH = JUMPSCARE + KNOCK; SEMUA KNOCK = WIPE (SOLO = LANGSUNG WIPE)
 
 Decision (pola dari user 2026-10-10, dibangun di Phase 6):
