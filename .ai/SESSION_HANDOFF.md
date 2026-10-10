@@ -104,6 +104,14 @@ Prasyarat: Tool `KunciPeti` dan `KerisPusaka` (Handle) di ServerStorage.QuestTem
 8. Notifikasi: ambil Kelor -> pelaku "Kamu mendapatkan Daun Kelor (n/4)", rekan "<nama> mendapatkan ..."; 4/4 -> toast "Daun Kelor sudah lengkap. Kembali ke Pemandu." Toast beruntun menumpuk, tidak saling menimpa.
 9. Device Emulator HP: tile terbaca, semua bisa diketuk. Tutup dengan BATAL: sesi berakhir, bisa coba lagi. Pemegang keluar game: kunci/keris pindah ke pemain lain.
 
+## Uji Studio Phase 5 awal (flower collection) + regresi Kelor
+Prasyarat: Workspace.QuestObjects.FlowerSpawns berisi 8 Part/Model (nama bebas); template MawarMerah, MawarPutih, Melati, KantilKuning.
+1. REGRESI KELOR: mulai game, 4 Kelor muncul di titik acak, [E] Ambil memberi item, toast "Kamu mendapatkan Daun Kelor (n/4)", rekan melihat "<nama> mendapatkan ...", pickup hilang setelah diambil, 4/4 -> "Daun Kelor sudah lengkap". Alur kunci/peti/puzzle/ritual seperti sebelumnya.
+2. Setelah keris disimpan di RitualCollection (KERIS COMPLETE): bicara ke Pemandu -> dialog laporan (3 baris) -> panel Quest berganti ke KEMBANG KANTIL HITAM "Cari 4 Bunga 0/4".
+3. 4 bunga muncul di 4 dari 8 titik; keempat jenis berbeda (Mawar Merah, Mawar Putih, Melati, Kantil Kuning). Prompt "Petik" menampilkan nama jenisnya. Jalankan ulang beberapa kali: titik dan penempatan jenis berubah.
+4. 2 pemain mengambil bunga bergantian: panel di kedua layar sama (n/4), toast "<nama> mendapatkan Mawar Merah (1/4)". Setelah 4/4: toast "Keempat bunga sudah terkumpul" dan Pemandu: "Bawalah ke makam".
+5. Dua pemain menekan bunga yang sama bersamaan: hanya satu yang mendapat item.
+
 ## Langkah berikutnya
 1. User: uji 2.1 di atas dan lapor Output; tinjau SkyboxInserter; siapkan naskah dialog Pemandu.
 2. Task 2.2 Quest UI, Task 2.3 alur Pemandu -> quest.

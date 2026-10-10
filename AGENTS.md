@@ -28,6 +28,11 @@ Project: MALAM SURO: DUSUN KELABU (Roblox, horor co-op 1–4 pemain, bahasa Indo
 - Pemandu hanya MELAPOR/memberi petunjuk (dialog). Jangan menaruh logika penyelesaian quest di dialog Pemandu.
 - Item akhir: Keris Pusaka, Kembang Kantil Hitam, Kain Kafan. Phase 8 (ritual akhir) membaca status simpanan dari sini.
 
+## Aturan DRY objective koleksi (ADR-027)
+- Objective "kumpulkan N item di titik spawn acak" (Kelor, bunga, dan yang serupa) HANYA lewat `CollectibleService`, dikonfigurasi di `shared/Config/CollectionConfig.luau`. Jangan menyalin logika spawn/pickup/progres ke service quest.
+- Objective koleksi baru = tambah entri di CollectionConfig (+ counter di QuestConfig + titik spawn di Workspace.QuestObjects). Perilaku yang belum didukung modul = perluas modul generik, bukan membuat salinan.
+- Penyimpanan item akhir selalu lewat RitualCollection (ADR-026); notifikasi selalu lewat NoticeService (ADR-025).
+
 ## Alur task
 AUDIT -> CURRENT STATE -> PLAN -> IMPLEMENT -> TEST -> DEBUG -> REVIEW DIFF -> UPDATE .ai/ -> COMMIT -> HANDOFF
 

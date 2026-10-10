@@ -19,6 +19,7 @@ local GameFlowService = require(Services:WaitForChild("GameFlowService") :: Modu
 local NoticeService = require(Services:WaitForChild("NoticeService") :: ModuleScript)
 local MemoryPuzzleService = require(Services:WaitForChild("MemoryPuzzleService") :: ModuleScript)
 local RitualCollectionService = require(Services:WaitForChild("RitualCollectionService") :: ModuleScript)
+local CollectibleService = require(Services:WaitForChild("CollectibleService") :: ModuleScript)
 local KerisQuestService = require(Services:WaitForChild("KerisQuestService") :: ModuleScript)
 
 Log.info("Server", string.format("Malam Suro server siap (MAX_PLAYERS=%d)", GameConfig.MAX_PLAYERS))
@@ -33,6 +34,7 @@ DialogueService.init()
 GameFlowService.init()
 NoticeService.init()
 MemoryPuzzleService.init()
+CollectibleService.init()
 KerisQuestService.init()
 RitualCollectionService.init()
 

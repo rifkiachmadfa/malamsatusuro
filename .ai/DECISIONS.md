@@ -340,6 +340,31 @@ ACCEPTED (menunggu uji Studio, Task 3.1)
 
 
 
+## ADR-028 — GAMEFLOWSERVICE GENERIK: PEMANDU MELAPOR QUEST SELESAI LALU MEMBERI QUEST BERIKUTNYA
+
+Decision:
+
+- `QUEST_FLOW` (questId -> state game + state pertama) dan `startQuest` dipakai bersama intro (KERIS) dan quest berikutnya. Tidak ada urutan aktivasi yang di-hardcode per quest.
+- `QUEST_DIALOGUES[quest][state]` memetakan dialog Pemandu per state (nilai boleh fungsi untuk dialog per pemain). Quest berjalan = quest pertama yang bukan LOCKED/COMPLETE.
+- `REPORT_DIALOGUES[quest]`: saat quest COMPLETE (item sudah disimpan di RitualCollection, ADR-026), Pemandu melapor; menamatkan dialog laporan memberi quest berikutnya bila masih LOCKED (aman dipanggil ganda). Sekarang: KERIS -> KANTIL. KAFAN ditambahkan di Phase 7.
+- ASUMSI (belum diputuskan di GDD): quest berikutnya dimulai lewat dialog laporan Pemandu, sesuai core loop "bertemu Pemandu -> menerima quest". Mengubah ke aktivasi otomatis cukup mengganti pemicu startQuest.
+
+Status:
+PROPOSED (menunggu uji Studio)
+
+## ADR-027 — COLLECTIBLESERVICE: SATU MODUL UNTUK SEMUA OBJECTIVE KOLEKSI
+
+Decision:
+
+- `CollectibleService` (server) menjalankan semua objective "kumpulkan N item di titik acak". Definisi di `CollectionConfig.Collections` (questId, counterId, activeState, spawnFolder, interactionId, itemIds, assignment, actionText, pickupDistance, completeNotice). Kelor (KERIS) dan Flowers (KANTIL) adalah dua entri; logika Kelor dipindah dari KerisQuestService tanpa perubahan perilaku.
+- Siklus: masuk activeState -> pilih N titik acak (N = target counter di QuestConfig, satu sumber kebenaran) -> spawn pickup Model; [E] -> validasi server (objek terdaftar, status AVAILABLE, state quest benar) -> item ke Backpack -> progres party-wide -> notifikasi; keluar activeState -> pickup sisa dihapus. Masuk activeState lagi (party wipe Kantil) = spawn ulang.
+- `assignment`: SAME (semua titik item yang sama, Kelor) atau DISTINCT (tiap jenis item tepat sekali, diacak ke titik aktif, bunga). ASUMSI bunga: 4 titik aktif dari 8, empat jenis masing-masing sekali (GDD hanya menyebut 8 lokasi, 4 aktif, 4 jenis).
+- Status pickup server: AVAILABLE -> COLLECTING -> COLLECTED (anti-duplikasi). Notifikasi lewat NoticeService.
+- Belum termasuk: penghapusan bunga dari Backpack saat party wipe (Task "Flower reset").
+
+Status:
+PROPOSED (menunggu uji Studio)
+
 ## ADR-026 — QUEST SELESAI = ITEM DISIMPAN DI RITUALCOLLECTION; PEMANDU HANYA MELAPOR
 
 Decision:

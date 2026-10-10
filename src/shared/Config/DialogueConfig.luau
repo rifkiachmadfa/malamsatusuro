@@ -57,12 +57,29 @@ local DialogueConfig: { [string]: Dialogue } = {
 			"Keris itu ada pada salah satu kawanmu. Suruh dia menyimpannya di tempat ritual.",
 		},
 	},
-	-- Pemandu MELAPOR: keris sudah tersimpan di tempat ritual (KERIS COMPLETE). PLACEHOLDER.
+	-- Pemandu MELAPOR: keris sudah tersimpan di tempat ritual (KERIS COMPLETE). Menamatkan dialog ini memberi
+	-- quest berikutnya (Kantil). PLACEHOLDER.
 	Pemandu_KerisDone = {
 		speaker = "Pemandu",
 		lines = {
 			"Keris Pusaka sudah tersimpan di tempat ritual. Satu pusaka telah kembali.",
-			"Tunggulah, pencarian berikutnya akan segera dimulai.",
+			"Pusaka berikutnya adalah kembang kantil hitam. Untuk itu kita butuh empat bunga yang tersebar di dusun ini.",
+			"Carilah mawar merah, mawar putih, melati, dan kantil kuning.",
+		},
+	},
+	-- Dipakai saat KANTIL di SEARCHING_FLOWERS. PLACEHOLDER.
+	Pemandu_KantilSearch = {
+		speaker = "Pemandu",
+		lines = {
+			"Carilah empat bunga: mawar merah, mawar putih, melati, dan kantil kuning.",
+			"Jangan berpisah terlalu jauh.",
+		},
+	},
+	-- Dipakai saat KANTIL di FLOWERS_COMPLETE (petunjuk saja; makam dibuat di task berikutnya). PLACEHOLDER.
+	Pemandu_KantilGrave = {
+		speaker = "Pemandu",
+		lines = {
+			"Bunga sudah lengkap. Bawalah ke makam di ujung dusun.",
 		},
 	},
 }

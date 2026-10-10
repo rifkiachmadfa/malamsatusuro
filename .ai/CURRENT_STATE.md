@@ -9,7 +9,7 @@ PHASE 1 — FOUNDATION: SELESAI.
 PHASE 2 — QUEST SYSTEM: SELESAI (diuji 1 dan 2 pemain).
 PHASE 3 — INTERACTION & INVENTORY: ItemService selesai (boot diuji; give/consume diuji lewat Phase 4).
 PHASE 4 — KERIS PUSAKA: SELESAI dengan catatan (alur Kelor -> kunci -> peti -> puzzle -> keris -> simpan di RitualCollection; 3–4 pemain di Phase 10).
-PHASE 5 — KEMBANG KANTIL HITAM: BERIKUTNYA (belum dimulai).
+PHASE 5 — KEMBANG KANTIL HITAM: SEDANG BERJALAN (5.1–5.5 kode selesai, belum dites di Studio).
 
 
 ## TOOLCHAIN
@@ -73,6 +73,9 @@ Quest KERIS lengkap secara kode: Kelor -> kunci -> peti -> memory puzzle -> keri
 
 ## UPDATE 2026-10-05 (ADR-025, ADR-026)
 Penyelesaian quest Keris kini di RitualCollection (bukan Pemandu). Semua notifikasi lewat NoticeService. DEPENDENCY baru: `Workspace.QuestObjects.RitualCollection` (Model, jarak interaksi 14 dari pivot). Belum ada tes Studio.
+
+## UPDATE 2026-10-05 (Phase 5 awal)
+CollectibleService (ADR-027) menjalankan Kelor dan bunga dari CollectionConfig. GameFlowService generik (ADR-028): setelah KERIS COMPLETE, Pemandu melapor (Pemandu_KerisDone) dan menamatkan dialog itu memulai KANTIL (SEARCHING_FLOWERS). DEPENDENCY BARU: Workspace.QuestObjects.FlowerSpawns (8 Part/Model), template Tool MawarMerah, MawarPutih, Melati, KantilKuning (sudah dicek ItemService saat boot). Belum ada tes Studio.
 
 ## NEXT ACTION
 

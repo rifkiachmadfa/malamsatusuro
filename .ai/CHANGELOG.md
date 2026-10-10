@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 2026-10-05 — Phase 5 mulai: CollectibleService generik + pencarian bunga Kantil (belum dites di Studio)
+- Baru: CollectibleService, CollectionConfig (Kelor dan Flowers), ADR-027/028
+- Refactor: logika Kelor dipindah dari KerisQuestService ke CollectibleService (perilaku sama); GameFlowService generik (QUEST_FLOW, QUEST_DIALOGUES, REPORT_DIALOGUES): Pemandu melapor KERIS selesai lalu memberi quest KANTIL
+- Dialog baru (placeholder): Pemandu_KantilSearch, Pemandu_KantilGrave; Pemandu_KerisDone kini memberi quest berikutnya
+- Verifikasi AI: luau-compile semua file; harness offline 70 cek lulus (Kelor via modul generik, 4 bunga jenis berbeda, progres party 3 pemain, pickup ganda/palsu ditolak, spawn ulang saat party wipe). Tidak ada tes Studio
+
 ## 2026-10-05 — Penutupan Phase 4 (Keris Pusaka)
 - Phase 4 DONE dengan catatan (ditutup atas instruksi user). ADR-023/024/026 -> ACCEPTED, BUG-001 -> VERIFIED
 - Utang: uji 3–4 pemain (Phase 10), respawn menghilangkan kunci (Phase 5/6), pemicu aktivasi KANTIL, teks placeholder, PemanduService kode mati
