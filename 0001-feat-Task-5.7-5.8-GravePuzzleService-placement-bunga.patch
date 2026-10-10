@@ -1,0 +1,692 @@
+From 43693cc031be77c988cf334ac096da6fd94c1870 Mon Sep 17 00:00:00 2001
+From: Claude <claude@anthropic.local>
+Date: Sat, 10 Oct 2026 15:16:06 +0000
+Subject: [PATCH] feat: Task 5.7-5.8 GravePuzzleService (placement bunga +
+ validasi puzzle makam), docs .ai diselaraskan
+
+---
+ .ai/CHANGELOG.md                            |   7 +
+ .ai/CURRENT_STATE.md                        |  17 +-
+ .ai/DECISIONS.md                            |  18 +
+ .ai/SESSION_HANDOFF.md                      |  13 +-
+ .ai/TASKS.md                                |  35 +-
+ src/server/Config/GravePuzzleConfig.luau    |  41 +++
+ src/server/Services/GameFlowService.luau    |   3 +
+ src/server/Services/GravePuzzleService.luau | 372 ++++++++++++++++++++
+ src/server/init.server.luau                 |   2 +
+ src/shared/Config/DialogueConfig.luau       |  17 +-
+ 10 files changed, 500 insertions(+), 25 deletions(-)
+ create mode 100644 src/server/Config/GravePuzzleConfig.luau
+ create mode 100644 src/server/Services/GravePuzzleService.luau
+
+diff --git a/.ai/CHANGELOG.md b/.ai/CHANGELOG.md
+index e175d94..221af11 100644
+--- a/.ai/CHANGELOG.md
++++ b/.ai/CHANGELOG.md
+@@ -1,5 +1,12 @@
+ # CHANGELOG
+ 
++## 2026-10-10 — Phase 5: placement bunga dan validasi puzzle makam (belum dites di Studio)
++- Baru: GravePuzzleService, server/Config/GravePuzzleConfig (jawaban sisi server), ADR-029; registrasi di init.server
++- Dialog baru (placeholder): Pemandu_KantilPuzzle, Pemandu_KantilStore; GameFlowService memetakan FLOWERS_PLACEMENT, CANTIL_PUZZLE, CANTIL_BLACK_OBTAINED
++- Docs: status Phase 4 di TASKS.md dipulihkan ke DONE dengan catatan; Phase 5 diselaraskan dengan kode aktual
++- Verifikasi AI: luau-compile semua file berubah; harness offline 47 cek lulus (jalur benar 2 pemain, makam ganda ditolak, salah+kembali+coba lagi, hook onWrong, template hadiah hilang, pemain/pemegang keluar, reset makam, Graves hilang). Tidak ada tes Studio
++- Temuan: grave clue/placement belum ada sebelum task ini (tercatat "dibuat" oleh user); alur Kantil buntu di FLOWERS_COMPLETE
++
+ ## 2026-10-05 — Phase 5 mulai: CollectibleService generik + pencarian bunga Kantil (belum dites di Studio)
+ - Baru: CollectibleService, CollectionConfig (Kelor dan Flowers), ADR-027/028
+ - Refactor: logika Kelor dipindah dari KerisQuestService ke CollectibleService (perilaku sama); GameFlowService generik (QUEST_FLOW, QUEST_DIALOGUES, REPORT_DIALOGUES): Pemandu melapor KERIS selesai lalu memberi quest KANTIL
+diff --git a/.ai/CURRENT_STATE.md b/.ai/CURRENT_STATE.md
+index 46b7348..2f3257a 100644
+--- a/.ai/CURRENT_STATE.md
++++ b/.ai/CURRENT_STATE.md
+@@ -1,7 +1,7 @@
+ # CURRENT PROJECT STATE
+ 
+ Last Updated:
+-2026-10-05
++2026-10-10
+ 
+ ## CURRENT PHASE
+ 
+@@ -9,7 +9,7 @@ PHASE 1 — FOUNDATION: SELESAI.
+ PHASE 2 — QUEST SYSTEM: SELESAI (diuji 1 dan 2 pemain).
+ PHASE 3 — INTERACTION & INVENTORY: ItemService selesai (boot diuji; give/consume diuji lewat Phase 4).
+ PHASE 4 — KERIS PUSAKA: SELESAI dengan catatan (alur Kelor -> kunci -> peti -> puzzle -> keris -> simpan di RitualCollection; 3–4 pemain di Phase 10).
+-PHASE 5 — KEMBANG KANTIL HITAM: SEDANG BERJALAN (5.1–5.5 kode selesai, belum dites di Studio).
++PHASE 5 — KEMBANG KANTIL HITAM: SEDANG BERJALAN (5.1–5.8 kode selesai, belum dites di Studio; knock/revive/wipe/flower reset = Phase 6).
+ 
+ 
+ ## TOOLCHAIN
+@@ -77,12 +77,17 @@ Penyelesaian quest Keris kini di RitualCollection (bukan Pemandu). Semua notifik
+ ## UPDATE 2026-10-05 (Phase 5 awal)
+ CollectibleService (ADR-027) menjalankan Kelor dan bunga dari CollectionConfig. GameFlowService generik (ADR-028): setelah KERIS COMPLETE, Pemandu melapor (Pemandu_KerisDone) dan menamatkan dialog itu memulai KANTIL (SEARCHING_FLOWERS). DEPENDENCY BARU: Workspace.QuestObjects.FlowerSpawns (8 Part/Model), template Tool MawarMerah, MawarPutih, Melati, KantilKuning (sudah dicek ItemService saat boot). Belum ada tes Studio.
+ 
++## UPDATE 2026-10-10 (Task 5.6–5.8)
++GravePuzzleService (ADR-029): placement bunga (equip + [E] di makam) dan validasi jawaban di server; hadiah Kembang Kantil Hitam ke penempat terakhir. Clue = SurfaceGui buatan user (tanpa kode). Harness offline 47 cek lulus; BELUM dites di Studio. DEPENDENCY: Workspace.QuestObjects.Graves/Grave_1..4 (SurfaceGui clue), template Tool KembangKantilHitam. JAWABAN (GravePuzzleConfig.ANSWER) masih PLACEHOLDER dan harus dicocokkan dengan clue. Risiko terbuka: bunga di Backpack hilang jika pemain mati/respawn (ADR-018); kontrol giliran tunggal belum diputuskan.
++
+ ## NEXT ACTION
+ 
+-1. Phase 5 (Kantil), Task 5.1: spawn bunga (8 titik, 4 aktif) memakai RandomSpawnService yang sudah generik. Detail yang dibutuhkan dari user: Workspace.QuestObjects.FlowerSpawns (titik, atribut tipe bunga), makam (GravePuzzle), template Mawar Merah/Putih, Melati, Kantil Kuning, Kembang Kantil Hitam, Minyak Zaitun.
+-2. Tentukan pemicu aktivasi quest KANTIL setelah KERIS COMPLETE (belum ada).
+-3. Aturan wajib: semua notifikasi lewat NoticeService (ADR-025); quest selesai di RitualCollection (ADR-026).
+-4. User (masih terbuka): ganti teks placeholder dengan naskah GDD; tinjau SkyboxInserter.
++1. User: cocokkan GravePuzzleConfig.ANSWER dengan clue SurfaceGui lalu set ANSWER_CONFIRMED=true; pastikan Graves/Grave_1..4 dan template KembangKantilHitam ada; cek Handle.Anchored=false di semua template Tool.
++2. User: uji Studio (lihat SESSION_HANDOFF "Uji Studio Task 5.7–5.8") dan lapor Output.
++3. Keputusan desain: kontrol giliran tunggal (Task 5.9) dan penanganan bunga saat pemain mati.
++4. Phase 6: knock (pasang di GravePuzzleService.onWrong), Minyak Zaitun/revive, party wipe, flower reset.
++5. Aturan wajib: semua notifikasi lewat NoticeService (ADR-025); quest selesai di RitualCollection (ADR-026).
++6. User (masih terbuka): ganti teks placeholder dengan naskah GDD; tinjau SkyboxInserter.
+ 
+ ## IMPORTANT
+ 
+diff --git a/.ai/DECISIONS.md b/.ai/DECISIONS.md
+index b6f5d07..6db9664 100644
+--- a/.ai/DECISIONS.md
++++ b/.ai/DECISIONS.md
+@@ -340,6 +340,24 @@ ACCEPTED (menunggu uji Studio, Task 3.1)
+ 
+ 
+ 
++## ADR-029 — GRAVEPUZZLESERVICE: PLACEMENT BUNGA DI MAKAM, JAWABAN DI SERVER
++
++Decision:
++
++- Clue = SurfaceGui di makam (dibuat user di Studio, ADR-011). Kode tidak menampilkan/mengirim clue (tidak ada Task 5.6 berkode).
++- Placement: pemain MEMEGANG (equip) bunga lalu [E] "Letakkan Bunga" di makam `Workspace.QuestObjects.Graves.<Grave_N>`. Tanpa GUI/Remote baru. Server membaca Tool yang di-equip, bukan client.
++- ASUMSI (belum diputuskan di GDD): 4 makam, tiap bunga dicocokkan ke makam yang benar (jumlah makam = jumlah entri `GravePuzzleConfig.ANSWER`). Jawaban benar = peta makam -> ItemId di `src/server/Config/GravePuzzleConfig.luau` (sisi server agar tidak terreplikasi). ANSWER saat ini PLACEHOLDER (`ANSWER_CONFIRMED=false`, ada warn saat boot).
++- State: FLOWERS_COMPLETE -> (bunga pertama) FLOWERS_PLACEMENT -> (makam penuh) CANTIL_PUZZLE -> BENAR: CANTIL_BLACK_OBTAINED. SALAH: state tetap CANTIL_PUZZLE, bunga dikembalikan ke penempatnya, makam dikosongkan, boleh coba lagi (pola sama seperti CHEST_PUZZLE).
++- Hadiah Kembang Kantil Hitam ke penempat bunga terakhir. Template hadiah dicek SEBELUM bunga terakhir dipakai. Gagal di tengah = rollback.
++- Hook `GravePuzzleService.onWrong(listener)` dipanggil dengan penempat terakhir; knock (Phase 6) dipasang di sini.
++- Bunga pemain yang keluar game dipindah ke pemain lain (state pencarian s.d. puzzle). Pemegang hadiah yang keluar: hadiah dipindah.
++- Party wipe (masuk SEARCHING_FLOWERS) mengosongkan slot makam. Penghapusan sisa bunga dari Backpack = task Flower reset.
++- DITUNDA: kontrol giliran tunggal. Bunga terbagi antar pemain sehingga satu pemain tidak bisa menempatkan semuanya; setiap [E] atomik di server. Perlu keputusan desain.
++- Duplikasi kecil `pickPlayer` (mirip `pickHolder` KerisQuestService); kandidat util bersama saat ada pemakai ketiga.
++
++Status:
++PROPOSED (menunggu uji Studio dan konfirmasi jawaban)
++
+ ## ADR-028 — GAMEFLOWSERVICE GENERIK: PEMANDU MELAPOR QUEST SELESAI LALU MEMBERI QUEST BERIKUTNYA
+ 
+ Decision:
+diff --git a/.ai/SESSION_HANDOFF.md b/.ai/SESSION_HANDOFF.md
+index 5404b91..70a0ee6 100644
+--- a/.ai/SESSION_HANDOFF.md
++++ b/.ai/SESSION_HANDOFF.md
+@@ -1,6 +1,6 @@
+ # SESSION HANDOFF
+ 
+-Last Updated: 2026-10-05
++Last Updated: 2026-10-10
+ 
+ ## Ringkasan
+ - Fase aktif: PHASE 5 — KEMBANG KANTIL HITAM (belum dimulai). Phase 1–4 selesai (Phase 4 dengan catatan: 3–4 pemain di Phase 10). Quest KERIS lengkap: Kelor -> kunci -> peti -> memory puzzle -> keris -> simpan di RitualCollection.
+@@ -112,6 +112,17 @@ Prasyarat: Workspace.QuestObjects.FlowerSpawns berisi 8 Part/Model (nama bebas);
+ 4. 2 pemain mengambil bunga bergantian: panel di kedua layar sama (n/4), toast "<nama> mendapatkan Mawar Merah (1/4)". Setelah 4/4: toast "Keempat bunga sudah terkumpul" dan Pemandu: "Bawalah ke makam".
+ 5. Dua pemain menekan bunga yang sama bersamaan: hanya satu yang mendapat item.
+ 
++## Uji Studio Task 5.7–5.8 (makam: placement + validasi)
++Prasyarat: Workspace.QuestObjects.Graves berisi Grave_1..4 (Model/Part, SurfaceGui clue); template KembangKantilHitam; GravePuzzleConfig.ANSWER dicocokkan dengan clue. Output boot: `[GravePuzzleService] siap, 4/4 makam terdaftar` (dan warn PLACEHOLDER selama ANSWER_CONFIRMED=false).
++1. Selesaikan sampai 4 bunga terkumpul (FLOWERS_COMPLETE). Keempat makam menampilkan prompt "Letakkan Bunga / Makam"; sebelum itu tidak ada prompt.
++2. Tekan E tanpa bunga: toast "Kamu tidak membawa bunga". Bawa bunga tapi tidak di-equip: toast "Pegang bunga ...".
++3. Equip satu bunga, E di makam: bunga hilang, toast (n/4) untuk pelaku dan rekan, prompt makam itu hilang, state KANTIL = FLOWERS_PLACEMENT (Output).
++4. Letakkan semua sesuai clue: state CANTIL_PUZZLE lalu CANTIL_BLACK_OBTAINED, penempat terakhir memegang Kembang Kantil Hitam (toast), panel quest tercentang "Selesaikan teka-teki makam". Pemandu: dialog Pemandu_KantilStore. Simpan di RitualCollection menyelesaikan quest.
++5. Susun SALAH: toast "Bunga tidak cocok ...", semua bunga kembali ke Backpack penempatnya, makam kosong dan berprompt lagi, state tetap CANTIL_PUZZLE. Coba lagi dengan benar: berhasil.
++6. 2 pemain menekan E di makam yang sama bersamaan: hanya satu bunga terpakai. Pemain yang memegang bunga keluar: bunganya muncul di Backpack pemain lain.
++7. Tanpa template KembangKantilHitam: bunga terakhir TIDAK terpakai, Output warn dependency.
++8. Equip bunga lalu karakter freeze? Cek Handle.Anchored template (lihat catatan Daun Kelor).
++
+ ## Langkah berikutnya
+ 1. User: uji 2.1 di atas dan lapor Output; tinjau SkyboxInserter; siapkan naskah dialog Pemandu.
+ 2. Task 2.2 Quest UI, Task 2.3 alur Pemandu -> quest.
+\ No newline at end of file
+diff --git a/.ai/TASKS.md b/.ai/TASKS.md
+index d592fae..04fa0b9 100644
+--- a/.ai/TASKS.md
++++ b/.ai/TASKS.md
+@@ -78,7 +78,7 @@ IN PROGRESS
+ # PHASE 4 — KERIS PUSAKA
+ 
+ Status:
+-IN PROGRESS
++DONE dengan catatan (2026-10-05, ditutup atas instruksi user; commit 0d8dfa2). Status ini sempat termundur di commit 6acfb27 dan dipulihkan 2026-10-10. Uji 3–4 pemain di Phase 10.
+ 
+ - [x] 4.1 Kelor spawn system + server randomization + 4 active / 4 inactive (RandomSpawnService, KerisQuestService, ADR-023) — logika lulus harness offline (18 cek); BELUM dites di Studio
+ - [x] 4.2 Kelor collection + party progress (pickup [E], ItemService.give, QuestService.addProgress) — idem
+@@ -94,22 +94,23 @@ IN PROGRESS
+ # PHASE 5 — KEMBANG KANTIL HITAM
+ 
+ Status:
+-NOT STARTED
+-
+-- [ ] Flower spawn system
+-- [ ] Server randomization
+-- [ ] Flower collection
+-- [ ] Party progress
+-- [ ] Grave clue
+-- [ ] Flower placement
+-- [ ] Puzzle validation
+-- [ ] Knock system
+-- [ ] Revive
+-- [ ] Party wipe
+-- [ ] Flower reset
+-- [ ] Black Kantil reward
+-- [ ] NPC submission
+-
++IN PROGRESS (2026-10-10). Kode 5.1–5.8 ada; SEMUANYA belum dites di Studio. Knock/revive/party wipe/flower reset menunggu Phase 6.
++
++- [x] 5.1 Flower spawn system (CollectibleService + CollectionConfig, ADR-027) — harness offline; BELUM dites di Studio
++- [x] 5.2 Server randomization (4 dari 8 titik, 4 jenis berbeda) — idem
++- [x] 5.3 Flower collection — idem
++- [x] 5.4 Party progress (counter Flowers 4/4) — idem
++- [x] 5.5 Alur Pemandu: KERIS selesai -> laporan -> KANTIL (GameFlowService, ADR-028) — idem
++- [x] 5.6 Grave clue — TANPA KODE: clue = SurfaceGui di makam (dibuat user di Studio). Dependency Studio, belum diverifikasi AI
++- [x] 5.7 Flower placement (GravePuzzleService, ADR-029): equip bunga + [E] di makam; harness offline 47 cek; BELUM dites di Studio
++- [x] 5.8 Puzzle validation (server, jawaban di server/Config/GravePuzzleConfig) — idem. JAWABAN MASIH PLACEHOLDER (ANSWER_CONFIRMED=false)
++- [ ] 5.9 Turn/attempt control (satu pemain aktif) — KEPUTUSAN: bunga terbagi antar pemain, kunci giliran tunggal bertabrakan; belum diputuskan
++- [ ] Knock system (hook GravePuzzleService.onWrong sudah ada)
++- [ ] Revive (Minyak Zaitun)
++- [ ] Party wipe (CANTIL_PUZZLE -> SEARCHING_FLOWERS; makam otomatis dikosongkan, bunga di Backpack belum dihapus)
++- [ ] Flower reset (hapus sisa bunga dari semua Backpack saat wipe)
++- [x] Black Kantil reward (diberikan ke penempat bunga terakhir saat jawaban benar) — harness offline
++- [x] NPC submission = simpan di RitualCollection (sudah ada di RitualConfig sejak ADR-026; belum dites untuk Kantil)
+ 
+ # PHASE 6 — KNOCK / REVIVE
+ 
+diff --git a/src/server/Config/GravePuzzleConfig.luau b/src/server/Config/GravePuzzleConfig.luau
+new file mode 100644
+index 0000000..b23183d
+--- /dev/null
++++ b/src/server/Config/GravePuzzleConfig.luau
+@@ -0,0 +1,41 @@
++--!strict
++-- GravePuzzleConfig: data puzzle makam Kantil (Task 5.7-5.8). SISI SERVER SAJA (ServerScriptService),
++-- agar jawaban tidak ikut terreplikasi ke client. Clue dibaca pemain dari SurfaceGui di makam (dibuat di Studio, ADR-011);
++-- kode tidak menampilkan atau mengirim clue.
++
++local GravePuzzleConfig = {}
++
++GravePuzzleConfig.QUEST_ID = "KANTIL"
++GravePuzzleConfig.GRAVES_FOLDER = "Graves" -- Workspace.QuestObjects.Graves
++GravePuzzleConfig.INTERACTION_ID = "GravePlace"
++GravePuzzleConfig.ACTION_TEXT = "Letakkan Bunga"
++GravePuzzleConfig.OBJECT_TEXT = "Makam"
++GravePuzzleConfig.MAX_DISTANCE = 8
++GravePuzzleConfig.REWARD_ITEM_ID = "KembangKantilHitam"
++
++-- Placement dibuka pada state quest ini. CANTIL_PUZZLE termasuk: jawaban salah = tetap di state itu, coba lagi.
++GravePuzzleConfig.OPEN_STATES = table.freeze({
++	FLOWERS_COMPLETE = true,
++	FLOWERS_PLACEMENT = true,
++	CANTIL_PUZZLE = true,
++} :: { [string]: boolean })
++
++-- State di mana bunga milik pemain yang keluar game harus dipindahkan ke pemain lain.
++GravePuzzleConfig.FLOWER_HOLD_STATES = table.freeze({
++	SEARCHING_FLOWERS = true,
++	FLOWERS_COMPLETE = true,
++	FLOWERS_PLACEMENT = true,
++	CANTIL_PUZZLE = true,
++} :: { [string]: boolean })
++
++-- Jawaban: nama makam di Workspace.QuestObjects.Graves -> ItemId bunga yang benar.
++-- PLACEHOLDER: HARUS disamakan dengan teks clue di SurfaceGui makam. Ubah ANSWER_CONFIRMED jadi true setelah dicocokkan.
++GravePuzzleConfig.ANSWER_CONFIRMED = false
++GravePuzzleConfig.ANSWER = table.freeze({
++	Grave_1 = "MawarMerah",
++	Grave_2 = "MawarPutih",
++	Grave_3 = "Melati",
++	Grave_4 = "KantilKuning",
++} :: { [string]: string })
++
++return table.freeze(GravePuzzleConfig)
+diff --git a/src/server/Services/GameFlowService.luau b/src/server/Services/GameFlowService.luau
+index 66c2f93..8a52cbc 100644
+--- a/src/server/Services/GameFlowService.luau
++++ b/src/server/Services/GameFlowService.luau
+@@ -46,6 +46,9 @@ local QUEST_DIALOGUES: { [string]: { [string]: DialogueRule } } = {
+ 	KANTIL = {
+ 		SEARCHING_FLOWERS = "Pemandu_KantilSearch",
+ 		FLOWERS_COMPLETE = "Pemandu_KantilGrave",
++		FLOWERS_PLACEMENT = "Pemandu_KantilPuzzle",
++		CANTIL_PUZZLE = "Pemandu_KantilPuzzle",
++		CANTIL_BLACK_OBTAINED = "Pemandu_KantilStore",
+ 	},
+ }
+ 
+diff --git a/src/server/Services/GravePuzzleService.luau b/src/server/Services/GravePuzzleService.luau
+new file mode 100644
+index 0000000..b7e474f
+--- /dev/null
++++ b/src/server/Services/GravePuzzleService.luau
+@@ -0,0 +1,372 @@
++--!strict
++-- GravePuzzleService: placement bunga di makam dan validasi jawaban quest Kantil (Task 5.7-5.8, ADR-029).
++-- Clue = SurfaceGui di makam (Studio); kode hanya mengurus penempatan dan pengecekan, semuanya di server.
++--
++-- Alur:
++--   FLOWERS_COMPLETE -> pemain MEMEGANG (equip) bunga lalu [E] di makam -> bunga dipakai (dihapus dari Backpack),
++--   state FLOWERS_PLACEMENT. Setelah semua makam terisi -> CANTIL_PUZZLE -> jawaban dicek:
++--     BENAR -> pemain yang meletakkan bunga terakhir menerima Kembang Kantil Hitam -> CANTIL_BLACK_OBTAINED.
++--     SALAH -> bunga dikembalikan ke penempatnya, makam dikosongkan, state tetap CANTIL_PUZZLE (coba lagi),
++--              hook onWrong dipanggil (Phase 6 memasang knock di sini).
++-- Semua langkah tanpa yield, sehingga dua pemain yang menekan [E] bersamaan tidak bisa mengisi satu makam dua kali.
++
++local CollectionService = game:GetService("CollectionService")
++local Players = game:GetService("Players")
++local ReplicatedStorage = game:GetService("ReplicatedStorage")
++local Workspace = game:GetService("Workspace")
++
++local Shared = ReplicatedStorage:WaitForChild("Shared")
++local GameConfig = require(Shared:WaitForChild("Config"):WaitForChild("GameConfig") :: ModuleScript)
++local ItemConfig = require(Shared:WaitForChild("Config"):WaitForChild("ItemConfig") :: ModuleScript)
++local Log = require(Shared:WaitForChild("Util"):WaitForChild("Log") :: ModuleScript)
++local Config = require(script.Parent.Parent:WaitForChild("Config"):WaitForChild("GravePuzzleConfig") :: ModuleScript)
++local Services = script.Parent
++local GameManager = require(Services:WaitForChild("GameManager") :: ModuleScript)
++local InteractionService = require(Services:WaitForChild("InteractionService") :: ModuleScript)
++local ItemService = require(Services:WaitForChild("ItemService") :: ModuleScript)
++local NoticeService = require(Services:WaitForChild("NoticeService") :: ModuleScript)
++local QuestService = require(Services:WaitForChild("QuestService") :: ModuleScript)
++
++local TAG = "GravePuzzleService"
++local QUEST_ID = Config.QUEST_ID
++
++type Slot = {
++	itemId: string,
++	placer: Player,
++}
++
++export type WrongListener = (player: Player) -> ()
++
++local GravePuzzleService = {}
++
++local graves: { [string]: Instance } = {} -- nama makam -> objek
++local graveNames: { [Instance]: string } = {} -- objek -> nama makam
++local slots: { [string]: Slot } = {} -- nama makam -> bunga yang sudah diletakkan
++local totalGraves = 0
++local rewardHolder: Player? = nil
++local wrongListeners: { WrongListener } = {}
++local rng = Random.new()
++
++local function displayName(itemId: string): string
++	local def = ItemConfig.Items[itemId]
++	return if def then def.displayName else itemId
++end
++
++local function isFlower(itemId: unknown): boolean
++	if type(itemId) ~= "string" then
++		return false
++	end
++	for _, flowerId in Config.ANSWER do
++		if flowerId == itemId then
++			return true
++		end
++	end
++	return false
++end
++
++local function slotCount(): number
++	local count = 0
++	for _ in slots do
++		count += 1
++	end
++	return count
++end
++
++-- Pemain acak (server) yang valid menerima item. exclude boleh nil.
++local function pickPlayer(exclude: Player?): Player?
++	local candidates: { Player } = {}
++	for _, candidate in Players:GetPlayers() do
++		if
++			candidate ~= exclude
++			and GameManager.getPlayerState(candidate) == GameConfig.PlayerState.NORMAL
++			and candidate:FindFirstChildOfClass("Backpack") ~= nil
++		then
++			table.insert(candidates, candidate)
++		end
++	end
++	if #candidates == 0 then
++		return nil
++	end
++	return candidates[rng:NextInteger(1, #candidates)]
++end
++
++-- Bunga yang sedang dipegang (equip) pemain, atau nil.
++local function getHeldFlower(player: Player): string?
++	local character = player.Character
++	if not character then
++		return nil
++	end
++	local tool = character:FindFirstChildOfClass("Tool")
++	if not tool then
++		return nil
++	end
++	local itemId = tool:GetAttribute(ItemConfig.ATTR_ITEM_ID)
++	if isFlower(itemId) and ItemService.has(player, itemId :: string) then
++		return itemId :: string
++	end
++	return nil
++end
++
++local function carriesFlower(player: Player): boolean
++	for _, flowerId in Config.ANSWER do
++		if ItemService.has(player, flowerId) then
++			return true
++		end
++	end
++	return false
++end
++
++-- Prompt makam hanya muncul saat placement terbuka dan makam itu masih kosong.
++local function refreshGraves()
++	local state = QuestService.getState(QUEST_ID)
++	local open = state ~= nil and Config.OPEN_STATES[state] == true
++	for name, grave in graves do
++		if open and slots[name] == nil then
++			CollectionService:AddTag(grave, GameConfig.Interaction.TAG)
++		else
++			CollectionService:RemoveTag(grave, GameConfig.Interaction.TAG)
++		end
++	end
++end
++
++local function fireWrong(player: Player)
++	for _, listener in wrongListeners do
++		task.spawn(listener, player)
++	end
++end
++
++-- Hook jawaban salah (Phase 6: knock). Diberi pemain yang meletakkan bunga terakhir.
++function GravePuzzleService.onWrong(listener: WrongListener)
++	table.insert(wrongListeners, listener)
++end
++
++function GravePuzzleService.getRewardHolder(): Player?
++	return rewardHolder
++end
++
++-- Kembalikan semua bunga di makam ke penempatnya (atau pemain acak jika penempat sudah keluar), lalu kosongkan makam.
++local function returnFlowers()
++	for _, slot in slots do
++		local recipient: Player? = if slot.placer.Parent == Players then slot.placer else pickPlayer(nil)
++		if not recipient or not ItemService.give(recipient, slot.itemId, 1) then
++			Log.warn(TAG, string.format("bunga %s tidak bisa dikembalikan", slot.itemId))
++		end
++	end
++	table.clear(slots)
++end
++
++local function isCorrect(): boolean
++	for graveName, flowerId in Config.ANSWER do
++		local slot = slots[graveName]
++		if not slot or slot.itemId ~= flowerId then
++			return false
++		end
++	end
++	return true
++end
++
++local function rollbackAll(): ()
++	returnFlowers()
++	refreshGraves()
++end
++
++-- Dipanggil saat semua makam terisi. state sudah CANTIL_PUZZLE.
++local function validate(lastPlacer: Player)
++	if not isCorrect() then
++		rollbackAll()
++		Log.info(TAG, string.format("jawaban salah (penempat terakhir: %s)", lastPlacer.Name))
++		NoticeService.broadcast("Bunga tidak cocok dengan makamnya. Bunga dikembalikan, coba lagi.")
++		fireWrong(lastPlacer)
++		return
++	end
++
++	-- Benar: beri hadiah dulu, baru pindah state. Gagal di tengah = hadiah dibatalkan dan bunga dikembalikan.
++	local recipient: Player? = lastPlacer
++	if lastPlacer.Parent ~= Players or not ItemService.give(lastPlacer, Config.REWARD_ITEM_ID, 1) then
++		recipient = pickPlayer(nil)
++		if not recipient or not ItemService.give(recipient, Config.REWARD_ITEM_ID, 1) then
++			Log.warn(TAG, "gagal memberi " .. Config.REWARD_ITEM_ID .. "; bunga dikembalikan")
++			rollbackAll()
++			return
++		end
++	end
++	local winner = recipient :: Player
++
++	if not QuestService.transition(QUEST_ID, "CANTIL_BLACK_OBTAINED") then
++		ItemService.consume(winner, Config.REWARD_ITEM_ID, 1)
++		rollbackAll()
++		return
++	end
++
++	table.clear(slots) -- bunga sudah terpakai; tidak dikembalikan
++	rewardHolder = winner
++	Log.info(TAG, string.format("jawaban benar; %s menerima %s", winner.Name, Config.REWARD_ITEM_ID))
++	NoticeService.notifyParty(
++		winner,
++		"Kembang Kantil Hitam muncul dan kamu memegangnya. Simpan di tempat ritual.",
++		string.format("%s memegang Kembang Kantil Hitam. Simpan di tempat ritual.", winner.Name)
++	)
++end
++
++local function onGraveInteract(player: Player, target: Instance)
++	local graveName = graveNames[target]
++	if not graveName then
++		return
++	end
++
++	local state = QuestService.getState(QUEST_ID)
++	if state == nil or Config.OPEN_STATES[state] ~= true then
++		return
++	end
++	if slots[graveName] ~= nil then
++		return
++	end
++
++	local itemId = getHeldFlower(player)
++	if not itemId then
++		if carriesFlower(player) then
++			NoticeService.send(player, "Pegang bunga yang ingin diletakkan (pilih dari hotbar), lalu tekan lagi.")
++		else
++			NoticeService.send(player, "Kamu tidak membawa bunga.")
++		end
++		return
++	end
++
++	-- Hadiah harus bisa dibuat SEBELUM bunga terakhir dipakai (jangan sampai bunga habis tanpa hadiah).
++	local isLast = slotCount() + 1 == totalGraves
++	if isLast and not ItemService.getTemplate(Config.REWARD_ITEM_ID) then
++		Log.warn(TAG, "dependency belum ada: template " .. Config.REWARD_ITEM_ID .. " di ServerStorage.QuestTemplates")
++		NoticeService.send(player, "Makam belum bisa diselesaikan.")
++		return
++	end
++
++	if not ItemService.consume(player, itemId, 1) then
++		return
++	end
++	if state == "FLOWERS_COMPLETE" and not QuestService.transition(QUEST_ID, "FLOWERS_PLACEMENT") then
++		ItemService.give(player, itemId, 1)
++		return
++	end
++
++	slots[graveName] = { itemId = itemId, placer = player }
++	local placed = slotCount()
++	Log.info(TAG, string.format("%s meletakkan %s di %s (%d/%d)", player.Name, itemId, graveName, placed, totalGraves))
++
++	local name = displayName(itemId)
++	NoticeService.notifyParty(
++		player,
++		string.format("Kamu meletakkan %s di makam (%d/%d).", name, placed, totalGraves),
++		string.format("%s meletakkan %s di makam (%d/%d).", player.Name, name, placed, totalGraves)
++	)
++
++	if placed < totalGraves then
++		refreshGraves()
++		return
++	end
++
++	if QuestService.getState(QUEST_ID) == "FLOWERS_PLACEMENT" and not QuestService.transition(QUEST_ID, "CANTIL_PUZZLE") then
++		Log.warn(TAG, "gagal masuk CANTIL_PUZZLE; bunga dikembalikan")
++		rollbackAll()
++		return
++	end
++	validate(player)
++end
++
++-- Pemain keluar membawa bunga: pindahkan ke pemain lain agar quest tidak buntu (Backpack hilang bersama pemain).
++local function onPlayerRemoving(leaving: Player)
++	local state = QuestService.getState(QUEST_ID)
++	if state ~= nil and Config.FLOWER_HOLD_STATES[state] == true then
++		for _, flowerId in Config.ANSWER do
++			local owned = ItemService.count(leaving, flowerId)
++			if owned > 0 then
++				local newHolder = pickPlayer(leaving)
++				if newHolder and ItemService.give(newHolder, flowerId, owned) then
++					NoticeService.notifyParty(
++						newHolder,
++						string.format("Pemain keluar. Kini kamu membawa %s.", displayName(flowerId)),
++						string.format("Pemain keluar. Kini %s membawa %s.", newHolder.Name, displayName(flowerId))
++					)
++				else
++					Log.warn(TAG, string.format("%s keluar membawa %s dan tidak ada pemain lain", leaving.Name, flowerId))
++				end
++			end
++		end
++	end
++
++	if rewardHolder == leaving then
++		rewardHolder = nil
++		if state == "CANTIL_BLACK_OBTAINED" then
++			local newHolder = pickPlayer(leaving)
++			if newHolder and ItemService.give(newHolder, Config.REWARD_ITEM_ID, 1) then
++				rewardHolder = newHolder
++				NoticeService.notifyParty(
++					newHolder,
++					"Pemegang Kembang Kantil Hitam keluar. Kini kamu memegangnya.",
++					string.format("Pemegang Kembang Kantil Hitam keluar. Kini %s memegangnya.", newHolder.Name)
++				)
++			else
++				Log.warn(TAG, "pemegang Kembang Kantil Hitam keluar dan tidak ada pemain lain")
++			end
++		end
++	end
++end
++
++local function setupGraves()
++	local questObjects = Workspace:FindFirstChild("QuestObjects")
++	local folder = questObjects and questObjects:FindFirstChild(Config.GRAVES_FOLDER)
++	if not folder then
++		Log.warn(TAG, "dependency belum ada: Workspace.QuestObjects." .. Config.GRAVES_FOLDER)
++		return
++	end
++
++	local Interaction = GameConfig.Interaction
++	for name in Config.ANSWER do
++		local grave = folder:FindFirstChild(name)
++		if not grave then
++			Log.warn(TAG, string.format("dependency belum ada: makam %s di %s", name, Config.GRAVES_FOLDER))
++		else
++			grave:SetAttribute(Interaction.ATTR_ID, Config.INTERACTION_ID)
++			grave:SetAttribute(Interaction.ATTR_ACTION_TEXT, Config.ACTION_TEXT)
++			grave:SetAttribute(Interaction.ATTR_OBJECT_TEXT, Config.OBJECT_TEXT)
++			grave:SetAttribute(Interaction.ATTR_MAX_DISTANCE, Config.MAX_DISTANCE)
++			CollectionService:RemoveTag(grave, Interaction.TAG) -- baru aktif saat placement terbuka
++			graves[name] = grave
++			graveNames[grave] = name
++		end
++	end
++end
++
++function GravePuzzleService.init()
++	for _ in Config.ANSWER do
++		totalGraves += 1
++	end
++
++	InteractionService.register(Config.INTERACTION_ID, onGraveInteract)
++	setupGraves()
++	Players.PlayerRemoving:Connect(onPlayerRemoving)
++
++	QuestService.onStateChanged(function(questId: string, _fromState: string, toState: string)
++		if questId ~= QUEST_ID then
++			return
++		end
++		-- Party wipe (CANTIL_PUZZLE -> SEARCHING_FLOWERS) atau reset: makam dikosongkan.
++		if toState == "SEARCHING_FLOWERS" then
++			table.clear(slots)
++		end
++		if toState == "CANTIL_SUBMITTED" or toState == "COMPLETE" then
++			rewardHolder = nil
++		end
++		refreshGraves()
++	end)
++
++	if not Config.ANSWER_CONFIRMED then
++		Log.warn(TAG, "jawaban makam masih PLACEHOLDER: samakan GravePuzzleConfig.ANSWER dengan clue di SurfaceGui")
++	end
++	local registered = 0
++	for _ in graves do
++		registered += 1
++	end
++	Log.info(TAG, string.format("siap, %d/%d makam terdaftar", registered, totalGraves))
++end
++
++return table.freeze(GravePuzzleService)
+diff --git a/src/server/init.server.luau b/src/server/init.server.luau
+index 8b1d09a..4440d75 100644
+--- a/src/server/init.server.luau
++++ b/src/server/init.server.luau
+@@ -21,6 +21,7 @@ local MemoryPuzzleService = require(Services:WaitForChild("MemoryPuzzleService")
+ local RitualCollectionService = require(Services:WaitForChild("RitualCollectionService") :: ModuleScript)
+ local CollectibleService = require(Services:WaitForChild("CollectibleService") :: ModuleScript)
+ local KerisQuestService = require(Services:WaitForChild("KerisQuestService") :: ModuleScript)
++local GravePuzzleService = require(Services:WaitForChild("GravePuzzleService") :: ModuleScript)
+ 
+ Log.info("Server", string.format("Malam Suro server siap (MAX_PLAYERS=%d)", GameConfig.MAX_PLAYERS))
+ 
+@@ -37,6 +38,7 @@ MemoryPuzzleService.init()
+ CollectibleService.init()
+ KerisQuestService.init()
+ RitualCollectionService.init()
++GravePuzzleService.init()
+ 
+ -- Pemandu: objek Workspace.NPC.Pemandu (dibuat di Studio) ber-tag Interactable dengan InteractionId = "Pemandu".
+ InteractionService.register("Pemandu", function(player: Player, target: Instance)
+diff --git a/src/shared/Config/DialogueConfig.luau b/src/shared/Config/DialogueConfig.luau
+index 2fc54da..e1a7857 100644
+--- a/src/shared/Config/DialogueConfig.luau
++++ b/src/shared/Config/DialogueConfig.luau
+@@ -75,13 +75,28 @@ local DialogueConfig: { [string]: Dialogue } = {
+ 			"Jangan berpisah terlalu jauh.",
+ 		},
+ 	},
+-	-- Dipakai saat KANTIL di FLOWERS_COMPLETE (petunjuk saja; makam dibuat di task berikutnya). PLACEHOLDER.
++	-- Dipakai saat KANTIL di FLOWERS_COMPLETE (petunjuk saja). PLACEHOLDER.
+ 	Pemandu_KantilGrave = {
+ 		speaker = "Pemandu",
+ 		lines = {
+ 			"Bunga sudah lengkap. Bawalah ke makam di ujung dusun.",
+ 		},
+ 	},
++	-- Dipakai saat KANTIL di FLOWERS_PLACEMENT / CANTIL_PUZZLE. PLACEHOLDER.
++	Pemandu_KantilPuzzle = {
++		speaker = "Pemandu",
++		lines = {
++			"Baca petunjuk di makam, lalu letakkan setiap bunga di makam yang tepat.",
++			"Pegang bunganya, lalu tekan E di dekat makam.",
++		},
++	},
++	-- Dipakai saat KANTIL di CANTIL_BLACK_OBTAINED (petunjuk saja; penyimpanan di RitualCollection, ADR-026). PLACEHOLDER.
++	Pemandu_KantilStore = {
++		speaker = "Pemandu",
++		lines = {
++			"Kembang kantil hitam sudah muncul. Simpan di tempat ritual.",
++		},
++	},
+ }
+ 
+ return table.freeze(DialogueConfig)
+\ No newline at end of file
+-- 
+2.43.0
+
