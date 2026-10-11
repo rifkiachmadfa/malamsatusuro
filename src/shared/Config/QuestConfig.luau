@@ -90,13 +90,14 @@ kantilTransitions["CANTIL_PUZZLE"] = { "CANTIL_BLACK_OBTAINED", "SEARCHING_FLOWE
 kantilTransitions["RETRY_GUIDE"] = { "ACTIVE" }
 
 -- QUEST 03 — KAIN KAFAN
--- State party saja. Skor dan PLAYER_COMPLETE bersifat per pemain (Phase 7), bukan state party.
+-- REVISI user 2026-10-11 (ADR-038): hanya SATU pemain yang memainkan gamelan; skor >= 80 = quest lulus untuk seluruh party.
+-- Gagal skor = tetap GAMELAN_ACTIVE (main lagi), bukan transisi.
 local kafanStates = {
 	"LOCKED",
 	"ACTIVE",
 	"FIND_GAMELAN",
 	"GAMELAN_ACTIVE",
-	"ALL_PLAYER_COMPLETE",
+	"GAMELAN_COMPLETE",
 	"KAIN_OBTAINED",
 	"KAIN_SUBMITTED",
 	"COMPLETE",
@@ -147,7 +148,7 @@ QuestConfig.Quests = table.freeze({
 		states = kafanStates,
 		objectives = {
 			{ text = "Cari tempat gamelan", doneAt = "GAMELAN_ACTIVE" },
-			{ text = "Mainkan gamelan (skor 80+)", doneAt = "ALL_PLAYER_COMPLETE" },
+			{ text = "Mainkan gamelan (skor 80+)", doneAt = "GAMELAN_COMPLETE" },
 			{ text = "Simpan Kain Kafan di tempat ritual", doneAt = "KAIN_SUBMITTED" },
 		},
 		initialState = "LOCKED",

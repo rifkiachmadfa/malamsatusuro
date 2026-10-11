@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 2026-10-11 — Phase 7 awal: gamelan ritme 4 kolom, satu pemain (ADR-038) (belum dites di Studio)
+- Perubahan dari GDD (arahan user): SATU pemain memainkan gamelan, 4 kolom (Q W E R di PC, ketuk di mobile), durasi 97 detik, musik placeholder (`GamelanConfig.SOUND_ID` kosong)
+- Baru: shared/Config/GamelanConfig, server/Services/RhythmGameService (chart, sesi, validasi, skor), server/Services/KafanQuestService (objek Gamelan, state, hadiah Kain Kafan), client/Controllers/GamelanController (GUI ritme), remote `GamelanUpdate` dan `GamelanAction`
+- QuestConfig: state `ALL_PLAYER_COMPLETE` diganti `GAMELAN_COMPLETE`; GameFlowService: KAFAN di QUEST_FLOW dan laporan Kantil (`Pemandu_KantilDone`) memulai Kafan; DialogueConfig: dialog placeholder Kantil Done / Kafan Search / Store / Wait
+- init.server/init.client: service dan controller baru; InteractionController dan ReviveController diblokir saat gamelan terbuka
+- Verifikasi AI: luau-compile semua file OK; harness offline server (stub Roblox, jam palsu) 53 cek LULUS: chart, sesi tunggal, skor sempurna/good/campuran/nol, anti-curang (waktu palsu, duplikat, spam, payload aneh), cancel/knock/keluar/karakter hilang/timeout Ready, alur quest + hadiah + pemegang keluar. GUI client TIDAK dites (hanya kompilasi). Tidak ada tes Studio
+
 ## 2026-10-11 — Revisi Minyak Zaitun: selalu 2 pickup aktif, pengganti di titik berbeda (ADR-037) (belum dites di Studio)
 - CollectionConfig: opsi baru `replenish`; entri `Zaitun` memakainya. Komentar entri diperbarui (menggantikan "tidak respawn setelah diambil" di ADR-036)
 - CollectibleService: `placePickup` (diekstrak dari spawnAll), `usedSpawns`, `refill` setelah pickup diambil; Pickup menyimpan referensi titik spawn

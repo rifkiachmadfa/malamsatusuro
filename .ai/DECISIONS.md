@@ -283,7 +283,7 @@ Rules:
 - Transisi hanya yang tercantum di QuestConfig (ADR-009). Gagal puzzle yang boleh coba lagi (CHEST_PUZZLE) tetap di state yang sama.
 - `addProgress` hanya diterima saat quest berada di `requiredState` milik counter; nilai dibatasi target; saat target tercapai quest otomatis pindah ke `completeState`. Ini juga menolak progres berlebih/duplikat.
 - Party wipe Kantil: transisi CANTIL_PUZZLE -> SEARCHING_FLOWERS, counter Flowers di-reset lewat `resetCountersOnEnter`. Quest lain tidak tersentuh.
-- Kafan: PLAYER_SCORE / SCORE>=80 / PLAYER_COMPLETE dari GDD adalah state PER PEMAIN (Phase 7), bukan state party. State party Kafan: FIND_GAMELAN -> GAMELAN_ACTIVE -> ALL_PLAYER_COMPLETE -> KAIN_OBTAINED -> KAIN_SUBMITTED -> COMPLETE.
+- Kafan: DIGANTIKAN ADR-038 (satu pemain; ALL_PLAYER_COMPLETE diganti GAMELAN_COMPLETE). Teks lama: PLAYER_SCORE / SCORE>=80 / PLAYER_COMPLETE adalah state PER PEMAIN, bukan state party.
 - Quest berikutnya hanya bisa activate jika semua quest sebelumnya COMPLETE.
 - Layanan lain bereaksi lewat `QuestService.onStateChanged`, tidak mengubah state sendiri.
 
@@ -558,3 +558,27 @@ Konsekuensi: jumlah titik di `ZaitunSpawns` menentukan berapa kali pengganti bis
 
 Status:
 ACCEPTED sebagai arahan user; logika lulus harness offline; BELUM dites di Studio.
+
+
+## ADR-038 — QUEST KAFAN: GAMELAN RITME 4 KOLOM, SATU PEMAIN, SERVER-AUTHORITATIVE
+
+Context:
+
+GDD awal (GAME_CONTEXT bagian 9, ADR-019): semua pemain harus mencapai skor >= 80 (per pemain, 6 kolom). REVISI user 2026-10-11: hanya SATU pemain yang memainkan gamelan; gaya Guitar Hero dengan 4 kolom; PC memakai Q W E R, mobile mengetuk layar; musik gamelan diputar saat mulai (ID audio menyusul), durasi sesi = durasi musik (1 menit 37 detik = 97 detik).
+
+Decision:
+
+- Perubahan terhadap GDD (disetujui user): 4 kolom (bukan 6); SATU pemain bermain; skor >= 80 meluluskan quest untuk seluruh party. Tidak ada lagi skor/komplesi per pemain. State party Kafan: LOCKED -> ACTIVE -> FIND_GAMELAN -> GAMELAN_ACTIVE -> GAMELAN_COMPLETE -> KAIN_OBTAINED -> KAIN_SUBMITTED -> COMPLETE (`ALL_PLAYER_COMPLETE` diganti `GAMELAN_COMPLETE`; ADR-019 poin Kafan digantikan).
+- Skor akhir = persen dari poin maksimum (0-100): Perfect 10 poin, Good 7, Miss 0, lulus bila >= 80 (ASUMSI: GDD hanya menyebut poin per not dan batas 80; dipilih persen agar batas 80 tetap bermakna berapa pun jumlah not). Jendela waktu: Perfect +-0,10 dtk, Good +-0,20 dtk (config).
+- Dua service, mengikuti pola Keris: `RhythmGameService` (mesin minigame generik: chart, sesi, validasi, skor) dan `KafanQuestService` (objek Gamelan, transisi state, hadiah, pemegang kain). Client: `GamelanController` (GUI + input). Config: `shared/Config/GamelanConfig`. Remote: `GamelanUpdate`, `GamelanAction`.
+- Server-authoritative: chart dibuat server (acak per sesi di grid BPM, belum ada beatmap per lagu — ASUMSI sampai musik asli masuk). Client memuat musik lalu mengirim `Ready` (jam sesi server mulai di saat itu), lalu `Hit {lane, t}` tiap tekanan. Server memeriksa: payload valid; lane integer 1-4; jam lagu `t` cocok dengan jam server (tidak boleh dari masa depan > 0,3 dtk atau tertinggal > 2 dtk); jarak minimal antar tekanan; batas total tekanan; satu not hanya bisa dinilai sekali. Server menutup sesi sendiri saat durasi habis (+3 dtk) dan menghitung skor. Client tidak mengirim "selesai" atau skor.
+- BATASAN JUJUR: server tidak bisa membedakan bot yang menekan di waktu nyata dari manusia (client harus tahu chart agar bisa menggambar not). Yang dicegah: skor instan tanpa waktu berjalan, duplikasi, spam, dan skor yang dikarang client. Bila perlu nanti: kirim chart bertahap per jendela dan/atau deteksi pola tekanan terlalu sempurna.
+- Selama bermain: state pemain MINIGAME; karakter dibekukan server (WalkSpeed/Jump 0, dipulihkan hanya bila masih beku oleh sesi) karena Q/W/E/R bertabrakan dengan gerak/interaksi; client menelan Q/W/E/R (ContextActionService prioritas tinggi) dan InteractionController diblokir. Sesi dibatalkan tanpa hasil/hadiah bila pemain knock, karakter hilang, keluar, menekan BATAL, atau musik tidak siap dalam 10 dtk.
+- Hanya satu sesi per party. Pemain lain yang menekan [E] diberi notifikasi "<nama> sedang memainkan gamelan". Gagal skor = tetap GAMELAN_ACTIVE; siapa pun boleh mencoba lagi, tanpa hukuman.
+- Alur quest: Pemandu_KantilDone (laporan Kantil COMPLETE) memulai KAFAN (GameFlowService: `KAFAN` di QUEST_FLOW dan REPORT_DIALOGUES KANTIL). [E] Mainkan pertama: FIND_GAMELAN -> GAMELAN_ACTIVE. Lulus: beri KainKafan -> GAMELAN_COMPLETE -> KAIN_OBTAINED; kain disimpan di RitualCollection (ADR-026, tidak berubah). Pemegang kain keluar sebelum menyimpan: kain dipindah ke pemain lain.
+- Musik diputar lokal di client pemain yang bermain (sinkron dengan jam sesi). Opsi nanti: putar juga di model gamelan agar rekan ikut mendengar.
+
+Dependency (Studio): `Workspace.QuestObjects.Gamelan` (Model/Part), template Tool `ServerStorage.QuestTemplates.KainKafan`, ID audio di `GamelanConfig.SOUND_ID`.
+
+Status:
+ACCEPTED sebagai arahan user; server lulus harness offline; client hanya lulus kompilasi; BELUM dites di Studio.

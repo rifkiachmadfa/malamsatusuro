@@ -105,6 +105,37 @@ local DialogueConfig: { [string]: Dialogue } = {
 			"Kembang kantil hitam sudah muncul. Simpan di tempat ritual.",
 		},
 	},
+	-- Pemandu MELAPOR: kembang kantil hitam sudah tersimpan (KANTIL COMPLETE). Menamatkannya memulai quest Kafan. PLACEHOLDER.
+	Pemandu_KantilDone = {
+		speaker = "Pemandu",
+		lines = {
+			"Kembang kantil hitam sudah tersimpan di tempat ritual. Dua pusaka telah kembali.",
+			"Yang terakhir adalah kain kafan. Kain itu hanya mau diserahkan bila gamelan di dusun ini dimainkan dengan benar.",
+			"Carilah gamelannya. Satu orang saja yang memainkannya; yang lain menemani.",
+		},
+	},
+	-- Dipakai saat KAFAN di FIND_GAMELAN / GAMELAN_ACTIVE (petunjuk). PLACEHOLDER.
+	Pemandu_KafanSearch = {
+		speaker = "Pemandu",
+		lines = {
+			"Temukan gamelan itu, lalu mainkan. Tekan Q, W, E, R mengikuti irama, atau ketuk kolomnya di layar.",
+			"Bila gagal, kau boleh mencoba lagi.",
+		},
+	},
+	-- Dipakai saat KAFAN di KAIN_OBTAINED untuk pemain yang MEMEGANG kain (petunjuk saja; penyimpanan di RitualCollection). PLACEHOLDER.
+	Pemandu_KafanStore = {
+		speaker = "Pemandu",
+		lines = {
+			"Kain kafan sudah ada di tanganmu. Simpan di tempat ritual.",
+		},
+	},
+	-- Dipakai saat KAFAN di KAIN_OBTAINED untuk pemain yang TIDAK memegang kain. PLACEHOLDER.
+	Pemandu_KafanWait = {
+		speaker = "Pemandu",
+		lines = {
+			"Kain itu ada pada salah satu kawanmu. Suruh dia menyimpannya di tempat ritual.",
+		},
+	},
 }
 
 return table.freeze(DialogueConfig)

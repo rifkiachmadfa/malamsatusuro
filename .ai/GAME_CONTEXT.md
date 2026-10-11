@@ -175,33 +175,24 @@ PARTY WIPE
 
 ## 9. QUEST 03 — KAIN KAFAN
 
+REVISI user 2026-10-11 (ADR-038): hanya SATU pemain yang memainkan gamelan; 4 kolom.
+
 Gameplay:
-Rhythm Game / Gamelan
+Rhythm Game / Gamelan (gaya Guitar Hero)
 
 Flow:
 
 FIND GAMELAN
-→ PLAY GAMELAN
-→ RHYTHM GAME
+→ [E] MAINKAN GAMELAN (satu pemain)
+→ RHYTHM GAME (4 kolom; PC: Q W E R, mobile: ketuk layar; musik gamelan 1:37)
 → SCORE >= 80
-→ PLAYER COMPLETE
-
-Each player must achieve the required score.
-
-Example:
-
-Player A = 92 ✓
-Player B = 88 ✓
-Player C = 73 ✗
-Player D = 95 ✓
-
-Only Player C needs another attempt.
-
-When all players complete:
-
 → KAIN KAFAN
-→ SUBMIT
+→ SUBMIT (RitualCollection)
 → QUEST COMPLETE
+
+Gagal skor: boleh mencoba lagi (siapa pun di party), tanpa hukuman.
+
+(Desain lama, digantikan: semua pemain harus mencapai skor >= 80 di 6 kolom.)
 
 
 ## 10. FINAL RITUAL

@@ -22,6 +22,8 @@ Remotes.Names = table.freeze({
 	Jumpscare = "Jumpscare", -- server -> client (hanya pemain yang kena): (ghostId: string)
 	ReviveRequest = "ReviveRequest", -- client -> server: { action = "Start", target = Player } | { action = "Cancel" }
 	ReviveUpdate = "ReviveUpdate", -- server -> client (penyelamat): { action = "Start", targetName, duration } | { action = "Stop", success }
+	GamelanUpdate = "GamelanUpdate", -- server -> client (pemain yang main): { action = "Start", notes, duration } | { action = "Result", ... } | { action = "Close" }
+	GamelanAction = "GamelanAction", -- client -> server: { action = "Ready" } | { action = "Hit", lane, t } | { action = "Cancel" }
 })
 
 -- Server only: buat folder dan semua RemoteEvent (aman dipanggil ulang).

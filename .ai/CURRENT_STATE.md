@@ -10,7 +10,8 @@ PHASE 2 — QUEST SYSTEM: SELESAI (diuji 1 dan 2 pemain).
 PHASE 3 — INTERACTION & INVENTORY: ItemService selesai (boot diuji; give/consume diuji lewat Phase 4).
 PHASE 4 — KERIS PUSAKA: SELESAI dengan catatan (alur Kelor -> kunci -> peti -> puzzle -> keris -> simpan di RitualCollection; 3–4 pemain di Phase 10).
 PHASE 5 — KEMBANG KANTIL HITAM: 5.1–5.8 SELESAI dan DITES user di Studio (normal, 2026-10-11). Sisa (giliran tunggal, revive, wipe, flower reset) dikerjakan di Phase 6.
-PHASE 6 — KNOCK / REVIVE: SEDANG BERJALAN, bertahap. 6.1 knock, 6.1b solo/multiplayer, 6.2 jumpscare (+audio placeholder, RETRY_GUIDE) DITES user di Studio (normal, 2026-10-11). 6.3 Knock UI minimal: kode ada, BELUM dites. 6.4 (Minyak Zaitun spawner + revive tahan 3 detik): kode ada, BELUM dites. 6.5 (giliran tunggal, party wipe, flower reset) belum.
+PHASE 6 — KNOCK / REVIVE: DITUTUP dan dites user di Studio (dilaporkan user 2026-10-11; rincian per-poin tidak dilaporkan).
+PHASE 7 — KAIN KAFAN / GAMELAN: SEDANG BERJALAN. Kode gamelan ritme (satu pemain, 4 kolom) ditulis; BELUM dites di Studio (ADR-038).
 
 
 ## TOOLCHAIN
@@ -100,6 +101,9 @@ Zaitun kini SELALU 2 pickup aktif: tiap pickup diambil, server spawn pengganti d
 ## HASIL TES 2026-10-11 (dilaporkan user: Phase 5 dan Phase 6 sampai 6.2 berhasil, Studio normal)
 Berlaku untuk: CollectibleService/bunga (5.1–5.4), alur Pemandu KERIS->KANTIL (5.5), clue makam (5.6), placement + validasi per bunga + hadiah Kantil Hitam (5.7–5.8), KnockService (6.1), FailureService solo/multiplayer + QuestService.reset (6.1b), jumpscare (6.2), audio jumpscare placeholder dan state RETRY_GUIDE dengan Quest UI "Kembali berbicara kepada Pemandu". User hanya melaporkan "berhasil, tes Studio normal"; rincian jumlah pemain tidak dilaporkan, jadi uji 2–4 pemain tetap dijadwalkan di Phase 10. Masih placeholder: jawaban makam (ANSWER_CONFIRMED=false), teks Pemandu_KantilRetry, suara jumpscare.
 Task 6.3 (KnockController, overlay vinyet + teks "KAMU PINGSAN", hotbar disembunyikan saat knock) baru ditulis: BELUM dites.
+
+## UPDATE 2026-10-11 (Phase 7 awal, ADR-038)
+Gamelan ritme: RhythmGameService (server, chart + validasi + skor), KafanQuestService (objek Gamelan, transisi, hadiah), GamelanController (client, 4 kolom, Q W E R / ketuk), GamelanConfig. Perubahan GDD disetujui user: SATU pemain, 4 kolom, 97 detik. Alur: laporan Kantil (Pemandu_KantilDone) memulai KAFAN; [E] Mainkan Gamelan; skor >= 80 -> Kain Kafan -> simpan di RitualCollection. Server lulus harness offline (53 cek); GUI hanya kompilasi; BELUM dites di Studio. DEPENDENCY: Workspace.QuestObjects.Gamelan, template Tool KainKafan, ID musik di GamelanConfig.SOUND_ID (placeholder kosong = main tanpa suara). Risiko terbuka: Kain Kafan di Backpack hilang jika pemegang mati/respawn (ADR-018, sama seperti item quest lain); anti-bot terbatas (lihat ADR-038).
 
 ## NEXT ACTION
 

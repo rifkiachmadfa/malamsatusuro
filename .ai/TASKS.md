@@ -115,7 +115,7 @@ KODE & TES STUDIO OK untuk 5.1–5.8 (dilaporkan user, Studio normal, 2026-10-11
 # PHASE 6 — KNOCK / REVIVE
 
 Status:
-IN PROGRESS. Dikerjakan bertahap sesuai ADR-031; user memvalidasi tiap tahap. 6.1, 6.1b, 6.2 DITES user di Studio (normal, 2026-10-11).
+DONE — ditutup dan dites user di Studio (dilaporkan user 2026-10-11). Dikerjakan bertahap sesuai ADR-031.
 
 - [x] 6.1 Knock state (KnockService, server): berbaring + tidak bisa bergerak/berinteraksi, knock dari bunga salah — DITES user di Studio (normal, 2026-10-11)
 - [x] 6.1b Kegagalan solo vs multiplayer (FailureService, ADR-032): solo = respawn + reset quest 2 + mulai lagi dari Pemandu; multiplayer = knock — DITES user di Studio (normal, 2026-10-11)
@@ -147,20 +147,22 @@ Alur target: pemain masuk ke PLACE LOBBY terpisah (belum dibuat) -> memilih area
 # PHASE 7 — KAIN KAFAN / GAMELAN
 
 Status:
-NOT STARTED
+IN PROGRESS (ADR-038). Perubahan GDD disetujui user 2026-10-11: SATU pemain bermain, 4 kolom (Q W E R / ketuk), durasi 97 detik, musik placeholder. Kode ditulis; BELUM dites di Studio.
 
-- [ ] Gamelan interaction
-- [ ] Rhythm UI
-- [ ] four columns
-- [ ] Note system
-- [ ] Input handling
-- [ ] Score
-- [ ] Score validation
-- [ ] Retry
-- [ ] Player completion
-- [ ] All-player completion
-- [ ] Reward
-- [ ] NPC submission
+- [x] Gamelan interaction ([E] Mainkan, KafanQuestService) — kode ditulis, belum dites Studio
+- [x] Rhythm UI (GamelanController) — kode ditulis, hanya kompilasi, belum dites Studio
+- [x] four columns (Q W E R di PC, ketuk kolom di mobile)
+- [x] Note system (chart acak di grid BPM, dibuat server) — beatmap sesuai musik asli = menyusul
+- [x] Input handling (tekan saat ditekan; Q/W/E/R ditelan; karakter dibekukan server)
+- [x] Score (persen poin maksimum; Perfect 10, Good 7)
+- [x] Score validation (server: sinkron jam, once-per-note, rate limit; harness offline 53 cek lulus)
+- [x] Retry (gagal skor = main lagi tanpa hukuman)
+- [x] Player completion (SATU pemain; ALL_PLAYER_COMPLETE -> GAMELAN_COMPLETE)
+- [x] Reward (KainKafan ke pemain yang lulus; butuh template ServerStorage.QuestTemplates.KainKafan)
+- [x] NPC submission = simpan di RitualCollection (sudah ada di RitualConfig; belum dites untuk Kafan)
+- [ ] Isi ID musik di GamelanConfig.SOUND_ID; sesuaikan BPM/LEAD_IN agar not menyatu dengan musik
+- [ ] Tes Studio (lihat SESSION_HANDOFF "Uji Studio Phase 7")
+- [ ] Opsional nanti: musik terdengar rekan, beatmap per lagu, anti-bot lebih ketat
 
 
 # PHASE 8 — FINAL RITUAL

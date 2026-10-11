@@ -199,6 +199,33 @@ Prasyarat: `Workspace.QuestObjects.ZaitunSpawns` berisi >= 6 Part/Model; templat
 5. Kelor/bunga tidak berubah (tanpa pengganti). Revive (6.4) tetap jalan.
 Laporkan Output dan jika ada pickup yang muncul di titik yang sama dua kali sebelum siklus baru.
 
+## Uji Studio Phase 7 (gamelan ritme, ADR-038)
+Prasyarat Studio: `Workspace.QuestObjects.Gamelan` (Model/Part); `ServerStorage.QuestTemplates.KainKafan` (Tool dengan Handle, Anchored=false). `GamelanConfig.SOUND_ID` boleh kosong (main tanpa suara) atau isi "rbxassetid://<id>". Test > Clients 2 (satu pemain bermain, satu mengamati).
+Jalan pintas (Command Bar server) agar langsung ke quest Kafan tanpa memainkan Keris/Kantil:
+```lua
+local S = game.ServerScriptService.Server.Services
+local Q = require(S.QuestService)
+local C = require(game.ReplicatedStorage.Shared.Config.QuestConfig)
+for _, id in { "KERIS", "KANTIL" } do
+	local def = C.Quests[id]
+	for i = 2, #def.states do Q.transition(id, def.states[i]) end
+end
+Q.activate("KAFAN"); Q.transition("KAFAN", "FIND_GAMELAN")
+```
+(Efek samping: service lain ikut bereaksi pada state itu, mis. spawn pickup; abaikan.) Alur normal: simpan Kantil di RitualCollection -> bicara ke Pemandu (Pemandu_KantilDone) -> quest Kafan mulai.
+1. EXPECTED: di FIND_GAMELAN gamelan menampilkan prompt "[E] Mainkan Gamelan". Quest UI: "Cari tempat gamelan".
+2. [E]: GUI ritme muncul (4 kolom, huruf Q W E R di bawah, SKOR kiri atas, waktu 1:37 kanan atas, tombol BATAL). Output server `sesi dimulai untuk <nama> (N not)`. Toast "Kamu mulai memainkan gamelan." / rekan: "<nama> mulai memainkan gamelan." Quest UI: objective pertama tercentang.
+3. Musik: bila SOUND_ID diisi, musik mulai bersamaan dengan jam sesi; bila kosong, tidak ada suara tetapi not tetap jalan. Not pertama muncul ~3 detik setelah mulai.
+4. PC: tekan Q W E R saat not tiba di garis putih. Karakter TIDAK berjalan saat W ditekan, tidak melompat, E tidak memicu interaksi lain. Mobile (Device Emulator): ketuk kolom. Mouse: klik kolom.
+5. Umpan balik: PERFECT / GOOD / MISS di tengah, combo "xN", kolom berkedip saat ditekan, SKOR bertambah.
+6. Setelah 1:37 (dan hitung mundur 0:00): layar "Menghitung skor...", lalu hasil. Skor >= 80: "KAIN KAFAN DIDAPAT", toast skor + "Kamu mendapatkan Kain Kafan. Simpan di tempat ritual." (rekan mendapat toast), item Kain Kafan di Backpack, Quest UI maju. Skor < 80: "SKOR TIDAK CUKUP (BUTUH 80)", toast skor, [E] gamelan tetap bisa diulang.
+7. Pemain lain menekan [E] saat A bermain: toast "<A> sedang memainkan gamelan.", tidak ada sesi kedua. Pemain lain tidak melihat GUI A.
+8. BATAL di tengah: GUI tutup, musik berhenti, karakter bisa bergerak lagi, tidak ada kain, bisa mulai ulang.
+9. Reset karakter / knock di tengah sesi: GUI tutup, tidak ada hasil/hadiah, karakter normal.
+10. Setelah dapat kain: [E] gamelan hilang; [E] Simpan di RitualCollection -> quest KAFAN COMPLETE (ritual 3/3).
+11. Output server TANPA error; catat apakah terasa not terlambat/terlalu cepat terhadap musik (untuk menyetel BPM/LEAD_IN dan jendela waktu).
+Laporkan Output (server dan client), skor yang didapat, dan perilaku yang berbeda dari EXPECTED (terutama sinkron suara-not di mobile).
+
 ## Langkah berikutnya
 1. User: uji 2.1 di atas dan lapor Output; tinjau SkyboxInserter; siapkan naskah dialog Pemandu.
 2. Task 2.2 Quest UI, Task 2.3 alur Pemandu -> quest.

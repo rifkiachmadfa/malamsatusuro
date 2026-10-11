@@ -19,10 +19,11 @@ local INTRO_DIALOGUE_ID = "Pemandu_Intro"
 
 local GameState = GameConfig.GameState
 
--- Cara memulai tiap quest: state game dan state pertama quest. Quest KAFAN ditambahkan di Phase 7.
+-- Cara memulai tiap quest: state game dan state pertama quest.
 local QUEST_FLOW: { [string]: { gameState: string, startState: string } } = {
 	KERIS = { gameState = GameState.QUEST_KERIS, startState = "SEARCHING_KELOR" },
 	KANTIL = { gameState = GameState.QUEST_KANTIL, startState = "SEARCHING_FLOWERS" },
+	KAFAN = { gameState = GameState.QUEST_KAFAN, startState = "FIND_GAMELAN" },
 }
 
 type DialogueRule = string | (player: Player?) -> string
@@ -51,12 +52,23 @@ local QUEST_DIALOGUES: { [string]: { [string]: DialogueRule } } = {
 		CANTIL_BLACK_OBTAINED = "Pemandu_KantilStore",
 		RETRY_GUIDE = "Pemandu_KantilRetry", -- setelah solo gagal (ADR-034)
 	},
+	KAFAN = {
+		FIND_GAMELAN = "Pemandu_KafanSearch",
+		GAMELAN_ACTIVE = "Pemandu_KafanSearch",
+		KAIN_OBTAINED = function(player: Player?): string
+			if player and ItemService.has(player, "KainKafan") then
+				return "Pemandu_KafanStore"
+			end
+			return "Pemandu_KafanWait"
+		end,
+	},
 }
 
 -- Dialog LAPORAN saat sebuah quest sudah COMPLETE (item sudah disimpan di RitualCollection, ADR-026).
 -- Pemandu hanya melapor; menamatkan dialog ini memberi quest berikutnya (jika masih LOCKED).
 local REPORT_DIALOGUES: { [string]: { dialogueId: string, nextQuestId: string? } } = {
 	KERIS = { dialogueId = "Pemandu_KerisDone", nextQuestId = "KANTIL" },
+	KANTIL = { dialogueId = "Pemandu_KantilDone", nextQuestId = "KAFAN" },
 }
 
 -- Dialog ULANGI: menamatkannya memulai ulang quest yang berada di retryState (ADR-034).
