@@ -569,16 +569,44 @@ GDD awal (GAME_CONTEXT bagian 9, ADR-019): semua pemain harus mencapai skor >= 8
 Decision:
 
 - Perubahan terhadap GDD (disetujui user): 4 kolom (bukan 6); SATU pemain bermain; skor >= 80 meluluskan quest untuk seluruh party. Tidak ada lagi skor/komplesi per pemain. State party Kafan: LOCKED -> ACTIVE -> FIND_GAMELAN -> GAMELAN_ACTIVE -> GAMELAN_COMPLETE -> KAIN_OBTAINED -> KAIN_SUBMITTED -> COMPLETE (`ALL_PLAYER_COMPLETE` diganti `GAMELAN_COMPLETE`; ADR-019 poin Kafan digantikan).
-- Skor akhir = persen dari poin maksimum (0-100): Perfect 10 poin, Good 7, Miss 0, lulus bila >= 80 (ASUMSI: GDD hanya menyebut poin per not dan batas 80; dipilih persen agar batas 80 tetap bermakna berapa pun jumlah not). Jendela waktu: Perfect +-0,10 dtk, Good +-0,20 dtk (config).
+- [DIGANTIKAN ADR-039: skor kini mulai 100 dan turun] Skor akhir = persen dari poin maksimum (0-100): Perfect 10 poin, Good 7, Miss 0, lulus bila >= 80 (ASUMSI: GDD hanya menyebut poin per not dan batas 80; dipilih persen agar batas 80 tetap bermakna berapa pun jumlah not). Jendela waktu: Perfect +-0,10 dtk, Good +-0,20 dtk (config).
 - Dua service, mengikuti pola Keris: `RhythmGameService` (mesin minigame generik: chart, sesi, validasi, skor) dan `KafanQuestService` (objek Gamelan, transisi state, hadiah, pemegang kain). Client: `GamelanController` (GUI + input). Config: `shared/Config/GamelanConfig`. Remote: `GamelanUpdate`, `GamelanAction`.
 - Server-authoritative: chart dibuat server (acak per sesi di grid BPM, belum ada beatmap per lagu — ASUMSI sampai musik asli masuk). Client memuat musik lalu mengirim `Ready` (jam sesi server mulai di saat itu), lalu `Hit {lane, t}` tiap tekanan. Server memeriksa: payload valid; lane integer 1-4; jam lagu `t` cocok dengan jam server (tidak boleh dari masa depan > 0,3 dtk atau tertinggal > 2 dtk); jarak minimal antar tekanan; batas total tekanan; satu not hanya bisa dinilai sekali. Server menutup sesi sendiri saat durasi habis (+3 dtk) dan menghitung skor. Client tidak mengirim "selesai" atau skor.
 - BATASAN JUJUR: server tidak bisa membedakan bot yang menekan di waktu nyata dari manusia (client harus tahu chart agar bisa menggambar not). Yang dicegah: skor instan tanpa waktu berjalan, duplikasi, spam, dan skor yang dikarang client. Bila perlu nanti: kirim chart bertahap per jendela dan/atau deteksi pola tekanan terlalu sempurna.
 - Selama bermain: state pemain MINIGAME; karakter dibekukan server (WalkSpeed/Jump 0, dipulihkan hanya bila masih beku oleh sesi) karena Q/W/E/R bertabrakan dengan gerak/interaksi; client menelan Q/W/E/R (ContextActionService prioritas tinggi) dan InteractionController diblokir. Sesi dibatalkan tanpa hasil/hadiah bila pemain knock, karakter hilang, keluar, menekan BATAL, atau musik tidak siap dalam 10 dtk.
-- Hanya satu sesi per party. Pemain lain yang menekan [E] diberi notifikasi "<nama> sedang memainkan gamelan". Gagal skor = tetap GAMELAN_ACTIVE; siapa pun boleh mencoba lagi, tanpa hukuman.
+- Hanya satu sesi per party. Pemain lain yang menekan [E] diberi notifikasi "<nama> sedang memainkan gamelan". Gagal skor = tetap GAMELAN_ACTIVE; siapa pun boleh mencoba lagi (ADR-039 menambah jumpscare saat gagal, tetap tanpa knock/reset).
 - Alur quest: Pemandu_KantilDone (laporan Kantil COMPLETE) memulai KAFAN (GameFlowService: `KAFAN` di QUEST_FLOW dan REPORT_DIALOGUES KANTIL). [E] Mainkan pertama: FIND_GAMELAN -> GAMELAN_ACTIVE. Lulus: beri KainKafan -> GAMELAN_COMPLETE -> KAIN_OBTAINED; kain disimpan di RitualCollection (ADR-026, tidak berubah). Pemegang kain keluar sebelum menyimpan: kain dipindah ke pemain lain.
-- Musik diputar lokal di client pemain yang bermain (sinkron dengan jam sesi). Opsi nanti: putar juga di model gamelan agar rekan ikut mendengar.
+- Musik diputar lokal di client pemain yang bermain (sinkron dengan jam sesi). [Opsi rekan ikut mendengar DIKERJAKAN di ADR-039.]
 
 Dependency (Studio): `Workspace.QuestObjects.Gamelan` (Model/Part), template Tool `ServerStorage.QuestTemplates.KainKafan`, ID audio di `GamelanConfig.SOUND_ID`.
 
 Status:
 ACCEPTED sebagai arahan user; server lulus harness offline; client hanya lulus kompilasi; BELUM dites di Studio.
+
+
+
+## ADR-039 — GAMELAN: SKOR DIPERTAHANKAN (100 -> TURUN), GAGAL < 80 = JUMPSCARE, MUSIK TERDENGAR PEMAIN LAIN
+
+Context:
+
+ADR-038: skor akhir = persen poin yang dikumpulkan; gagal skor hanya notifikasi dan boleh ulang tanpa hukuman. REVISI user 2026-10-11 (sesi lanjutan Phase 7): skor MULAI 100 dan pemain harus mempertahankannya; skor < 80 = langsung tutup UI + jumpscare seperti minigame makam (model hantu sama dulu, nanti diganti); musik harus terdengar pemain lain, UI hanya untuk pemain yang bermain, pemain lain bebas bergerak, pemain yang bermain diam.
+
+Decision:
+
+- Penilaian (MENGGANTIKAN poin ADR-038 tentang "persen poin"): `START_SCORE = 100`; tiap Good -`GOOD_PENALTY` (1), tiap Miss -`MISS_PENALTY` (3), Perfect -`PERFECT_PENALTY` (0). Konstanta `PERFECT_POINTS`/`GOOD_POINTS` dihapus. Angka penalti ADALAH ASUMSI AI (user tidak menyebut): 6 Miss masih aman (82), Miss ke-7 gagal (79); 20 Good aman, Good ke-21 gagal. Semua di GamelanConfig untuk disetel.
+- Gagal kapan pun skor < `REQUIRED_SCORE` (80), diputuskan SERVER. Miss dinilai server real-time (Heartbeat): not menjadi Miss setelah `note.time + GOOD_WINDOW + MISS_GRACE` (0,4 dtk kelonggaran latensi) bila belum dinilai; tanpa tekanan sama sekali = gagal di Miss ke-7, bukan di akhir lagu. Sapu akhir sebelum menghitung hasil. Tekanan tanpa not tetap tanpa penalti (hindari hukuman karena spam/latensi).
+- Gagal: `RhythmGameService.failSession` menutup sesi (kirim `Close` -> client menutup GUI dan menghentikan musik lokal), lalu memanggil `hooks.onFail` di thread terpisah. Lulus = bertahan sampai durasi habis dengan skor >= 80; alur hadiah ADR-038 tidak berubah. Tidak ada layar Result untuk gagal.
+- API baru `RhythmGameService.start(player, onFinish, hooks?)` (kompatibel mundur) dengan `Hooks = { onFail, onPlaying, onClosed }`. Remote `GamelanUpdate` menambah `{ action = "Score", score }` (server -> client tiap skor berubah; client TIDAK menghitung skor sendiri) dan `Start.score`.
+- Jumpscare: `FailureService.scare(player, reason)` = CUTSCENE -> jumpscare (JumpscareService, ADR-033) -> NORMAL, TANPA knock/reset quest. `FailureConfig.JumpscareByReason.GAMELAN_FAIL = "Pocong"` (placeholder; ganti ke hantu lain = ubah satu entri + tambah model di JumpscareConfig.Ghosts). ASUMSI: "sama seperti grave" diartikan jumpscare saja; knock/respawn grave TIDAK dipakai karena ADR-038 menetapkan gagal gamelan boleh diulang langsung. Jika user ingin hukuman penuh, ganti `FailureService.scare` di `KafanQuestService.onFail` dengan `FailureService.fail`.
+- Musik untuk pemain lain: `hooks.onPlaying` (saat Ready) menulis Attribute pada objek Gamelan: `MusicStartServerTime` lalu `MusicPlayerUserId`; `hooks.onClosed` (semua akhir sesi) menghapusnya. Client lain (`GamelanMusicController`) memutar `Sound` spasial di BasePart gamelan (InverseTapered, min 20 / maks 160 studs), `TimePosition` dari `Workspace:GetServerTimeNow() - start` sehingga pemain yang baru masuk ikut tersinkron. Pemain yang bermain TIDAK memutar suara dunia (memakai musik lokal yang sinkron dengan not; tidak ada gema ganda). Memakai Attribute (pola ADR-014), bukan Remote baru. Presentasi audio murni di client; server tidak mempercayai apa pun dari client untuk ini.
+- UI hanya di client pemain yang bermain (tidak berubah: GUI lokal, Remote `GamelanUpdate` hanya `FireClient` ke pemain itu). Pemain lain tidak dikunci apa pun. Pemain yang bermain diam: WalkSpeed/Jump 0 dari server + Q/W/E/R ditelan client + InteractionController diblokir (ADR-038, tidak berubah). Dipulihkan di closeSession (lulus/gagal/batal/keluar), dan jumpscare lalu mengunci ulang sebentar.
+
+Consequences / batasan:
+
+- Sinkron musik dunia vs musik pemain tidak presisi (selisih latensi jaringan, beberapa ratus ms); disengaja, hanya latar bagi pemain lain.
+- Skor di layar bergerak sedikit terlambat dari teks MISS (server menilai Miss +0,4 dtk setelah client menampilkan MISS).
+- Anti-bot tetap terbatas (ADR-038). Gagal-karena-diam mempersulit "hit nol" tetapi tidak membedakan bot.
+- Kain Kafan di Backpack tetap hilang bila pemegang mati (ADR-018, tidak berubah).
+
+Status:
+ACCEPTED sebagai arahan user; logika server lulus harness offline; client (GUI, musik dunia) BELUM dites di Studio.

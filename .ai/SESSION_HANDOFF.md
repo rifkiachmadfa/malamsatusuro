@@ -226,6 +226,20 @@ Q.activate("KAFAN"); Q.transition("KAFAN", "FIND_GAMELAN")
 11. Output server TANPA error; catat apakah terasa not terlambat/terlalu cepat terhadap musik (untuk menyetel BPM/LEAD_IN dan jendela waktu).
 Laporkan Output (server dan client), skor yang didapat, dan perilaku yang berbeda dari EXPECTED (terutama sinkron suara-not di mobile).
 
+## Uji Studio Phase 7 REVISI (skor 100, gagal < 80, musik multiplayer; ADR-039)
+Menggantikan poin 3 dan 6 uji Phase 7 di atas. Prasyarat sama (objek Gamelan, template KainKafan) + `GamelanConfig.SOUND_ID` terisi + `ServerStorage/GhostModels/Pocong` ada. Jalan pintas Command Bar server sama seperti di atas. Test > Clients 2 (A bermain, B mengamati); idealnya Clients 3.
+1. EXPECTED: [E] gamelan -> GUI hanya di layar A; SKOR tertulis 100 sejak awal. Hanya layar A yang memunculkan GUI; B tidak melihat apa pun dan tetap bisa berjalan/lompat; A tidak bisa berjalan/lompat/menggeser kamera karakter (Q/W/E/R tidak menggerakkan).
+2. MUSIK: setelah A mulai (setelah "Memuat musik..."), A mendengar musik lokal tanpa gema. B (berdiri dekat gamelan) mendengar musik yang sama, makin pelan bila menjauh (hilang jauh di atas ~160 studs). Output client B tanpa warn `GamelanMusicController`. Lapor apakah ada gema/dobel di A dan apakah B mendengar mulai dari awal.
+3. B masuk (Test > tambah client) ATAU berjalan mendekat saat lagu sudah berjalan beberapa detik: musik langsung terdengar dari posisi lagu yang kira-kira sama (bukan dari awal).
+4. Pertahankan skor: tekan tepat waktu (Perfect) -> SKOR tetap 100. Good -> turun 1; Miss -> turun 3 (angka bisa disetel di GamelanConfig). Skor di layar berubah mengikuti server.
+5. GAGAL: sengaja tidak menekan apa pun. EXPECTED: setelah Miss ke-7 (sekitar 4-5 detik pertama lagu) GUI A LANGSUNG hilang, musik lokal A berhenti, jumpscare Pocong muncul di layar A saja (B tidak melihat), setelah ~2 detik A normal lagi, toast "Skor turun ke ... Kamu gagal. Mainkan gamelan lagi." (B: "<A> gagal memainkan gamelan."). Musik di B ikut berhenti. TIDAK ada knock, tidak ada reset quest; [E] gamelan masih ada.
+6. Ulangi dari awal setelah gagal: sesi baru normal; musik B menyala lagi, tidak ada musik dobel/tumpang.
+7. LULUS: pertahankan >= 80 sampai 1:37 (mis. main sampai habis). EXPECTED: layar hasil "KAIN KAFAN DIDAPAT", Kain Kafan di Backpack A, musik B berhenti, tanpa jumpscare. Simpan di RitualCollection -> KAFAN COMPLETE.
+8. BATAL di tengah: GUI tutup, musik A dan B berhenti, TANPA jumpscare. Reset karakter / knock A di tengah sesi: sesi batal, tanpa jumpscare, musik B berhenti.
+9. A keluar game saat bermain: musik B berhenti, B tidak error, gamelan bisa dimainkan lagi.
+10. Mobile (Device Emulator) untuk A: GUI terbaca, ketuk kolom berfungsi, jumpscare menutupi layar lalu hilang.
+Laporkan Output server/client, apakah kesulitan terasa pas (angka penalti), dan kualitas sinkron musik di B.
+
 ## Langkah berikutnya
 1. User: uji 2.1 di atas dan lapor Output; tinjau SkyboxInserter; siapkan naskah dialog Pemandu.
 2. Task 2.2 Quest UI, Task 2.3 alur Pemandu -> quest.

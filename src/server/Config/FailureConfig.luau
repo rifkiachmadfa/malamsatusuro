@@ -11,6 +11,7 @@ FailureConfig.FAIL_ON_WRONG_FLOWER = true
 -- Jumpscare per penyebab gagal (id hantu dari JumpscareConfig.Ghosts). Penyebab tanpa entri memakai DEFAULT_JUMPSCARE.
 FailureConfig.JumpscareByReason = table.freeze({
 	WRONG_FLOWER = "Pocong",
+	GAMELAN_FAIL = "Pocong", -- PLACEHOLDER (ADR-039): ganti ke hantu lain nanti, cukup tambah entri di JumpscareConfig.Ghosts
 } :: { [string]: string })
 FailureConfig.DEFAULT_JUMPSCARE = "Pocong"
 

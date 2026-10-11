@@ -185,12 +185,13 @@ Flow:
 FIND GAMELAN
 → [E] MAINKAN GAMELAN (satu pemain)
 → RHYTHM GAME (4 kolom; PC: Q W E R, mobile: ketuk layar; musik gamelan 1:37)
-→ SCORE >= 80
+→ SKOR MULAI 100, harus dipertahankan >= 80 sampai musik selesai (ADR-039)
 → KAIN KAFAN
 → SUBMIT (RitualCollection)
 → QUEST COMPLETE
 
-Gagal skor: boleh mencoba lagi (siapa pun di party), tanpa hukuman.
+Gagal (skor < 80 kapan pun): UI pemain langsung tutup + jumpscare (hantu placeholder), lalu siapa pun di party boleh mencoba lagi (tanpa knock/reset, ADR-039).
+Musik gamelan terdengar pemain lain (spasial di gamelan); UI hanya di layar pemain yang bermain; pemain lain bebas bergerak, pemain yang bermain diam.
 
 (Desain lama, digantikan: semua pemain harus mencapai skor >= 80 di 6 kolom.)
 

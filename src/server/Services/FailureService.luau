@@ -77,6 +77,22 @@ local function failureSequence(player: Player, reason: string, questId: string)
 	end
 end
 
+-- Jumpscare TANPA hukuman lanjutan (tanpa knock, tanpa reset quest): kunci pemain (CUTSCENE) -> jumpscare di
+-- layarnya -> kembali NORMAL. Dipakai kegagalan yang boleh langsung diulang (gamelan, ADR-039). MENUNGGU (yield)
+-- selama jumpscare; panggil dari thread yang boleh yield.
+function FailureService.scare(player: Player, reason: string)
+	if player.Parent ~= Players then
+		return
+	end
+	if not GameManager.setPlayerState(player, PlayerState.CUTSCENE) then
+		return
+	end
+	JumpscareService.play(player, Config.JumpscareByReason[reason] or Config.DEFAULT_JUMPSCARE)
+	if player.Parent == Players and GameManager.getPlayerState(player) == PlayerState.CUTSCENE then
+		GameManager.setPlayerState(player, PlayerState.NORMAL)
+	end
+end
+
 -- Pemain gagal di quest `questId` karena `reason` (lihat KnockConfig.Reason).
 function FailureService.fail(player: Player, reason: string, questId: string)
 	if player.Parent ~= Players then

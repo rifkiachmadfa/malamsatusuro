@@ -11,7 +11,7 @@ PHASE 3 — INTERACTION & INVENTORY: ItemService selesai (boot diuji; give/consu
 PHASE 4 — KERIS PUSAKA: SELESAI dengan catatan (alur Kelor -> kunci -> peti -> puzzle -> keris -> simpan di RitualCollection; 3–4 pemain di Phase 10).
 PHASE 5 — KEMBANG KANTIL HITAM: 5.1–5.8 SELESAI dan DITES user di Studio (normal, 2026-10-11). Sisa (giliran tunggal, revive, wipe, flower reset) dikerjakan di Phase 6.
 PHASE 6 — KNOCK / REVIVE: DITUTUP dan dites user di Studio (dilaporkan user 2026-10-11; rincian per-poin tidak dilaporkan).
-PHASE 7 — KAIN KAFAN / GAMELAN: SEDANG BERJALAN. Kode gamelan ritme (satu pemain, 4 kolom) ditulis; BELUM dites di Studio (ADR-038).
+PHASE 7 — KAIN KAFAN / GAMELAN: SEDANG BERJALAN. Kode gamelan ritme (satu pemain, 4 kolom) ditulis; direvisi 2026-10-11 (ADR-039): skor mulai 100, gagal < 80 = UI tutup + jumpscare, musik terdengar pemain lain. Logika server lulus harness offline; client/GUI/audio BELUM dites di Studio.
 
 
 ## TOOLCHAIN
@@ -104,6 +104,9 @@ Task 6.3 (KnockController, overlay vinyet + teks "KAMU PINGSAN", hotbar disembun
 
 ## UPDATE 2026-10-11 (Phase 7 awal, ADR-038)
 Gamelan ritme: RhythmGameService (server, chart + validasi + skor), KafanQuestService (objek Gamelan, transisi, hadiah), GamelanController (client, 4 kolom, Q W E R / ketuk), GamelanConfig. Perubahan GDD disetujui user: SATU pemain, 4 kolom, 97 detik. Alur: laporan Kantil (Pemandu_KantilDone) memulai KAFAN; [E] Mainkan Gamelan; skor >= 80 -> Kain Kafan -> simpan di RitualCollection. Server lulus harness offline (53 cek); GUI hanya kompilasi; BELUM dites di Studio. DEPENDENCY: Workspace.QuestObjects.Gamelan, template Tool KainKafan, ID musik di GamelanConfig.SOUND_ID (placeholder kosong = main tanpa suara). Risiko terbuka: Kain Kafan di Backpack hilang jika pemegang mati/respawn (ADR-018, sama seperti item quest lain); anti-bot terbatas (lihat ADR-038).
+
+## UPDATE 2026-10-11 (Phase 7 revisi, ADR-039)
+Skor gamelan kini 100 -> turun (Good -1, Miss -3; asumsi, di GamelanConfig); Miss dinilai server real-time; skor < 80 kapan pun = `RhythmGameService.failSession` (client menutup GUI + musik) -> `KafanQuestService.onFail` -> `FailureService.scare` (jumpscare Pocong placeholder, TANPA knock/reset quest) -> boleh main lagi. Musik untuk pemain lain: Attribute `MusicPlayerUserId` + `MusicStartServerTime` di `Workspace.QuestObjects.Gamelan`, diputar `GamelanMusicController` sebagai suara spasial; pemain yang bermain memakai musik lokal. Server lulus harness offline baru (52 cek, memuat src/ asli); GUI client, jumpscare nyata, musik spasial, dan multiplayer sungguhan BELUM dites di Studio. Keputusan terbuka untuk user: apakah gagal gamelan perlu knock/respawn seperti makam (saat ini TIDAK), dan angka penalti.
 
 ## NEXT ACTION
 

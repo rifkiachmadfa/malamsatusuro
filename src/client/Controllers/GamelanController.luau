@@ -2,7 +2,9 @@
 -- GamelanController: GUI minigame ritme gamelan (4 kolom, gaya Guitar Hero), Phase 7 (ADR-038).
 -- PC: tombol Q W E R. Mobile/mouse: ketuk kolom. Hanya tampilan dan input:
 --   server membuat chart, memvalidasi tiap tekanan, dan menghitung skor akhir.
--- Penilaian di client (Perfect/Good/Miss) hanya umpan balik instan; hasil akhir SELALU dari server.
+-- Penilaian di client (Perfect/Good/Miss) hanya umpan balik instan; SKOR dan hasil akhir SELALU dari server (ADR-039):
+-- skor mulai 100 dan hanya turun; server mengirim "Score" tiap berubah dan "Close" bila skor < batas (gagal).
+-- GUI ini hanya ada di layar pemain yang bermain; pemain lain tidak melihatnya (mereka hanya mendengar musiknya).
 -- Selama bermain, Q/W/E/R "ditelan" (Sink) agar karakter tidak berjalan dan E tidak memicu interaksi lain.
 
 local ContentProvider = game:GetService("ContentProvider")
@@ -56,7 +58,6 @@ local duration = 0
 local clockStart = 0
 local sound: Sound? = nil
 local renderConnection: RBXScriptConnection? = nil
-local pointsLocal = 0
 local combo = 0
 local flashToken = 0
 
@@ -116,13 +117,9 @@ local function flashLane(lane: number)
 	end)
 end
 
-local function updateScore()
-	local total = #notes
-	local percent = 0
-	if total > 0 then
-		percent = math.floor(pointsLocal / (total * Config.PERFECT_POINTS) * 100 + 0.5)
-	end
-	scoreLabel.Text = string.format("SKOR %d", percent)
+-- Skor hanya ditampilkan; nilainya dari server.
+local function setScore(score: number)
+	scoreLabel.Text = string.format("SKOR %d", score)
 end
 
 -- ===== Not =====
@@ -183,16 +180,8 @@ local function press(lane: number)
 
 	best.state = "HIT"
 	destroyNoteFrame(best)
-	if bestDelta <= Config.PERFECT_WINDOW then
-		pointsLocal += Config.PERFECT_POINTS
-		combo += 1
-		showJudgement("PERFECT")
-	else
-		pointsLocal += Config.GOOD_POINTS
-		combo += 1
-		showJudgement("GOOD")
-	end
-	updateScore()
+	combo += 1
+	showJudgement(if bestDelta <= Config.PERFECT_WINDOW then "PERFECT" else "GOOD")
 end
 
 -- ===== Loop render =====
@@ -320,7 +309,9 @@ local function beginPlaying(myToken: number)
 	end
 	actionRemote:FireServer({ action = "Ready" })
 	local touchOnly = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
-	infoLabel.Text = if touchOnly then "Ketuk kolom saat not tiba di garis" else "Tekan Q W E R (atau klik kolom) saat not tiba di garis"
+	infoLabel.Text = if touchOnly
+		then string.format("Ketuk kolom tepat waktu. Jaga skor di atas %d!", Config.REQUIRED_SCORE)
+		else string.format("Tekan Q W E R (atau klik kolom) tepat waktu. Jaga skor di atas %d!", Config.REQUIRED_SCORE)
 	stopRender()
 	renderConnection = RunService.RenderStepped:Connect(onRender)
 end
@@ -359,7 +350,8 @@ end
 local function onStart(data: { [string]: any })
 	local newNotes = readNotes(data.notes)
 	local newDuration = data.duration
-	if not newNotes or typeof(newDuration) ~= "number" then
+	local startScore = data.score
+	if not newNotes or typeof(newDuration) ~= "number" or typeof(startScore) ~= "number" then
 		return
 	end
 	if open then
@@ -369,9 +361,8 @@ local function onStart(data: { [string]: any })
 	clearNotes()
 	notes = newNotes
 	duration = newDuration
-	pointsLocal = 0
 	combo = 0
-	updateScore()
+	setScore(startScore)
 	judgementLabel.Text = ""
 	comboLabel.Text = ""
 	resultLabel.Text = ""
@@ -436,12 +427,13 @@ local function onResult(data: { [string]: any })
 	scoreLabel.Text = string.format("SKOR %d", score)
 	timeLabel.Text = ""
 
+	-- Gagal (skor < batas) tidak lewat sini: server mengirim "Close" lalu jumpscare. Result hanya untuk sesi yang bertahan.
 	if data.rewarded == true then
 		resultLabel.Text = "KAIN KAFAN DIDAPAT"
 	elseif data.passed == true then
 		resultLabel.Text = "TERJADI MASALAH"
 	else
-		resultLabel.Text = string.format("SKOR TIDAK CUKUP (BUTUH %d)", Config.REQUIRED_SCORE)
+		resultLabel.Text = "GAGAL"
 	end
 	infoLabel.Text = string.format("Perfect %d   Good %d   Miss %d", perfect, good, miss)
 
@@ -459,6 +451,10 @@ local function onUpdate(raw: unknown)
 	local data = raw :: { [string]: any }
 	if data.action == "Start" then
 		onStart(data)
+	elseif data.action == "Score" then
+		if open and typeof(data.score) == "number" then
+			setScore(data.score)
+		end
 	elseif data.action == "Result" then
 		onResult(data)
 	elseif data.action == "Close" then

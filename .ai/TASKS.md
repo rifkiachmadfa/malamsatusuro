@@ -154,16 +154,16 @@ IN PROGRESS (ADR-038). Perubahan GDD disetujui user 2026-10-11: SATU pemain berm
 - [x] four columns (Q W E R di PC, ketuk kolom di mobile)
 - [x] Note system (chart acak di grid BPM, dibuat server) — beatmap sesuai musik asli = menyusul
 - [x] Input handling (tekan saat ditekan; Q/W/E/R ditelan; karakter dibekukan server)
-- [x] Score (persen poin maksimum; Perfect 10, Good 7)
+- [x] Score (REVISI ADR-039: mulai 100, Good -1, Miss -3; gagal seketika < 80 -> UI tutup + jumpscare; kode ditulis, logika server lulus harness, belum dites Studio)
 - [x] Score validation (server: sinkron jam, once-per-note, rate limit; harness offline 53 cek lulus)
-- [x] Retry (gagal skor = main lagi tanpa hukuman)
+- [x] Retry (gagal skor = jumpscare lalu boleh main lagi; tanpa knock/reset, ADR-039)
+- [x] Musik terdengar pemain lain (Attribute di objek Gamelan + GamelanMusicController, ADR-039) — belum dites Studio
+- [ ] Ganti model hantu jumpscare gamelan (FailureConfig.JumpscareByReason.GAMELAN_FAIL; sementara Pocong)
 - [x] Player completion (SATU pemain; ALL_PLAYER_COMPLETE -> GAMELAN_COMPLETE)
 - [x] Reward (KainKafan ke pemain yang lulus; butuh template ServerStorage.QuestTemplates.KainKafan)
 - [x] NPC submission = simpan di RitualCollection (sudah ada di RitualConfig; belum dites untuk Kafan)
-- [ ] Isi ID musik di GamelanConfig.SOUND_ID; sesuaikan BPM/LEAD_IN agar not menyatu dengan musik
-- [ ] Tes Studio (lihat SESSION_HANDOFF "Uji Studio Phase 7")
-- [ ] Opsional nanti: musik terdengar rekan, beatmap per lagu, anti-bot lebih ketat
-
+- [x] ID musik sudah diisi user di GamelanConfig.SOUND_ID; sesuaikan BPM/LEAD_IN agar not menyatu dengan musik; setel GOOD/MISS_PENALTY sesuai rasa
+- [x] Tes Studio (lihat SESSION_HANDOFF "Uji Studio Phase 7")
 
 # PHASE 8 — FINAL RITUAL
 

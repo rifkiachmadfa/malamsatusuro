@@ -15,6 +15,7 @@ local GameConfig = require(Shared:WaitForChild("Config"):WaitForChild("GameConfi
 local GamelanConfig = require(Shared:WaitForChild("Config"):WaitForChild("GamelanConfig") :: ModuleScript)
 local Log = require(Shared:WaitForChild("Util"):WaitForChild("Log") :: ModuleScript)
 local Services = script.Parent
+local FailureService = require(Services:WaitForChild("FailureService") :: ModuleScript)
 local InteractionService = require(Services:WaitForChild("InteractionService") :: ModuleScript)
 local ItemService = require(Services:WaitForChild("ItemService") :: ModuleScript)
 local NoticeService = require(Services:WaitForChild("NoticeService") :: ModuleScript)
@@ -24,6 +25,7 @@ local RhythmGameService = require(Services:WaitForChild("RhythmGameService") :: 
 local TAG = "KafanQuestService"
 local QUEST_ID = "KAFAN"
 local KAIN_ITEM_ID = "KainKafan"
+local SCARE_REASON = "GAMELAN_FAIL" -- kunci di FailureConfig.JumpscareByReason
 
 local KafanQuestService = {}
 
@@ -46,6 +48,41 @@ local function refreshInteractable()
 	else
 		CollectionService:RemoveTag(gamelan, GameConfig.Interaction.TAG)
 	end
+end
+
+-- ===== Musik untuk pemain lain (ADR-039) =====
+-- Server hanya menandai SIAPA yang bermain dan KAPAN mulai lewat Attribute pada objek Gamelan (direplikasi ke semua
+-- client, termasuk pemain yang baru masuk). Client pemain LAIN memutar suara spasial di gamelan
+-- (GamelanMusicController); pemain yang bermain memakai musik lokalnya sendiri agar sinkron dengan not.
+
+local function startWorldMusic(player: Player)
+	if not gamelan then
+		return
+	end
+	-- Urutan: waktu mulai dulu, baru pemain (client bereaksi pada perubahan MUSIC_PLAYER_ATTR).
+	gamelan:SetAttribute(GamelanConfig.MUSIC_START_ATTR, Workspace:GetServerTimeNow())
+	gamelan:SetAttribute(GamelanConfig.MUSIC_PLAYER_ATTR, player.UserId)
+end
+
+local function stopWorldMusic()
+	if not gamelan then
+		return
+	end
+	gamelan:SetAttribute(GamelanConfig.MUSIC_PLAYER_ATTR, nil)
+	gamelan:SetAttribute(GamelanConfig.MUSIC_START_ATTR, nil)
+end
+
+-- Skor jatuh di bawah batas (ADR-039): UI sudah ditutup RhythmGameService. Jumpscare, lalu boleh mencoba lagi.
+local function onFail(player: Player, result: RhythmGameService.Result)
+	FailureService.scare(player, SCARE_REASON)
+	if player.Parent ~= Players then
+		return
+	end
+	NoticeService.notifyParty(
+		player,
+		string.format("Skor turun ke %d (batas %d). Kamu gagal. Mainkan gamelan lagi.", result.score, GamelanConfig.REQUIRED_SCORE),
+		string.format("%s gagal memainkan gamelan.", player.Name)
+	)
 end
 
 -- Dipanggil RhythmGameService saat sesi selesai. Return true jika Kain Kafan berhasil diberikan.
@@ -117,7 +154,12 @@ local function onGamelanInteract(player: Player, target: Instance)
 		return
 	end
 
-	if not RhythmGameService.start(player, onFinish) then
+	local hooks: RhythmGameService.Hooks = {
+		onFail = onFail,
+		onPlaying = startWorldMusic,
+		onClosed = stopWorldMusic,
+	}
+	if not RhythmGameService.start(player, onFinish, hooks) then
 		return
 	end
 	NoticeService.notifyParty(

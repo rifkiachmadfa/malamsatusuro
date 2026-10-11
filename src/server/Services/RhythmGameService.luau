@@ -1,17 +1,23 @@
 --!strict
 -- RhythmGameService: mesin minigame ritme 4 kolom (Guitar Hero) untuk gamelan (Phase 7, ADR-038).
 -- Server-authoritative: server membuat chart acak, menentukan kapan sesi mulai/selesai, memvalidasi SETIAP tekanan,
--- menghitung skor, dan memutuskan lulus/tidak. Client hanya menampilkan dan MENGIRIM tekanan { lane, t }.
--- Satu sesi aktif untuk seluruh party; hanya SATU pemain yang bermain. Hadiah diputuskan callback onFinish pemanggil.
+-- menilai Miss secara real-time, menghitung skor, dan memutuskan lulus/gagal. Client hanya menampilkan dan MENGIRIM
+-- tekanan { lane, t }. Satu sesi aktif untuk seluruh party; hanya SATU pemain yang bermain.
+-- Hadiah/hukuman diputuskan callback pemanggil (onFinish / hooks.onFail).
 --
--- Alur: start() -> client memuat musik -> "Ready" (jam sesi server mulai) -> tekanan "Hit" -> durasi habis ->
---       server menutup sesi, menghitung skor, memanggil onFinish, mengirim hasil.
+-- Skor (ADR-039): MULAI START_SCORE (100), turun per Good/Miss. Skor < REQUIRED_SCORE kapan pun = GAGAL SEKETIKA:
+-- client diminta menutup UI, sesi ditutup, hooks.onFail dipanggil (jumpscare oleh pemanggil).
+-- Bertahan sampai durasi habis = lulus.
+--
+-- Alur: start() -> client memuat musik -> "Ready" (jam sesi server mulai) -> tekanan "Hit" (+ tick Miss server) ->
+--       skor < batas: gagal | durasi habis: server menutup sesi, memanggil onFinish, mengirim hasil.
 -- Batasan jujur: server tidak bisa memastikan tekanan berasal dari tangan manusia; yang dijamin: tidak ada skor
 -- tanpa waktu nyata berjalan, tiap not hanya bisa dinilai sekali, tekanan dibatasi laju dan jumlah, dan hasil akhir
 -- selalu dari server.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local GameConfig = require(Shared:WaitForChild("Config"):WaitForChild("GameConfig") :: ModuleScript)
@@ -37,6 +43,17 @@ export type Result = {
 -- Dipanggil saat sesi selesai NORMAL (bukan dibatalkan). Return true = hadiah berhasil diberikan.
 export type FinishHandler = (player: Player, result: Result) -> boolean
 
+-- Hook opsional dari pemanggil (semua dipanggil lewat pcall).
+export type Hooks = {
+	-- Skor jatuh di bawah batas. Dipanggil SETELAH sesi ditutup dan UI client diminta tutup. Boleh yield
+	-- (dijalankan di thread terpisah), mis. memutar jumpscare.
+	onFail: ((player: Player, result: Result) -> ())?,
+	-- Musik pemain mulai (client mengirim Ready, jam sesi mulai).
+	onPlaying: ((player: Player) -> ())?,
+	-- Sesi berakhir dengan cara APA PUN (lulus, gagal, batal, keluar). Aman dipanggil tanpa onPlaying.
+	onClosed: ((player: Player) -> ())?,
+}
+
 type Note = { time: number, lane: number, judged: boolean }
 
 type Session = {
@@ -44,9 +61,12 @@ type Session = {
 	notes: { Note },
 	startedAt: number?, -- jam server saat client mengirim Ready
 	onFinish: FinishHandler,
+	hooks: Hooks,
 	perfect: number,
 	good: number,
-	points: number,
+	missed: number,
+	score: number, -- mulai START_SCORE, hanya turun
+	nextJudge: number, -- indeks not berikutnya yang dicek untuk Miss (not terurut waktu)
 	hitCount: number,
 	rejected: number,
 	lastHitAt: number,
@@ -145,23 +165,93 @@ local function closeSession(player: Player, notifyClient: boolean)
 	if notifyClient then
 		updateRemote:FireClient(player, { action = "Close" })
 	end
+	local onClosed = session.hooks.onClosed
+	if onClosed then
+		local ok, err = pcall(onClosed, player)
+		if not ok then
+			Log.warn(TAG, "onClosed error: " .. tostring(err))
+		end
+	end
 end
 
 local function computeResult(session: Session): Result
-	local total = #session.notes
-	local maxPoints = total * Config.PERFECT_POINTS
-	local score = 0
-	if maxPoints > 0 then
-		score = math.floor(session.points / maxPoints * 100 + 0.5)
-	end
 	return {
-		score = score,
+		score = session.score,
 		perfect = session.perfect,
 		good = session.good,
-		miss = total - session.perfect - session.good,
-		total = total,
-		passed = score >= Config.REQUIRED_SCORE,
+		miss = session.missed,
+		total = #session.notes,
+		passed = session.score >= Config.REQUIRED_SCORE,
 	}
+end
+
+local function sendScore(player: Player, session: Session)
+	updateRemote:FireClient(player, { action = "Score", score = session.score })
+end
+
+-- Skor jatuh di bawah batas: tutup sesi (client menutup UI + musik), lalu serahkan ke hooks.onFail.
+local function failSession(player: Player, session: Session)
+	if sessions[player] ~= session then
+		return
+	end
+	local result = computeResult(session)
+	Log.info(
+		TAG,
+		string.format(
+			"%s GAGAL: skor %d < %d (perfect %d, good %d, miss %d dari %d not)",
+			player.Name,
+			result.score,
+			Config.REQUIRED_SCORE,
+			result.perfect,
+			result.good,
+			result.miss,
+			result.total
+		)
+	)
+	local onFail = session.hooks.onFail
+	closeSession(player, true)
+	if onFail then
+		task.spawn(function()
+			local ok, err = pcall(onFail, player, result)
+			if not ok then
+				Log.warn(TAG, "onFail error: " .. tostring(err))
+			end
+		end)
+	end
+end
+
+-- Not yang sudah lewat jendela penilaian + kelonggaran latensi dan belum dinilai = Miss (diputuskan server).
+-- `elapsed` = detik sejak Ready. Return true jika ada not yang menjadi Miss.
+local function judgeExpired(session: Session, elapsed: number): boolean
+	local changed = false
+	while true do
+		local note = session.notes[session.nextJudge]
+		if note == nil or note.time + Config.GOOD_WINDOW + Config.MISS_GRACE >= elapsed then
+			break
+		end
+		session.nextJudge += 1
+		if not note.judged then
+			note.judged = true
+			session.missed += 1
+			session.score = math.max(0, session.score - Config.MISS_PENALTY)
+			changed = true
+		end
+	end
+	return changed
+end
+
+-- Dipanggil tiap Heartbeat selama sesi berjalan: Miss real-time -> skor -> gagal bila di bawah batas.
+local function onTick(player: Player, session: Session)
+	local startedAt = session.startedAt
+	if sessions[player] ~= session or startedAt == nil then
+		return
+	end
+	if judgeExpired(session, os.clock() - startedAt) then
+		sendScore(player, session)
+		if session.score < Config.REQUIRED_SCORE then
+			failSession(player, session)
+		end
+	end
 end
 
 -- Durasi habis: hitung skor di server, panggil onFinish, kirim hasil, tutup sesi.
@@ -174,6 +264,12 @@ local function finishSession(player: Player, session: Session)
 	if GameManager.getPlayerState(player) ~= PlayerState.MINIGAME then
 		Log.info(TAG, string.format("sesi %s dibatalkan: state pemain berubah", player.Name))
 		closeSession(player, true)
+		return
+	end
+
+	-- Sapu not terakhir yang belum dinilai (tick mungkin belum menjangkau); bisa menggagalkan sesi.
+	if judgeExpired(session, math.huge) and session.score < Config.REQUIRED_SCORE then
+		failSession(player, session)
 		return
 	end
 
@@ -217,7 +313,7 @@ function RhythmGameService.getActivePlayer(): Player?
 end
 
 -- Mulai sesi untuk pemain. Return false jika sesi lain berjalan atau state pemain tidak mengizinkan.
-function RhythmGameService.start(player: Player, onFinish: FinishHandler): boolean
+function RhythmGameService.start(player: Player, onFinish: FinishHandler, hooks: Hooks?): boolean
 	if activePlayer ~= nil or sessions[player] ~= nil then
 		return false
 	end
@@ -231,9 +327,12 @@ function RhythmGameService.start(player: Player, onFinish: FinishHandler): boole
 		notes = generateChart(),
 		startedAt = nil,
 		onFinish = onFinish,
+		hooks = hooks or {},
 		perfect = 0,
 		good = 0,
-		points = 0,
+		missed = 0,
+		score = Config.START_SCORE,
+		nextJudge = 1,
 		hitCount = 0,
 		rejected = 0,
 		lastHitAt = 0,
@@ -271,6 +370,7 @@ function RhythmGameService.start(player: Player, onFinish: FinishHandler): boole
 		action = "Start",
 		notes = payloadNotes,
 		duration = Config.DURATION_SECONDS,
+		score = session.score,
 	})
 
 	-- Client harus mengirim Ready (musik siap) dalam READY_TIMEOUT.
@@ -295,6 +395,20 @@ local function onReady(player: Player, session: Session)
 	task.delay(Config.DURATION_SECONDS + Config.END_GRACE, function()
 		finishSession(player, session)
 	end)
+	-- Penilai Miss real-time (tidak bergantung pada tekanan pemain).
+	table.insert(
+		session.connections,
+		RunService.Heartbeat:Connect(function()
+			onTick(player, session)
+		end)
+	)
+	local onPlaying = session.hooks.onPlaying
+	if onPlaying then
+		local ok, err = pcall(onPlaying, player)
+		if not ok then
+			Log.warn(TAG, "onPlaying error: " .. tostring(err))
+		end
+	end
 end
 
 local function isFiniteNumber(value: unknown): boolean
@@ -362,12 +476,19 @@ local function onHit(player: Player, session: Session, payload: { [any]: any })
 	end
 
 	best.judged = true
+	local penalty = Config.PERFECT_PENALTY
 	if bestDelta <= Config.PERFECT_WINDOW then
 		session.perfect += 1
-		session.points += Config.PERFECT_POINTS
 	else
 		session.good += 1
-		session.points += Config.GOOD_POINTS
+		penalty = Config.GOOD_PENALTY
+	end
+	if penalty > 0 then
+		session.score = math.max(0, session.score - penalty)
+		sendScore(player, session)
+		if session.score < Config.REQUIRED_SCORE then
+			failSession(player, session)
+		end
 	end
 end
 

@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## 2026-10-11 — Phase 7 revisi: skor 100 dipertahankan, gagal < 80 = jumpscare, musik terdengar pemain lain (ADR-039) (belum dites di Studio)
+- Arahan user: skor mulai 100 dan turun (Good -1, Miss -3; angka = asumsi AI, di GamelanConfig); skor < 80 kapan pun = UI langsung tutup + jumpscare (Pocong dulu, sama seperti makam); musik terdengar pemain lain, UI hanya untuk pemain yang bermain, pemain lain bebas bergerak
+- GamelanConfig: `START_SCORE`, `PERFECT/GOOD/MISS_PENALTY`, `MISS_GRACE`, `WORLD_SOUND_VOLUME`, `WORLD_ROLLOFF_MIN/MAX`, `MUSIC_PLAYER_ATTR`, `MUSIC_START_ATTR`; `PERFECT_POINTS`/`GOOD_POINTS` dihapus
+- RhythmGameService: skor turun, Miss real-time di server (Heartbeat + sapu akhir), `failSession`, `start(player, onFinish, hooks?)` dengan `onFail/onPlaying/onClosed`; remote `GamelanUpdate` menambah action `Score`
+- FailureService: fungsi baru `scare(player, reason)` (jumpscare tanpa knock/reset); FailureConfig: `JumpscareByReason.GAMELAN_FAIL`
+- KafanQuestService: hook gagal (jumpscare + notifikasi), musik dunia lewat Attribute pada objek Gamelan
+- Client: GamelanController skor dari server (mulai 100, tanpa hitung lokal); baru `GamelanMusicController` (suara spasial di gamelan untuk pemain lain, tersinkron waktu server, mendukung pemain yang baru masuk); didaftarkan di init.client
+- Verifikasi AI: luau-compile semua file berubah OK; harness offline BARU yang memuat file src/ asli (stub Roblox, jam palsu, 52 cek) LULUS: skor awal 100, lulus sempurna, gagal seketika saat Miss ke-7 (bukan akhir lagu), gagal di Good ke-21, 6 Miss tetap lulus (82), Cancel/keluar/knock tanpa jumpscare, musik dunia nyala saat Ready dan mati di semua akhir sesi, B tidak melihat Start dan tidak dibekukan, input tak sah tidak mengubah skor. TIDAK dites di Studio: GUI, jumpscare nyata, musik spasial, sinkron audio, multiplayer sungguhan
+- Catatan: `phase7_harness.luau` dan `phase7-gamelan-ADR-038.patch` di root repo adalah snapshot lama (salinan gabungan, bukan memuat src/) dan TIDAK mencerminkan perubahan ini
+
 ## 2026-10-11 — Phase 7 awal: gamelan ritme 4 kolom, satu pemain (ADR-038) (belum dites di Studio)
 - Perubahan dari GDD (arahan user): SATU pemain memainkan gamelan, 4 kolom (Q W E R di PC, ketuk di mobile), durasi 97 detik, musik placeholder (`GamelanConfig.SOUND_ID` kosong)
 - Baru: shared/Config/GamelanConfig, server/Services/RhythmGameService (chart, sesi, validasi, skor), server/Services/KafanQuestService (objek Gamelan, state, hadiah Kain Kafan), client/Controllers/GamelanController (GUI ritme), remote `GamelanUpdate` dan `GamelanAction`

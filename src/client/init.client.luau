@@ -17,6 +17,7 @@ local JumpscareController = require(Controllers:WaitForChild("JumpscareControlle
 local KnockController = require(Controllers:WaitForChild("KnockController") :: ModuleScript)
 local ReviveController = require(Controllers:WaitForChild("ReviveController") :: ModuleScript)
 local GamelanController = require(Controllers:WaitForChild("GamelanController") :: ModuleScript)
+local GamelanMusicController = require(Controllers:WaitForChild("GamelanMusicController") :: ModuleScript)
 
 Log.info("Client", string.format("Malam Suro client siap (MAX_PLAYERS=%d)", GameConfig.MAX_PLAYERS))
 
@@ -34,6 +35,7 @@ MemoryPuzzleController.init()
 JumpscareController.init()
 KnockController.init()
 GamelanController.init()
+GamelanMusicController.init()
 ReviveController.init(function(): boolean
 	return DialogueController.isOpen() or MemoryPuzzleController.isOpen() or GamelanController.isOpen()
 end)

@@ -1,0 +1,898 @@
+From 38e66114ccb8235dd9e26856f34050973cafc8bf Mon Sep 17 00:00:00 2001
+From: Claude <claude@anthropic.local>
+Date: Sun, 11 Oct 2026 15:09:54 +0000
+Subject: [PATCH] feat: Phase 7 revisi gamelan - skor 100 dipertahankan, gagal
+ <80 = jumpscare, musik terdengar pemain lain (ADR-039)
+
+---
+ .ai/CHANGELOG.md                              |  10 ++
+ .ai/CURRENT_STATE.md                          |   5 +-
+ .ai/DECISIONS.md                              |  34 +++-
+ .ai/GAME_CONTEXT.md                           |   5 +-
+ .ai/SESSION_HANDOFF.md                        |  14 ++
+ .ai/TASKS.md                                  |  10 +-
+ src/client/Controllers/GamelanController.luau |  44 +++--
+ .../Controllers/GamelanMusicController.luau   | 139 +++++++++++++++
+ src/client/init.client.luau                   |   2 +
+ src/server/Config/FailureConfig.luau          |   1 +
+ src/server/Services/FailureService.luau       |  16 ++
+ src/server/Services/KafanQuestService.luau    |  44 ++++-
+ src/server/Services/RhythmGameService.luau    | 159 +++++++++++++++---
+ src/shared/Config/GamelanConfig.luau          |  23 ++-
+ 14 files changed, 447 insertions(+), 59 deletions(-)
+ create mode 100644 src/client/Controllers/GamelanMusicController.luau
+
+diff --git a/.ai/CHANGELOG.md b/.ai/CHANGELOG.md
+index 4d33fbd..b04fecc 100644
+--- a/.ai/CHANGELOG.md
++++ b/.ai/CHANGELOG.md
+@@ -1,5 +1,15 @@
+ # CHANGELOG
+ 
++## 2026-10-11 — Phase 7 revisi: skor 100 dipertahankan, gagal < 80 = jumpscare, musik terdengar pemain lain (ADR-039) (belum dites di Studio)
++- Arahan user: skor mulai 100 dan turun (Good -1, Miss -3; angka = asumsi AI, di GamelanConfig); skor < 80 kapan pun = UI langsung tutup + jumpscare (Pocong dulu, sama seperti makam); musik terdengar pemain lain, UI hanya untuk pemain yang bermain, pemain lain bebas bergerak
++- GamelanConfig: `START_SCORE`, `PERFECT/GOOD/MISS_PENALTY`, `MISS_GRACE`, `WORLD_SOUND_VOLUME`, `WORLD_ROLLOFF_MIN/MAX`, `MUSIC_PLAYER_ATTR`, `MUSIC_START_ATTR`; `PERFECT_POINTS`/`GOOD_POINTS` dihapus
++- RhythmGameService: skor turun, Miss real-time di server (Heartbeat + sapu akhir), `failSession`, `start(player, onFinish, hooks?)` dengan `onFail/onPlaying/onClosed`; remote `GamelanUpdate` menambah action `Score`
++- FailureService: fungsi baru `scare(player, reason)` (jumpscare tanpa knock/reset); FailureConfig: `JumpscareByReason.GAMELAN_FAIL`
++- KafanQuestService: hook gagal (jumpscare + notifikasi), musik dunia lewat Attribute pada objek Gamelan
++- Client: GamelanController skor dari server (mulai 100, tanpa hitung lokal); baru `GamelanMusicController` (suara spasial di gamelan untuk pemain lain, tersinkron waktu server, mendukung pemain yang baru masuk); didaftarkan di init.client
++- Verifikasi AI: luau-compile semua file berubah OK; harness offline BARU yang memuat file src/ asli (stub Roblox, jam palsu, 52 cek) LULUS: skor awal 100, lulus sempurna, gagal seketika saat Miss ke-7 (bukan akhir lagu), gagal di Good ke-21, 6 Miss tetap lulus (82), Cancel/keluar/knock tanpa jumpscare, musik dunia nyala saat Ready dan mati di semua akhir sesi, B tidak melihat Start dan tidak dibekukan, input tak sah tidak mengubah skor. TIDAK dites di Studio: GUI, jumpscare nyata, musik spasial, sinkron audio, multiplayer sungguhan
++- Catatan: `phase7_harness.luau` dan `phase7-gamelan-ADR-038.patch` di root repo adalah snapshot lama (salinan gabungan, bukan memuat src/) dan TIDAK mencerminkan perubahan ini
++
+ ## 2026-10-11 — Phase 7 awal: gamelan ritme 4 kolom, satu pemain (ADR-038) (belum dites di Studio)
+ - Perubahan dari GDD (arahan user): SATU pemain memainkan gamelan, 4 kolom (Q W E R di PC, ketuk di mobile), durasi 97 detik, musik placeholder (`GamelanConfig.SOUND_ID` kosong)
+ - Baru: shared/Config/GamelanConfig, server/Services/RhythmGameService (chart, sesi, validasi, skor), server/Services/KafanQuestService (objek Gamelan, state, hadiah Kain Kafan), client/Controllers/GamelanController (GUI ritme), remote `GamelanUpdate` dan `GamelanAction`
+diff --git a/.ai/CURRENT_STATE.md b/.ai/CURRENT_STATE.md
+index 3e3db09..06acc56 100644
+--- a/.ai/CURRENT_STATE.md
++++ b/.ai/CURRENT_STATE.md
+@@ -11,7 +11,7 @@ PHASE 3 — INTERACTION & INVENTORY: ItemService selesai (boot diuji; give/consu
+ PHASE 4 — KERIS PUSAKA: SELESAI dengan catatan (alur Kelor -> kunci -> peti -> puzzle -> keris -> simpan di RitualCollection; 3–4 pemain di Phase 10).
+ PHASE 5 — KEMBANG KANTIL HITAM: 5.1–5.8 SELESAI dan DITES user di Studio (normal, 2026-10-11). Sisa (giliran tunggal, revive, wipe, flower reset) dikerjakan di Phase 6.
+ PHASE 6 — KNOCK / REVIVE: DITUTUP dan dites user di Studio (dilaporkan user 2026-10-11; rincian per-poin tidak dilaporkan).
+-PHASE 7 — KAIN KAFAN / GAMELAN: SEDANG BERJALAN. Kode gamelan ritme (satu pemain, 4 kolom) ditulis; BELUM dites di Studio (ADR-038).
++PHASE 7 — KAIN KAFAN / GAMELAN: SEDANG BERJALAN. Kode gamelan ritme (satu pemain, 4 kolom) ditulis; direvisi 2026-10-11 (ADR-039): skor mulai 100, gagal < 80 = UI tutup + jumpscare, musik terdengar pemain lain. Logika server lulus harness offline; client/GUI/audio BELUM dites di Studio.
+ 
+ 
+ ## TOOLCHAIN
+@@ -105,6 +105,9 @@ Task 6.3 (KnockController, overlay vinyet + teks "KAMU PINGSAN", hotbar disembun
+ ## UPDATE 2026-10-11 (Phase 7 awal, ADR-038)
+ Gamelan ritme: RhythmGameService (server, chart + validasi + skor), KafanQuestService (objek Gamelan, transisi, hadiah), GamelanController (client, 4 kolom, Q W E R / ketuk), GamelanConfig. Perubahan GDD disetujui user: SATU pemain, 4 kolom, 97 detik. Alur: laporan Kantil (Pemandu_KantilDone) memulai KAFAN; [E] Mainkan Gamelan; skor >= 80 -> Kain Kafan -> simpan di RitualCollection. Server lulus harness offline (53 cek); GUI hanya kompilasi; BELUM dites di Studio. DEPENDENCY: Workspace.QuestObjects.Gamelan, template Tool KainKafan, ID musik di GamelanConfig.SOUND_ID (placeholder kosong = main tanpa suara). Risiko terbuka: Kain Kafan di Backpack hilang jika pemegang mati/respawn (ADR-018, sama seperti item quest lain); anti-bot terbatas (lihat ADR-038).
+ 
++## UPDATE 2026-10-11 (Phase 7 revisi, ADR-039)
++Skor gamelan kini 100 -> turun (Good -1, Miss -3; asumsi, di GamelanConfig); Miss dinilai server real-time; skor < 80 kapan pun = `RhythmGameService.failSession` (client menutup GUI + musik) -> `KafanQuestService.onFail` -> `FailureService.scare` (jumpscare Pocong placeholder, TANPA knock/reset quest) -> boleh main lagi. Musik untuk pemain lain: Attribute `MusicPlayerUserId` + `MusicStartServerTime` di `Workspace.QuestObjects.Gamelan`, diputar `GamelanMusicController` sebagai suara spasial; pemain yang bermain memakai musik lokal. Server lulus harness offline baru (52 cek, memuat src/ asli); GUI client, jumpscare nyata, musik spasial, dan multiplayer sungguhan BELUM dites di Studio. Keputusan terbuka untuk user: apakah gagal gamelan perlu knock/respawn seperti makam (saat ini TIDAK), dan angka penalti.
++
+ ## NEXT ACTION
+ 
+ 1. User: cocokkan GravePuzzleConfig.ANSWER dengan clue SurfaceGui lalu set ANSWER_CONFIRMED=true; pastikan Graves/Grave_1..4 dan template KembangKantilHitam ada; cek Handle.Anchored=false di semua template Tool.
+diff --git a/.ai/DECISIONS.md b/.ai/DECISIONS.md
+index e9e28ee..b273ebd 100644
+--- a/.ai/DECISIONS.md
++++ b/.ai/DECISIONS.md
+@@ -569,16 +569,44 @@ GDD awal (GAME_CONTEXT bagian 9, ADR-019): semua pemain harus mencapai skor >= 8
+ Decision:
+ 
+ - Perubahan terhadap GDD (disetujui user): 4 kolom (bukan 6); SATU pemain bermain; skor >= 80 meluluskan quest untuk seluruh party. Tidak ada lagi skor/komplesi per pemain. State party Kafan: LOCKED -> ACTIVE -> FIND_GAMELAN -> GAMELAN_ACTIVE -> GAMELAN_COMPLETE -> KAIN_OBTAINED -> KAIN_SUBMITTED -> COMPLETE (`ALL_PLAYER_COMPLETE` diganti `GAMELAN_COMPLETE`; ADR-019 poin Kafan digantikan).
+-- Skor akhir = persen dari poin maksimum (0-100): Perfect 10 poin, Good 7, Miss 0, lulus bila >= 80 (ASUMSI: GDD hanya menyebut poin per not dan batas 80; dipilih persen agar batas 80 tetap bermakna berapa pun jumlah not). Jendela waktu: Perfect +-0,10 dtk, Good +-0,20 dtk (config).
++- [DIGANTIKAN ADR-039: skor kini mulai 100 dan turun] Skor akhir = persen dari poin maksimum (0-100): Perfect 10 poin, Good 7, Miss 0, lulus bila >= 80 (ASUMSI: GDD hanya menyebut poin per not dan batas 80; dipilih persen agar batas 80 tetap bermakna berapa pun jumlah not). Jendela waktu: Perfect +-0,10 dtk, Good +-0,20 dtk (config).
+ - Dua service, mengikuti pola Keris: `RhythmGameService` (mesin minigame generik: chart, sesi, validasi, skor) dan `KafanQuestService` (objek Gamelan, transisi state, hadiah, pemegang kain). Client: `GamelanController` (GUI + input). Config: `shared/Config/GamelanConfig`. Remote: `GamelanUpdate`, `GamelanAction`.
+ - Server-authoritative: chart dibuat server (acak per sesi di grid BPM, belum ada beatmap per lagu — ASUMSI sampai musik asli masuk). Client memuat musik lalu mengirim `Ready` (jam sesi server mulai di saat itu), lalu `Hit {lane, t}` tiap tekanan. Server memeriksa: payload valid; lane integer 1-4; jam lagu `t` cocok dengan jam server (tidak boleh dari masa depan > 0,3 dtk atau tertinggal > 2 dtk); jarak minimal antar tekanan; batas total tekanan; satu not hanya bisa dinilai sekali. Server menutup sesi sendiri saat durasi habis (+3 dtk) dan menghitung skor. Client tidak mengirim "selesai" atau skor.
+ - BATASAN JUJUR: server tidak bisa membedakan bot yang menekan di waktu nyata dari manusia (client harus tahu chart agar bisa menggambar not). Yang dicegah: skor instan tanpa waktu berjalan, duplikasi, spam, dan skor yang dikarang client. Bila perlu nanti: kirim chart bertahap per jendela dan/atau deteksi pola tekanan terlalu sempurna.
+ - Selama bermain: state pemain MINIGAME; karakter dibekukan server (WalkSpeed/Jump 0, dipulihkan hanya bila masih beku oleh sesi) karena Q/W/E/R bertabrakan dengan gerak/interaksi; client menelan Q/W/E/R (ContextActionService prioritas tinggi) dan InteractionController diblokir. Sesi dibatalkan tanpa hasil/hadiah bila pemain knock, karakter hilang, keluar, menekan BATAL, atau musik tidak siap dalam 10 dtk.
+-- Hanya satu sesi per party. Pemain lain yang menekan [E] diberi notifikasi "<nama> sedang memainkan gamelan". Gagal skor = tetap GAMELAN_ACTIVE; siapa pun boleh mencoba lagi, tanpa hukuman.
++- Hanya satu sesi per party. Pemain lain yang menekan [E] diberi notifikasi "<nama> sedang memainkan gamelan". Gagal skor = tetap GAMELAN_ACTIVE; siapa pun boleh mencoba lagi (ADR-039 menambah jumpscare saat gagal, tetap tanpa knock/reset).
+ - Alur quest: Pemandu_KantilDone (laporan Kantil COMPLETE) memulai KAFAN (GameFlowService: `KAFAN` di QUEST_FLOW dan REPORT_DIALOGUES KANTIL). [E] Mainkan pertama: FIND_GAMELAN -> GAMELAN_ACTIVE. Lulus: beri KainKafan -> GAMELAN_COMPLETE -> KAIN_OBTAINED; kain disimpan di RitualCollection (ADR-026, tidak berubah). Pemegang kain keluar sebelum menyimpan: kain dipindah ke pemain lain.
+-- Musik diputar lokal di client pemain yang bermain (sinkron dengan jam sesi). Opsi nanti: putar juga di model gamelan agar rekan ikut mendengar.
++- Musik diputar lokal di client pemain yang bermain (sinkron dengan jam sesi). [Opsi rekan ikut mendengar DIKERJAKAN di ADR-039.]
+ 
+ Dependency (Studio): `Workspace.QuestObjects.Gamelan` (Model/Part), template Tool `ServerStorage.QuestTemplates.KainKafan`, ID audio di `GamelanConfig.SOUND_ID`.
+ 
+ Status:
+ ACCEPTED sebagai arahan user; server lulus harness offline; client hanya lulus kompilasi; BELUM dites di Studio.
++
++
++
++## ADR-039 — GAMELAN: SKOR DIPERTAHANKAN (100 -> TURUN), GAGAL < 80 = JUMPSCARE, MUSIK TERDENGAR PEMAIN LAIN
++
++Context:
++
++ADR-038: skor akhir = persen poin yang dikumpulkan; gagal skor hanya notifikasi dan boleh ulang tanpa hukuman. REVISI user 2026-10-11 (sesi lanjutan Phase 7): skor MULAI 100 dan pemain harus mempertahankannya; skor < 80 = langsung tutup UI + jumpscare seperti minigame makam (model hantu sama dulu, nanti diganti); musik harus terdengar pemain lain, UI hanya untuk pemain yang bermain, pemain lain bebas bergerak, pemain yang bermain diam.
++
++Decision:
++
++- Penilaian (MENGGANTIKAN poin ADR-038 tentang "persen poin"): `START_SCORE = 100`; tiap Good -`GOOD_PENALTY` (1), tiap Miss -`MISS_PENALTY` (3), Perfect -`PERFECT_PENALTY` (0). Konstanta `PERFECT_POINTS`/`GOOD_POINTS` dihapus. Angka penalti ADALAH ASUMSI AI (user tidak menyebut): 6 Miss masih aman (82), Miss ke-7 gagal (79); 20 Good aman, Good ke-21 gagal. Semua di GamelanConfig untuk disetel.
++- Gagal kapan pun skor < `REQUIRED_SCORE` (80), diputuskan SERVER. Miss dinilai server real-time (Heartbeat): not menjadi Miss setelah `note.time + GOOD_WINDOW + MISS_GRACE` (0,4 dtk kelonggaran latensi) bila belum dinilai; tanpa tekanan sama sekali = gagal di Miss ke-7, bukan di akhir lagu. Sapu akhir sebelum menghitung hasil. Tekanan tanpa not tetap tanpa penalti (hindari hukuman karena spam/latensi).
++- Gagal: `RhythmGameService.failSession` menutup sesi (kirim `Close` -> client menutup GUI dan menghentikan musik lokal), lalu memanggil `hooks.onFail` di thread terpisah. Lulus = bertahan sampai durasi habis dengan skor >= 80; alur hadiah ADR-038 tidak berubah. Tidak ada layar Result untuk gagal.
++- API baru `RhythmGameService.start(player, onFinish, hooks?)` (kompatibel mundur) dengan `Hooks = { onFail, onPlaying, onClosed }`. Remote `GamelanUpdate` menambah `{ action = "Score", score }` (server -> client tiap skor berubah; client TIDAK menghitung skor sendiri) dan `Start.score`.
++- Jumpscare: `FailureService.scare(player, reason)` = CUTSCENE -> jumpscare (JumpscareService, ADR-033) -> NORMAL, TANPA knock/reset quest. `FailureConfig.JumpscareByReason.GAMELAN_FAIL = "Pocong"` (placeholder; ganti ke hantu lain = ubah satu entri + tambah model di JumpscareConfig.Ghosts). ASUMSI: "sama seperti grave" diartikan jumpscare saja; knock/respawn grave TIDAK dipakai karena ADR-038 menetapkan gagal gamelan boleh diulang langsung. Jika user ingin hukuman penuh, ganti `FailureService.scare` di `KafanQuestService.onFail` dengan `FailureService.fail`.
++- Musik untuk pemain lain: `hooks.onPlaying` (saat Ready) menulis Attribute pada objek Gamelan: `MusicStartServerTime` lalu `MusicPlayerUserId`; `hooks.onClosed` (semua akhir sesi) menghapusnya. Client lain (`GamelanMusicController`) memutar `Sound` spasial di BasePart gamelan (InverseTapered, min 20 / maks 160 studs), `TimePosition` dari `Workspace:GetServerTimeNow() - start` sehingga pemain yang baru masuk ikut tersinkron. Pemain yang bermain TIDAK memutar suara dunia (memakai musik lokal yang sinkron dengan not; tidak ada gema ganda). Memakai Attribute (pola ADR-014), bukan Remote baru. Presentasi audio murni di client; server tidak mempercayai apa pun dari client untuk ini.
++- UI hanya di client pemain yang bermain (tidak berubah: GUI lokal, Remote `GamelanUpdate` hanya `FireClient` ke pemain itu). Pemain lain tidak dikunci apa pun. Pemain yang bermain diam: WalkSpeed/Jump 0 dari server + Q/W/E/R ditelan client + InteractionController diblokir (ADR-038, tidak berubah). Dipulihkan di closeSession (lulus/gagal/batal/keluar), dan jumpscare lalu mengunci ulang sebentar.
++
++Consequences / batasan:
++
++- Sinkron musik dunia vs musik pemain tidak presisi (selisih latensi jaringan, beberapa ratus ms); disengaja, hanya latar bagi pemain lain.
++- Skor di layar bergerak sedikit terlambat dari teks MISS (server menilai Miss +0,4 dtk setelah client menampilkan MISS).
++- Anti-bot tetap terbatas (ADR-038). Gagal-karena-diam mempersulit "hit nol" tetapi tidak membedakan bot.
++- Kain Kafan di Backpack tetap hilang bila pemegang mati (ADR-018, tidak berubah).
++
++Status:
++ACCEPTED sebagai arahan user; logika server lulus harness offline; client (GUI, musik dunia) BELUM dites di Studio.
+diff --git a/.ai/GAME_CONTEXT.md b/.ai/GAME_CONTEXT.md
+index 8383344..ecb7230 100644
+--- a/.ai/GAME_CONTEXT.md
++++ b/.ai/GAME_CONTEXT.md
+@@ -185,12 +185,13 @@ Flow:
+ FIND GAMELAN
+ → [E] MAINKAN GAMELAN (satu pemain)
+ → RHYTHM GAME (4 kolom; PC: Q W E R, mobile: ketuk layar; musik gamelan 1:37)
+-→ SCORE >= 80
++→ SKOR MULAI 100, harus dipertahankan >= 80 sampai musik selesai (ADR-039)
+ → KAIN KAFAN
+ → SUBMIT (RitualCollection)
+ → QUEST COMPLETE
+ 
+-Gagal skor: boleh mencoba lagi (siapa pun di party), tanpa hukuman.
++Gagal (skor < 80 kapan pun): UI pemain langsung tutup + jumpscare (hantu placeholder), lalu siapa pun di party boleh mencoba lagi (tanpa knock/reset, ADR-039).
++Musik gamelan terdengar pemain lain (spasial di gamelan); UI hanya di layar pemain yang bermain; pemain lain bebas bergerak, pemain yang bermain diam.
+ 
+ (Desain lama, digantikan: semua pemain harus mencapai skor >= 80 di 6 kolom.)
+ 
+diff --git a/.ai/SESSION_HANDOFF.md b/.ai/SESSION_HANDOFF.md
+index 8d1a4f8..84b07f4 100644
+--- a/.ai/SESSION_HANDOFF.md
++++ b/.ai/SESSION_HANDOFF.md
+@@ -226,6 +226,20 @@ Q.activate("KAFAN"); Q.transition("KAFAN", "FIND_GAMELAN")
+ 11. Output server TANPA error; catat apakah terasa not terlambat/terlalu cepat terhadap musik (untuk menyetel BPM/LEAD_IN dan jendela waktu).
+ Laporkan Output (server dan client), skor yang didapat, dan perilaku yang berbeda dari EXPECTED (terutama sinkron suara-not di mobile).
+ 
++## Uji Studio Phase 7 REVISI (skor 100, gagal < 80, musik multiplayer; ADR-039)
++Menggantikan poin 3 dan 6 uji Phase 7 di atas. Prasyarat sama (objek Gamelan, template KainKafan) + `GamelanConfig.SOUND_ID` terisi + `ServerStorage/GhostModels/Pocong` ada. Jalan pintas Command Bar server sama seperti di atas. Test > Clients 2 (A bermain, B mengamati); idealnya Clients 3.
++1. EXPECTED: [E] gamelan -> GUI hanya di layar A; SKOR tertulis 100 sejak awal. Hanya layar A yang memunculkan GUI; B tidak melihat apa pun dan tetap bisa berjalan/lompat; A tidak bisa berjalan/lompat/menggeser kamera karakter (Q/W/E/R tidak menggerakkan).
++2. MUSIK: setelah A mulai (setelah "Memuat musik..."), A mendengar musik lokal tanpa gema. B (berdiri dekat gamelan) mendengar musik yang sama, makin pelan bila menjauh (hilang jauh di atas ~160 studs). Output client B tanpa warn `GamelanMusicController`. Lapor apakah ada gema/dobel di A dan apakah B mendengar mulai dari awal.
++3. B masuk (Test > tambah client) ATAU berjalan mendekat saat lagu sudah berjalan beberapa detik: musik langsung terdengar dari posisi lagu yang kira-kira sama (bukan dari awal).
++4. Pertahankan skor: tekan tepat waktu (Perfect) -> SKOR tetap 100. Good -> turun 1; Miss -> turun 3 (angka bisa disetel di GamelanConfig). Skor di layar berubah mengikuti server.
++5. GAGAL: sengaja tidak menekan apa pun. EXPECTED: setelah Miss ke-7 (sekitar 4-5 detik pertama lagu) GUI A LANGSUNG hilang, musik lokal A berhenti, jumpscare Pocong muncul di layar A saja (B tidak melihat), setelah ~2 detik A normal lagi, toast "Skor turun ke ... Kamu gagal. Mainkan gamelan lagi." (B: "<A> gagal memainkan gamelan."). Musik di B ikut berhenti. TIDAK ada knock, tidak ada reset quest; [E] gamelan masih ada.
++6. Ulangi dari awal setelah gagal: sesi baru normal; musik B menyala lagi, tidak ada musik dobel/tumpang.
++7. LULUS: pertahankan >= 80 sampai 1:37 (mis. main sampai habis). EXPECTED: layar hasil "KAIN KAFAN DIDAPAT", Kain Kafan di Backpack A, musik B berhenti, tanpa jumpscare. Simpan di RitualCollection -> KAFAN COMPLETE.
++8. BATAL di tengah: GUI tutup, musik A dan B berhenti, TANPA jumpscare. Reset karakter / knock A di tengah sesi: sesi batal, tanpa jumpscare, musik B berhenti.
++9. A keluar game saat bermain: musik B berhenti, B tidak error, gamelan bisa dimainkan lagi.
++10. Mobile (Device Emulator) untuk A: GUI terbaca, ketuk kolom berfungsi, jumpscare menutupi layar lalu hilang.
++Laporkan Output server/client, apakah kesulitan terasa pas (angka penalti), dan kualitas sinkron musik di B.
++
+ ## Langkah berikutnya
+ 1. User: uji 2.1 di atas dan lapor Output; tinjau SkyboxInserter; siapkan naskah dialog Pemandu.
+ 2. Task 2.2 Quest UI, Task 2.3 alur Pemandu -> quest.
+\ No newline at end of file
+diff --git a/.ai/TASKS.md b/.ai/TASKS.md
+index c565f9b..d2662b1 100644
+--- a/.ai/TASKS.md
++++ b/.ai/TASKS.md
+@@ -154,15 +154,17 @@ IN PROGRESS (ADR-038). Perubahan GDD disetujui user 2026-10-11: SATU pemain berm
+ - [x] four columns (Q W E R di PC, ketuk kolom di mobile)
+ - [x] Note system (chart acak di grid BPM, dibuat server) — beatmap sesuai musik asli = menyusul
+ - [x] Input handling (tekan saat ditekan; Q/W/E/R ditelan; karakter dibekukan server)
+-- [x] Score (persen poin maksimum; Perfect 10, Good 7)
++- [x] Score (REVISI ADR-039: mulai 100, Good -1, Miss -3; gagal seketika < 80 -> UI tutup + jumpscare; kode ditulis, logika server lulus harness, belum dites Studio)
+ - [x] Score validation (server: sinkron jam, once-per-note, rate limit; harness offline 53 cek lulus)
+-- [x] Retry (gagal skor = main lagi tanpa hukuman)
++- [x] Retry (gagal skor = jumpscare lalu boleh main lagi; tanpa knock/reset, ADR-039)
++- [x] Musik terdengar pemain lain (Attribute di objek Gamelan + GamelanMusicController, ADR-039) — belum dites Studio
++- [ ] Ganti model hantu jumpscare gamelan (FailureConfig.JumpscareByReason.GAMELAN_FAIL; sementara Pocong)
+ - [x] Player completion (SATU pemain; ALL_PLAYER_COMPLETE -> GAMELAN_COMPLETE)
+ - [x] Reward (KainKafan ke pemain yang lulus; butuh template ServerStorage.QuestTemplates.KainKafan)
+ - [x] NPC submission = simpan di RitualCollection (sudah ada di RitualConfig; belum dites untuk Kafan)
+-- [ ] Isi ID musik di GamelanConfig.SOUND_ID; sesuaikan BPM/LEAD_IN agar not menyatu dengan musik
++- [ ] ID musik sudah diisi user di GamelanConfig.SOUND_ID; sesuaikan BPM/LEAD_IN agar not menyatu dengan musik; setel GOOD/MISS_PENALTY sesuai rasa
+ - [ ] Tes Studio (lihat SESSION_HANDOFF "Uji Studio Phase 7")
+-- [ ] Opsional nanti: musik terdengar rekan, beatmap per lagu, anti-bot lebih ketat
++- [ ] Opsional nanti: beatmap per lagu, anti-bot lebih ketat
+ 
+ 
+ # PHASE 8 — FINAL RITUAL
+diff --git a/src/client/Controllers/GamelanController.luau b/src/client/Controllers/GamelanController.luau
+index d8ba2cc..838cce6 100644
+--- a/src/client/Controllers/GamelanController.luau
++++ b/src/client/Controllers/GamelanController.luau
+@@ -2,7 +2,9 @@
+ -- GamelanController: GUI minigame ritme gamelan (4 kolom, gaya Guitar Hero), Phase 7 (ADR-038).
+ -- PC: tombol Q W E R. Mobile/mouse: ketuk kolom. Hanya tampilan dan input:
+ --   server membuat chart, memvalidasi tiap tekanan, dan menghitung skor akhir.
+--- Penilaian di client (Perfect/Good/Miss) hanya umpan balik instan; hasil akhir SELALU dari server.
++-- Penilaian di client (Perfect/Good/Miss) hanya umpan balik instan; SKOR dan hasil akhir SELALU dari server (ADR-039):
++-- skor mulai 100 dan hanya turun; server mengirim "Score" tiap berubah dan "Close" bila skor < batas (gagal).
++-- GUI ini hanya ada di layar pemain yang bermain; pemain lain tidak melihatnya (mereka hanya mendengar musiknya).
+ -- Selama bermain, Q/W/E/R "ditelan" (Sink) agar karakter tidak berjalan dan E tidak memicu interaksi lain.
+ 
+ local ContentProvider = game:GetService("ContentProvider")
+@@ -56,7 +58,6 @@ local duration = 0
+ local clockStart = 0
+ local sound: Sound? = nil
+ local renderConnection: RBXScriptConnection? = nil
+-local pointsLocal = 0
+ local combo = 0
+ local flashToken = 0
+ 
+@@ -116,13 +117,9 @@ local function flashLane(lane: number)
+ 	end)
+ end
+ 
+-local function updateScore()
+-	local total = #notes
+-	local percent = 0
+-	if total > 0 then
+-		percent = math.floor(pointsLocal / (total * Config.PERFECT_POINTS) * 100 + 0.5)
+-	end
+-	scoreLabel.Text = string.format("SKOR %d", percent)
++-- Skor hanya ditampilkan; nilainya dari server.
++local function setScore(score: number)
++	scoreLabel.Text = string.format("SKOR %d", score)
+ end
+ 
+ -- ===== Not =====
+@@ -183,16 +180,8 @@ local function press(lane: number)
+ 
+ 	best.state = "HIT"
+ 	destroyNoteFrame(best)
+-	if bestDelta <= Config.PERFECT_WINDOW then
+-		pointsLocal += Config.PERFECT_POINTS
+-		combo += 1
+-		showJudgement("PERFECT")
+-	else
+-		pointsLocal += Config.GOOD_POINTS
+-		combo += 1
+-		showJudgement("GOOD")
+-	end
+-	updateScore()
++	combo += 1
++	showJudgement(if bestDelta <= Config.PERFECT_WINDOW then "PERFECT" else "GOOD")
+ end
+ 
+ -- ===== Loop render =====
+@@ -320,7 +309,9 @@ local function beginPlaying(myToken: number)
+ 	end
+ 	actionRemote:FireServer({ action = "Ready" })
+ 	local touchOnly = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+-	infoLabel.Text = if touchOnly then "Ketuk kolom saat not tiba di garis" else "Tekan Q W E R (atau klik kolom) saat not tiba di garis"
++	infoLabel.Text = if touchOnly
++		then string.format("Ketuk kolom tepat waktu. Jaga skor di atas %d!", Config.REQUIRED_SCORE)
++		else string.format("Tekan Q W E R (atau klik kolom) tepat waktu. Jaga skor di atas %d!", Config.REQUIRED_SCORE)
+ 	stopRender()
+ 	renderConnection = RunService.RenderStepped:Connect(onRender)
+ end
+@@ -359,7 +350,8 @@ end
+ local function onStart(data: { [string]: any })
+ 	local newNotes = readNotes(data.notes)
+ 	local newDuration = data.duration
+-	if not newNotes or typeof(newDuration) ~= "number" then
++	local startScore = data.score
++	if not newNotes or typeof(newDuration) ~= "number" or typeof(startScore) ~= "number" then
+ 		return
+ 	end
+ 	if open then
+@@ -369,9 +361,8 @@ local function onStart(data: { [string]: any })
+ 	clearNotes()
+ 	notes = newNotes
+ 	duration = newDuration
+-	pointsLocal = 0
+ 	combo = 0
+-	updateScore()
++	setScore(startScore)
+ 	judgementLabel.Text = ""
+ 	comboLabel.Text = ""
+ 	resultLabel.Text = ""
+@@ -436,12 +427,13 @@ local function onResult(data: { [string]: any })
+ 	scoreLabel.Text = string.format("SKOR %d", score)
+ 	timeLabel.Text = ""
+ 
++	-- Gagal (skor < batas) tidak lewat sini: server mengirim "Close" lalu jumpscare. Result hanya untuk sesi yang bertahan.
+ 	if data.rewarded == true then
+ 		resultLabel.Text = "KAIN KAFAN DIDAPAT"
+ 	elseif data.passed == true then
+ 		resultLabel.Text = "TERJADI MASALAH"
+ 	else
+-		resultLabel.Text = string.format("SKOR TIDAK CUKUP (BUTUH %d)", Config.REQUIRED_SCORE)
++		resultLabel.Text = "GAGAL"
+ 	end
+ 	infoLabel.Text = string.format("Perfect %d   Good %d   Miss %d", perfect, good, miss)
+ 
+@@ -459,6 +451,10 @@ local function onUpdate(raw: unknown)
+ 	local data = raw :: { [string]: any }
+ 	if data.action == "Start" then
+ 		onStart(data)
++	elseif data.action == "Score" then
++		if open and typeof(data.score) == "number" then
++			setScore(data.score)
++		end
+ 	elseif data.action == "Result" then
+ 		onResult(data)
+ 	elseif data.action == "Close" then
+diff --git a/src/client/Controllers/GamelanMusicController.luau b/src/client/Controllers/GamelanMusicController.luau
+new file mode 100644
+index 0000000..eb2d01d
+--- /dev/null
++++ b/src/client/Controllers/GamelanMusicController.luau
+@@ -0,0 +1,139 @@
++--!strict
++-- GamelanMusicController: musik gamelan di dunia untuk pemain LAIN (Phase 7, ADR-039).
++-- Server menandai pemain yang bermain + waktu mulai lewat Attribute pada objek Workspace.QuestObjects.Gamelan
++-- (GamelanConfig.MUSIC_PLAYER_ATTR / MUSIC_START_ATTR). Setiap client lain memutar suara SPASIAL di gamelan,
++-- dimulai dari posisi yang sesuai waktu server (pemain yang baru masuk ikut tersinkron).
++-- Pemain yang bermain TIDAK memutar suara ini: ia mendengar musik lokalnya (GamelanController) yang sinkron dengan not.
++-- Hanya audio: tidak ada GUI, tidak mengirim apa pun ke server, tidak memengaruhi gameplay.
++
++local ContentProvider = game:GetService("ContentProvider")
++local Players = game:GetService("Players")
++local ReplicatedStorage = game:GetService("ReplicatedStorage")
++local Workspace = game:GetService("Workspace")
++
++local Shared = ReplicatedStorage:WaitForChild("Shared")
++local GamelanConfig = require(Shared:WaitForChild("Config"):WaitForChild("GamelanConfig") :: ModuleScript)
++local Log = require(Shared:WaitForChild("Util"):WaitForChild("Log") :: ModuleScript)
++
++local TAG = "GamelanMusicController"
++local FIND_TIMEOUT = 60 -- detik menunggu objek Gamelan muncul (map/streaming)
++local Config = GamelanConfig
++local localPlayer = Players.LocalPlayer
++
++local GamelanMusicController = {}
++
++local gamelan: Instance? = nil
++local current: Sound? = nil
++local currentKey: string? = nil -- "<userId>:<startTime>" sesi yang sedang diputar
++local token = 0 -- naikkan untuk membatalkan pemuatan yang sedang berjalan
++
++-- Bagian fisik tempat suara dipasang (Sound spasial harus berada di BasePart).
++local function findSoundPart(target: Instance): BasePart?
++	if target:IsA("BasePart") then
++		return target
++	end
++	if target:IsA("Model") then
++		if target.PrimaryPart then
++			return target.PrimaryPart
++		end
++		return target:FindFirstChildWhichIsA("BasePart", true)
++	end
++	return nil
++end
++
++local function stopMusic()
++	token += 1
++	currentKey = nil
++	if current then
++		current:Stop()
++		current:Destroy()
++		current = nil
++	end
++end
++
++local function refresh()
++	local target = gamelan
++	if not target then
++		return
++	end
++
++	local userId = target:GetAttribute(Config.MUSIC_PLAYER_ATTR)
++	local startTime = target:GetAttribute(Config.MUSIC_START_ATTR)
++	if typeof(userId) ~= "number" or typeof(startTime) ~= "number" then
++		stopMusic()
++		return
++	end
++	if userId == localPlayer.UserId then
++		stopMusic() -- pemain yang bermain memakai musik lokalnya sendiri
++		return
++	end
++
++	local key = string.format("%d:%f", userId, startTime)
++	if key == currentKey then
++		return -- sesi yang sama sudah diputar (hindari mulai ulang)
++	end
++	stopMusic()
++
++	local id = Config.SOUND_ID
++	if id == "" or id == "rbxassetid://0" then
++		return
++	end
++	local part = findSoundPart(target)
++	if not part then
++		Log.warn(TAG, "objek Gamelan tanpa BasePart; musik dunia dilewati")
++		return
++	end
++
++	local sound = Instance.new("Sound")
++	sound.Name = "GamelanWorldMusic"
++	sound.SoundId = id
++	sound.Volume = Config.WORLD_SOUND_VOLUME
++	sound.Looped = false
++	sound.RollOffMode = Enum.RollOffMode.InverseTapered
++	sound.RollOffMinDistance = Config.WORLD_ROLLOFF_MIN
++	sound.RollOffMaxDistance = Config.WORLD_ROLLOFF_MAX
++	sound.Parent = part
++	current = sound
++	currentKey = key
++	local myToken = token
++
++	task.spawn(function()
++		pcall(function()
++			ContentProvider:PreloadAsync({ sound })
++		end)
++		if token ~= myToken then
++			return -- dibatalkan saat memuat
++		end
++		-- Hitung ulang setelah memuat: musik pemain sudah berjalan sejak startTime.
++		local offset = Workspace:GetServerTimeNow() - startTime
++		if offset >= Config.DURATION_SECONDS then
++			stopMusic()
++			return
++		end
++		sound.TimePosition = math.max(0, offset)
++		sound:Play()
++	end)
++
++	sound.Ended:Connect(function()
++		if current == sound then
++			stopMusic()
++		end
++	end)
++end
++
++function GamelanMusicController.init()
++	task.spawn(function()
++		local questObjects = Workspace:WaitForChild("QuestObjects", FIND_TIMEOUT)
++		local found = questObjects and questObjects:WaitForChild(Config.OBJECT_NAME, FIND_TIMEOUT)
++		if not found then
++			Log.warn(TAG, "Workspace.QuestObjects." .. Config.OBJECT_NAME .. " tidak ditemukan; musik dunia nonaktif")
++			return
++		end
++		gamelan = found
++		found:GetAttributeChangedSignal(Config.MUSIC_PLAYER_ATTR):Connect(refresh)
++		found:GetAttributeChangedSignal(Config.MUSIC_START_ATTR):Connect(refresh)
++		refresh() -- pemain yang baru masuk saat gamelan sedang dimainkan
++	end)
++end
++
++return GamelanMusicController
+diff --git a/src/client/init.client.luau b/src/client/init.client.luau
+index 18c71b4..776f7bd 100644
+--- a/src/client/init.client.luau
++++ b/src/client/init.client.luau
+@@ -17,6 +17,7 @@ local JumpscareController = require(Controllers:WaitForChild("JumpscareControlle
+ local KnockController = require(Controllers:WaitForChild("KnockController") :: ModuleScript)
+ local ReviveController = require(Controllers:WaitForChild("ReviveController") :: ModuleScript)
+ local GamelanController = require(Controllers:WaitForChild("GamelanController") :: ModuleScript)
++local GamelanMusicController = require(Controllers:WaitForChild("GamelanMusicController") :: ModuleScript)
+ 
+ Log.info("Client", string.format("Malam Suro client siap (MAX_PLAYERS=%d)", GameConfig.MAX_PLAYERS))
+ 
+@@ -34,6 +35,7 @@ MemoryPuzzleController.init()
+ JumpscareController.init()
+ KnockController.init()
+ GamelanController.init()
++GamelanMusicController.init()
+ ReviveController.init(function(): boolean
+ 	return DialogueController.isOpen() or MemoryPuzzleController.isOpen() or GamelanController.isOpen()
+ end)
+diff --git a/src/server/Config/FailureConfig.luau b/src/server/Config/FailureConfig.luau
+index dd4b4b4..043022f 100644
+--- a/src/server/Config/FailureConfig.luau
++++ b/src/server/Config/FailureConfig.luau
+@@ -11,6 +11,7 @@ FailureConfig.FAIL_ON_WRONG_FLOWER = true
+ -- Jumpscare per penyebab gagal (id hantu dari JumpscareConfig.Ghosts). Penyebab tanpa entri memakai DEFAULT_JUMPSCARE.
+ FailureConfig.JumpscareByReason = table.freeze({
+ 	WRONG_FLOWER = "Pocong",
++	GAMELAN_FAIL = "Pocong", -- PLACEHOLDER (ADR-039): ganti ke hantu lain nanti, cukup tambah entri di JumpscareConfig.Ghosts
+ } :: { [string]: string })
+ FailureConfig.DEFAULT_JUMPSCARE = "Pocong"
+ 
+diff --git a/src/server/Services/FailureService.luau b/src/server/Services/FailureService.luau
+index e49361e..ea83986 100644
+--- a/src/server/Services/FailureService.luau
++++ b/src/server/Services/FailureService.luau
+@@ -77,6 +77,22 @@ local function failureSequence(player: Player, reason: string, questId: string)
+ 	end
+ end
+ 
++-- Jumpscare TANPA hukuman lanjutan (tanpa knock, tanpa reset quest): kunci pemain (CUTSCENE) -> jumpscare di
++-- layarnya -> kembali NORMAL. Dipakai kegagalan yang boleh langsung diulang (gamelan, ADR-039). MENUNGGU (yield)
++-- selama jumpscare; panggil dari thread yang boleh yield.
++function FailureService.scare(player: Player, reason: string)
++	if player.Parent ~= Players then
++		return
++	end
++	if not GameManager.setPlayerState(player, PlayerState.CUTSCENE) then
++		return
++	end
++	JumpscareService.play(player, Config.JumpscareByReason[reason] or Config.DEFAULT_JUMPSCARE)
++	if player.Parent == Players and GameManager.getPlayerState(player) == PlayerState.CUTSCENE then
++		GameManager.setPlayerState(player, PlayerState.NORMAL)
++	end
++end
++
+ -- Pemain gagal di quest `questId` karena `reason` (lihat KnockConfig.Reason).
+ function FailureService.fail(player: Player, reason: string, questId: string)
+ 	if player.Parent ~= Players then
+diff --git a/src/server/Services/KafanQuestService.luau b/src/server/Services/KafanQuestService.luau
+index e6c0228..8052ac6 100644
+--- a/src/server/Services/KafanQuestService.luau
++++ b/src/server/Services/KafanQuestService.luau
+@@ -15,6 +15,7 @@ local GameConfig = require(Shared:WaitForChild("Config"):WaitForChild("GameConfi
+ local GamelanConfig = require(Shared:WaitForChild("Config"):WaitForChild("GamelanConfig") :: ModuleScript)
+ local Log = require(Shared:WaitForChild("Util"):WaitForChild("Log") :: ModuleScript)
+ local Services = script.Parent
++local FailureService = require(Services:WaitForChild("FailureService") :: ModuleScript)
+ local InteractionService = require(Services:WaitForChild("InteractionService") :: ModuleScript)
+ local ItemService = require(Services:WaitForChild("ItemService") :: ModuleScript)
+ local NoticeService = require(Services:WaitForChild("NoticeService") :: ModuleScript)
+@@ -24,6 +25,7 @@ local RhythmGameService = require(Services:WaitForChild("RhythmGameService") ::
+ local TAG = "KafanQuestService"
+ local QUEST_ID = "KAFAN"
+ local KAIN_ITEM_ID = "KainKafan"
++local SCARE_REASON = "GAMELAN_FAIL" -- kunci di FailureConfig.JumpscareByReason
+ 
+ local KafanQuestService = {}
+ 
+@@ -48,6 +50,41 @@ local function refreshInteractable()
+ 	end
+ end
+ 
++-- ===== Musik untuk pemain lain (ADR-039) =====
++-- Server hanya menandai SIAPA yang bermain dan KAPAN mulai lewat Attribute pada objek Gamelan (direplikasi ke semua
++-- client, termasuk pemain yang baru masuk). Client pemain LAIN memutar suara spasial di gamelan
++-- (GamelanMusicController); pemain yang bermain memakai musik lokalnya sendiri agar sinkron dengan not.
++
++local function startWorldMusic(player: Player)
++	if not gamelan then
++		return
++	end
++	-- Urutan: waktu mulai dulu, baru pemain (client bereaksi pada perubahan MUSIC_PLAYER_ATTR).
++	gamelan:SetAttribute(GamelanConfig.MUSIC_START_ATTR, Workspace:GetServerTimeNow())
++	gamelan:SetAttribute(GamelanConfig.MUSIC_PLAYER_ATTR, player.UserId)
++end
++
++local function stopWorldMusic()
++	if not gamelan then
++		return
++	end
++	gamelan:SetAttribute(GamelanConfig.MUSIC_PLAYER_ATTR, nil)
++	gamelan:SetAttribute(GamelanConfig.MUSIC_START_ATTR, nil)
++end
++
++-- Skor jatuh di bawah batas (ADR-039): UI sudah ditutup RhythmGameService. Jumpscare, lalu boleh mencoba lagi.
++local function onFail(player: Player, result: RhythmGameService.Result)
++	FailureService.scare(player, SCARE_REASON)
++	if player.Parent ~= Players then
++		return
++	end
++	NoticeService.notifyParty(
++		player,
++		string.format("Skor turun ke %d (batas %d). Kamu gagal. Mainkan gamelan lagi.", result.score, GamelanConfig.REQUIRED_SCORE),
++		string.format("%s gagal memainkan gamelan.", player.Name)
++	)
++end
++
+ -- Dipanggil RhythmGameService saat sesi selesai. Return true jika Kain Kafan berhasil diberikan.
+ -- Urutan: beri kain -> GAMELAN_COMPLETE -> KAIN_OBTAINED. Gagal di tengah = kain dibatalkan (tidak ada duplikat).
+ local function onFinish(player: Player, result: RhythmGameService.Result): boolean
+@@ -117,7 +154,12 @@ local function onGamelanInteract(player: Player, target: Instance)
+ 		return
+ 	end
+ 
+-	if not RhythmGameService.start(player, onFinish) then
++	local hooks: RhythmGameService.Hooks = {
++		onFail = onFail,
++		onPlaying = startWorldMusic,
++		onClosed = stopWorldMusic,
++	}
++	if not RhythmGameService.start(player, onFinish, hooks) then
+ 		return
+ 	end
+ 	NoticeService.notifyParty(
+diff --git a/src/server/Services/RhythmGameService.luau b/src/server/Services/RhythmGameService.luau
+index 684f2c7..81e7713 100644
+--- a/src/server/Services/RhythmGameService.luau
++++ b/src/server/Services/RhythmGameService.luau
+@@ -1,17 +1,23 @@
+ --!strict
+ -- RhythmGameService: mesin minigame ritme 4 kolom (Guitar Hero) untuk gamelan (Phase 7, ADR-038).
+ -- Server-authoritative: server membuat chart acak, menentukan kapan sesi mulai/selesai, memvalidasi SETIAP tekanan,
+--- menghitung skor, dan memutuskan lulus/tidak. Client hanya menampilkan dan MENGIRIM tekanan { lane, t }.
+--- Satu sesi aktif untuk seluruh party; hanya SATU pemain yang bermain. Hadiah diputuskan callback onFinish pemanggil.
++-- menilai Miss secara real-time, menghitung skor, dan memutuskan lulus/gagal. Client hanya menampilkan dan MENGIRIM
++-- tekanan { lane, t }. Satu sesi aktif untuk seluruh party; hanya SATU pemain yang bermain.
++-- Hadiah/hukuman diputuskan callback pemanggil (onFinish / hooks.onFail).
+ --
+--- Alur: start() -> client memuat musik -> "Ready" (jam sesi server mulai) -> tekanan "Hit" -> durasi habis ->
+---       server menutup sesi, menghitung skor, memanggil onFinish, mengirim hasil.
++-- Skor (ADR-039): MULAI START_SCORE (100), turun per Good/Miss. Skor < REQUIRED_SCORE kapan pun = GAGAL SEKETIKA:
++-- client diminta menutup UI, sesi ditutup, hooks.onFail dipanggil (jumpscare oleh pemanggil).
++-- Bertahan sampai durasi habis = lulus.
++--
++-- Alur: start() -> client memuat musik -> "Ready" (jam sesi server mulai) -> tekanan "Hit" (+ tick Miss server) ->
++--       skor < batas: gagal | durasi habis: server menutup sesi, memanggil onFinish, mengirim hasil.
+ -- Batasan jujur: server tidak bisa memastikan tekanan berasal dari tangan manusia; yang dijamin: tidak ada skor
+ -- tanpa waktu nyata berjalan, tiap not hanya bisa dinilai sekali, tekanan dibatasi laju dan jumlah, dan hasil akhir
+ -- selalu dari server.
+ 
+ local Players = game:GetService("Players")
+ local ReplicatedStorage = game:GetService("ReplicatedStorage")
++local RunService = game:GetService("RunService")
+ 
+ local Shared = ReplicatedStorage:WaitForChild("Shared")
+ local GameConfig = require(Shared:WaitForChild("Config"):WaitForChild("GameConfig") :: ModuleScript)
+@@ -37,6 +43,17 @@ export type Result = {
+ -- Dipanggil saat sesi selesai NORMAL (bukan dibatalkan). Return true = hadiah berhasil diberikan.
+ export type FinishHandler = (player: Player, result: Result) -> boolean
+ 
++-- Hook opsional dari pemanggil (semua dipanggil lewat pcall).
++export type Hooks = {
++	-- Skor jatuh di bawah batas. Dipanggil SETELAH sesi ditutup dan UI client diminta tutup. Boleh yield
++	-- (dijalankan di thread terpisah), mis. memutar jumpscare.
++	onFail: ((player: Player, result: Result) -> ())?,
++	-- Musik pemain mulai (client mengirim Ready, jam sesi mulai).
++	onPlaying: ((player: Player) -> ())?,
++	-- Sesi berakhir dengan cara APA PUN (lulus, gagal, batal, keluar). Aman dipanggil tanpa onPlaying.
++	onClosed: ((player: Player) -> ())?,
++}
++
+ type Note = { time: number, lane: number, judged: boolean }
+ 
+ type Session = {
+@@ -44,9 +61,12 @@ type Session = {
+ 	notes: { Note },
+ 	startedAt: number?, -- jam server saat client mengirim Ready
+ 	onFinish: FinishHandler,
++	hooks: Hooks,
+ 	perfect: number,
+ 	good: number,
+-	points: number,
++	missed: number,
++	score: number, -- mulai START_SCORE, hanya turun
++	nextJudge: number, -- indeks not berikutnya yang dicek untuk Miss (not terurut waktu)
+ 	hitCount: number,
+ 	rejected: number,
+ 	lastHitAt: number,
+@@ -145,25 +165,95 @@ local function closeSession(player: Player, notifyClient: boolean)
+ 	if notifyClient then
+ 		updateRemote:FireClient(player, { action = "Close" })
+ 	end
++	local onClosed = session.hooks.onClosed
++	if onClosed then
++		local ok, err = pcall(onClosed, player)
++		if not ok then
++			Log.warn(TAG, "onClosed error: " .. tostring(err))
++		end
++	end
+ end
+ 
+ local function computeResult(session: Session): Result
+-	local total = #session.notes
+-	local maxPoints = total * Config.PERFECT_POINTS
+-	local score = 0
+-	if maxPoints > 0 then
+-		score = math.floor(session.points / maxPoints * 100 + 0.5)
+-	end
+ 	return {
+-		score = score,
++		score = session.score,
+ 		perfect = session.perfect,
+ 		good = session.good,
+-		miss = total - session.perfect - session.good,
+-		total = total,
+-		passed = score >= Config.REQUIRED_SCORE,
++		miss = session.missed,
++		total = #session.notes,
++		passed = session.score >= Config.REQUIRED_SCORE,
+ 	}
+ end
+ 
++local function sendScore(player: Player, session: Session)
++	updateRemote:FireClient(player, { action = "Score", score = session.score })
++end
++
++-- Skor jatuh di bawah batas: tutup sesi (client menutup UI + musik), lalu serahkan ke hooks.onFail.
++local function failSession(player: Player, session: Session)
++	if sessions[player] ~= session then
++		return
++	end
++	local result = computeResult(session)
++	Log.info(
++		TAG,
++		string.format(
++			"%s GAGAL: skor %d < %d (perfect %d, good %d, miss %d dari %d not)",
++			player.Name,
++			result.score,
++			Config.REQUIRED_SCORE,
++			result.perfect,
++			result.good,
++			result.miss,
++			result.total
++		)
++	)
++	local onFail = session.hooks.onFail
++	closeSession(player, true)
++	if onFail then
++		task.spawn(function()
++			local ok, err = pcall(onFail, player, result)
++			if not ok then
++				Log.warn(TAG, "onFail error: " .. tostring(err))
++			end
++		end)
++	end
++end
++
++-- Not yang sudah lewat jendela penilaian + kelonggaran latensi dan belum dinilai = Miss (diputuskan server).
++-- `elapsed` = detik sejak Ready. Return true jika ada not yang menjadi Miss.
++local function judgeExpired(session: Session, elapsed: number): boolean
++	local changed = false
++	while true do
++		local note = session.notes[session.nextJudge]
++		if note == nil or note.time + Config.GOOD_WINDOW + Config.MISS_GRACE >= elapsed then
++			break
++		end
++		session.nextJudge += 1
++		if not note.judged then
++			note.judged = true
++			session.missed += 1
++			session.score = math.max(0, session.score - Config.MISS_PENALTY)
++			changed = true
++		end
++	end
++	return changed
++end
++
++-- Dipanggil tiap Heartbeat selama sesi berjalan: Miss real-time -> skor -> gagal bila di bawah batas.
++local function onTick(player: Player, session: Session)
++	local startedAt = session.startedAt
++	if sessions[player] ~= session or startedAt == nil then
++		return
++	end
++	if judgeExpired(session, os.clock() - startedAt) then
++		sendScore(player, session)
++		if session.score < Config.REQUIRED_SCORE then
++			failSession(player, session)
++		end
++	end
++end
++
+ -- Durasi habis: hitung skor di server, panggil onFinish, kirim hasil, tutup sesi.
+ local function finishSession(player: Player, session: Session)
+ 	if sessions[player] ~= session then
+@@ -177,6 +267,12 @@ local function finishSession(player: Player, session: Session)
+ 		return
+ 	end
+ 
++	-- Sapu not terakhir yang belum dinilai (tick mungkin belum menjangkau); bisa menggagalkan sesi.
++	if judgeExpired(session, math.huge) and session.score < Config.REQUIRED_SCORE then
++		failSession(player, session)
++		return
++	end
++
+ 	local result = computeResult(session)
+ 	local rewarded = false
+ 	local ok, handlerResult = pcall(session.onFinish, player, result)
+@@ -217,7 +313,7 @@ function RhythmGameService.getActivePlayer(): Player?
+ end
+ 
+ -- Mulai sesi untuk pemain. Return false jika sesi lain berjalan atau state pemain tidak mengizinkan.
+-function RhythmGameService.start(player: Player, onFinish: FinishHandler): boolean
++function RhythmGameService.start(player: Player, onFinish: FinishHandler, hooks: Hooks?): boolean
+ 	if activePlayer ~= nil or sessions[player] ~= nil then
+ 		return false
+ 	end
+@@ -231,9 +327,12 @@ function RhythmGameService.start(player: Player, onFinish: FinishHandler): boole
+ 		notes = generateChart(),
+ 		startedAt = nil,
+ 		onFinish = onFinish,
++		hooks = hooks or {},
+ 		perfect = 0,
+ 		good = 0,
+-		points = 0,
++		missed = 0,
++		score = Config.START_SCORE,
++		nextJudge = 1,
+ 		hitCount = 0,
+ 		rejected = 0,
+ 		lastHitAt = 0,
+@@ -271,6 +370,7 @@ function RhythmGameService.start(player: Player, onFinish: FinishHandler): boole
+ 		action = "Start",
+ 		notes = payloadNotes,
+ 		duration = Config.DURATION_SECONDS,
++		score = session.score,
+ 	})
+ 
+ 	-- Client harus mengirim Ready (musik siap) dalam READY_TIMEOUT.
+@@ -295,6 +395,20 @@ local function onReady(player: Player, session: Session)
+ 	task.delay(Config.DURATION_SECONDS + Config.END_GRACE, function()
+ 		finishSession(player, session)
+ 	end)
++	-- Penilai Miss real-time (tidak bergantung pada tekanan pemain).
++	table.insert(
++		session.connections,
++		RunService.Heartbeat:Connect(function()
++			onTick(player, session)
++		end)
++	)
++	local onPlaying = session.hooks.onPlaying
++	if onPlaying then
++		local ok, err = pcall(onPlaying, player)
++		if not ok then
++			Log.warn(TAG, "onPlaying error: " .. tostring(err))
++		end
++	end
+ end
+ 
+ local function isFiniteNumber(value: unknown): boolean
+@@ -362,12 +476,19 @@ local function onHit(player: Player, session: Session, payload: { [any]: any })
+ 	end
+ 
+ 	best.judged = true
++	local penalty = Config.PERFECT_PENALTY
+ 	if bestDelta <= Config.PERFECT_WINDOW then
+ 		session.perfect += 1
+-		session.points += Config.PERFECT_POINTS
+ 	else
+ 		session.good += 1
+-		session.points += Config.GOOD_POINTS
++		penalty = Config.GOOD_PENALTY
++	end
++	if penalty > 0 then
++		session.score = math.max(0, session.score - penalty)
++		sendScore(player, session)
++		if session.score < Config.REQUIRED_SCORE then
++			failSession(player, session)
++		end
+ 	end
+ end
+ 
+diff --git a/src/shared/Config/GamelanConfig.luau b/src/shared/Config/GamelanConfig.luau
+index aae2f4b..c9091db 100644
+--- a/src/shared/Config/GamelanConfig.luau
++++ b/src/shared/Config/GamelanConfig.luau
+@@ -2,13 +2,21 @@
+ -- GamelanConfig: aturan minigame ritme gamelan (quest Kain Kafan, Phase 7). Hanya data, tanpa logika.
+ -- SATU pemain memainkannya (keputusan user 2026-10-11, ADR-038). Gaya Guitar Hero: 4 kolom, not jatuh ke garis
+ -- tekan. PC: tombol Q W E R. Mobile: ketuk kolom. Server membuat chart, memvalidasi tiap tekanan, dan menghitung skor.
++-- Skor MULAI 100 dan hanya turun; skor < REQUIRED_SCORE kapan pun = gagal seketika (ADR-039).
+ 
+ local GamelanConfig = {}
+ 
+ -- ===== Musik =====
+ -- PLACEHOLDER: isi dengan ID audio gamelan (format "rbxassetid://102528213806007"). Kosong = game tetap berjalan tanpa suara.
+ GamelanConfig.SOUND_ID = "rbxassetid://102528213806007"
+-GamelanConfig.SOUND_VOLUME = 0.8
++GamelanConfig.SOUND_VOLUME = 0.8 -- volume musik untuk pemain yang bermain (lokal, tepat sinkron dengan not)
++-- Musik untuk pemain LAIN (ADR-039): suara spasial di objek Gamelan, diputar client masing-masing.
++GamelanConfig.WORLD_SOUND_VOLUME = 1
++GamelanConfig.WORLD_ROLLOFF_MIN = 20 -- studs: sampai jarak ini volume penuh
++GamelanConfig.WORLD_ROLLOFF_MAX = 160 -- studs: di luar jarak ini tidak terdengar
++-- Attribute pada objek Gamelan (direplikasi ke semua client; juga berlaku bagi pemain yang baru masuk).
++GamelanConfig.MUSIC_PLAYER_ATTR = "MusicPlayerUserId" -- UserId pemain yang bermain; kosong = tidak ada musik
++GamelanConfig.MUSIC_START_ATTR = "MusicStartServerTime" -- Workspace:GetServerTimeNow() saat musik pemain mulai
+ -- Durasi sesi = durasi musik (1 menit 37 detik). Ubah di sini bila musik diganti.
+ GamelanConfig.DURATION_SECONDS = 97
+ 
+@@ -27,13 +35,18 @@ GamelanConfig.NOTE_CHANCE = 0.75
+ GamelanConfig.REPEAT_LANE_REJECT = 0.7 -- peluang menghindari kolom yang sama berturut-turut
+ GamelanConfig.APPROACH_SECONDS = 1.6 -- lama not jatuh dari atas ke garis tekan (tampilan)
+ 
+--- ===== Penilaian =====
++-- ===== Penilaian (ADR-039: skor dipertahankan, bukan dikumpulkan) =====
+ GamelanConfig.PERFECT_WINDOW = 0.10 -- detik, selisih tekan vs waktu not
+ GamelanConfig.GOOD_WINDOW = 0.20
+-GamelanConfig.PERFECT_POINTS = 10
+-GamelanConfig.GOOD_POINTS = 7
+--- Skor akhir = persen dari poin maksimum (0-100). Lulus bila >= REQUIRED_SCORE.
++GamelanConfig.START_SCORE = 100
++GamelanConfig.PERFECT_PENALTY = 0 -- pengurang skor per hasil
++GamelanConfig.GOOD_PENALTY = 1
++GamelanConfig.MISS_PENALTY = 3
++-- Skor < REQUIRED_SCORE kapan pun = GAGAL seketika (UI ditutup, jumpscare). Bertahan sampai musik selesai = lulus.
++-- Dengan nilai di atas: 6 Miss masih aman (82), Miss ke-7 gagal (79). Setel PENALTY agar kesulitan pas.
+ GamelanConfig.REQUIRED_SCORE = 80
++-- Not dianggap Miss oleh server setelah waktu not + GOOD_WINDOW + MISS_GRACE (kelonggaran latensi jaringan).
++GamelanConfig.MISS_GRACE = 0.4
+ 
+ -- ===== Validasi server (anti-curang, ADR-038) =====
+ GamelanConfig.READY_TIMEOUT = 10 -- detik menunggu client selesai memuat musik
+-- 
+2.43.0
+
