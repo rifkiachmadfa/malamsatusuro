@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 2026-10-11 — Phase 6 Task 6.3: Knock UI minimal + pencatatan hasil tes
+- Baru: client/Controllers/KnockController: overlay vinyet + "KAMU PINGSAN" + petunjuk Minyak Zaitun saat Attribute PlayerState = KNOCKED; fade in/out; hotbar Roblox disembunyikan selama knock. DisplayOrder 20 (di bawah notifikasi dan jumpscare). Tanpa marker di kepala korban (keputusan user: minimal)
+- Hasil tes (dilaporkan user, Studio normal): Phase 5 (5.1–5.8) dan Phase 6 sampai 6.2 BERHASIL. ADR-027/028/029/032/033/034 ACCEPTED, ADR-031 ACCEPTED untuk 6.1–6.2, ADR-030 sebagian dibangun
+- Verifikasi AI untuk 6.3: luau-compile OK. Belum dites di Studio
+
 ## 2026-10-11 — Audio jumpscare (placeholder) + state RETRY_GUIDE (ADR-034) (belum dites di Studio)
 - JumpscareConfig: soundId placeholder `rbxasset://sounds/bass.mp3` (suara bawaan Roblox, belum diverifikasi AI di Studio); ganti dengan aset asli. Diputar client hanya pada pemain yang kena
 - QuestConfig: field opsional `retryState`/`retryObjective`; KANTIL punya state `RETRY_GUIDE` (di luar rantai linear, transisi RETRY_GUIDE -> ACTIVE)

@@ -351,7 +351,7 @@ Decision (arahan user 2026-10-11, merevisi langkah reset di ADR-032):
 - Aturan baru untuk quest lain: jika ingin dukungan "ulangi", cukup tambah `retryState`/`retryObjective` di QuestConfig, transisi retryState -> ACTIVE, dan dialog ulangi di GameFlowService.
 
 Status:
-PROPOSED (menunggu uji Studio)
+ACCEPTED (diuji user di Studio, 2026-10-11)
 
 ## ADR-033 — JUMPSCARE: VIEWPORTFRAME LOKAL, SERVER MENUNGGU DURASI
 
@@ -365,7 +365,7 @@ Decision (2026-10-11, melaksanakan ADR-031):
 - Menambah hantu = satu entri baru di JumpscareConfig.Ghosts + model di ServerStorage/GhostModels.
 
 Status:
-PROPOSED (menunggu uji Studio)
+ACCEPTED (diuji user di Studio, 2026-10-11)
 
 ## ADR-032 — KEGAGALAN SOLO = JUMPSCARE + RESPAWN + RESET QUEST; MULTIPLAYER = KNOCK
 
@@ -380,7 +380,7 @@ Decision (arahan user 2026-10-10, MENGGANTIKAN bagian solo di ADR-030):
 - Risiko terbuka: pemain knock yang rekan-rekannya keluar sampai tersisa satu (solo mendadak) perlu ditangani di 6.5 lewat onAllKnocked (jalur solo = soloFail, bukan wipe biasa).
 
 Status:
-PROPOSED (menunggu uji Studio)
+ACCEPTED (diuji user di Studio, 2026-10-11)
 
 ## ADR-031 — PHASE 6 DIPECAH BERTAHAP; KNOCKSERVICE TIDAK TAHU PENYEBAB; JUMPSCARE = VIEWPORT 3D LOKAL
 
@@ -395,7 +395,7 @@ Decision (arahan user 2026-10-10):
 - Batasan 6.1: `knock` hanya menerima pemain berstatus NORMAL. Knock saat MINIGAME/dialog (mis. hantu menyerang saat puzzle) butuh pembatalan sesi MemoryPuzzleService; ditunda sampai hantu dibuat.
 
 Status:
-PROPOSED (6.1 menunggu uji Studio)
+ACCEPTED untuk 6.1 dan 6.2 (diuji user di Studio, 2026-10-11); 6.3 menunggu uji; 6.4–6.5 belum dikerjakan
 
 ## ADR-030 — POLA KEGAGALAN KANTIL: BUNGA SALAH = JUMPSCARE + KNOCK; SEMUA KNOCK = WIPE (SOLO = LANGSUNG WIPE)
 
@@ -409,7 +409,7 @@ Decision (pola dari user 2026-10-10, dibangun di Phase 6):
 - Titik sambung di kode: `GravePuzzleService.onWrong(player, graveName, itemId)`. TIDAK perlu mengubah QuestConfig (wipe dari CANTIL_PUZZLE sudah ada).
 
 Status:
-PROPOSED (Phase 6, belum dibangun)
+SEBAGIAN DIBANGUN: bunga salah -> jumpscare -> knock/solo respawn sudah diuji (ADR-031–034); party wipe dan flower reset menunggu Task 6.5
 
 ## ADR-029 — GRAVEPUZZLESERVICE: PLACEMENT BUNGA DI MAKAM, JAWABAN DI SERVER
 
@@ -427,7 +427,7 @@ Decision:
 - Duplikasi kecil `pickPlayer` (mirip `pickHolder` KerisQuestService); kandidat util bersama saat ada pemakai ketiga.
 
 Status:
-PROPOSED (menunggu uji Studio dan konfirmasi jawaban)
+ACCEPTED (diuji user di Studio, 2026-10-11). Catatan: jawaban GravePuzzleConfig.ANSWER masih placeholder (ANSWER_CONFIRMED=false)
 
 ## ADR-028 — GAMEFLOWSERVICE GENERIK: PEMANDU MELAPOR QUEST SELESAI LALU MEMBERI QUEST BERIKUTNYA
 
@@ -439,7 +439,7 @@ Decision:
 - ASUMSI (belum diputuskan di GDD): quest berikutnya dimulai lewat dialog laporan Pemandu, sesuai core loop "bertemu Pemandu -> menerima quest". Mengubah ke aktivasi otomatis cukup mengganti pemicu startQuest.
 
 Status:
-PROPOSED (menunggu uji Studio)
+ACCEPTED (diuji user di Studio, 2026-10-11)
 
 ## ADR-027 — COLLECTIBLESERVICE: SATU MODUL UNTUK SEMUA OBJECTIVE KOLEKSI
 
@@ -452,7 +452,7 @@ Decision:
 - Belum termasuk: penghapusan bunga dari Backpack saat party wipe (Task "Flower reset").
 
 Status:
-PROPOSED (menunggu uji Studio)
+ACCEPTED (diuji user di Studio, 2026-10-11)
 
 ## ADR-026 — QUEST SELESAI = ITEM DISIMPAN DI RITUALCOLLECTION; PEMANDU HANYA MELAPOR
 

@@ -94,33 +94,33 @@ DONE dengan catatan (2026-10-05, ditutup atas instruksi user; commit 0d8dfa2). S
 # PHASE 5 — KEMBANG KANTIL HITAM
 
 Status:
-IN PROGRESS (2026-10-10). Kode 5.1–5.8 ada; SEMUANYA belum dites di Studio. Knock/revive/party wipe/flower reset menunggu Phase 6.
+KODE & TES STUDIO OK untuk 5.1–5.8 (dilaporkan user, Studio normal, 2026-10-11). Sisa (5.9 giliran tunggal, revive, party wipe, flower reset) dikerjakan di Phase 6 (Task 6.4–6.5).
 
-- [x] 5.1 Flower spawn system (CollectibleService + CollectionConfig, ADR-027) — harness offline; BELUM dites di Studio
-- [x] 5.2 Server randomization (4 dari 8 titik, 4 jenis berbeda) — idem
-- [x] 5.3 Flower collection — idem
-- [x] 5.4 Party progress (counter Flowers 4/4) — idem
-- [x] 5.5 Alur Pemandu: KERIS selesai -> laporan -> KANTIL (GameFlowService, ADR-028) — idem
-- [x] 5.6 Grave clue — TANPA KODE: clue = SurfaceGui di makam (dibuat user di Studio). Dependency Studio, belum diverifikasi AI
-- [x] 5.7 Flower placement (GravePuzzleService, ADR-029): equip bunga + [E] di makam; harness offline 55 cek; BELUM dites di Studio
-- [x] 5.8 Puzzle validation PER BUNGA (server; bunga salah tidak dipakai + hook onWrong; benar tetap di makam) — idem. JAWABAN MASIH PLACEHOLDER (ANSWER_CONFIRMED=false)
+- [x] 5.1 Flower spawn system (CollectibleService + CollectionConfig, ADR-027) — DITES user di Studio (normal, 2026-10-11)
+- [x] 5.2 Server randomization (4 dari 8 titik, 4 jenis berbeda) — DITES user di Studio (normal, 2026-10-11)
+- [x] 5.3 Flower collection — DITES user di Studio (normal, 2026-10-11)
+- [x] 5.4 Party progress (counter Flowers 4/4) — DITES user di Studio (normal, 2026-10-11)
+- [x] 5.5 Alur Pemandu: KERIS selesai -> laporan -> KANTIL (GameFlowService, ADR-028) — DITES user di Studio (normal, 2026-10-11)
+- [x] 5.6 Grave clue — TANPA KODE: clue = SurfaceGui di makam (dibuat user di Studio); alur diuji user (2026-10-11)
+- [x] 5.7 Flower placement (GravePuzzleService, ADR-029): equip bunga + [E] di makam; DITES user di Studio (normal, 2026-10-11)
+- [x] 5.8 Puzzle validation PER BUNGA (server; bunga salah tidak dipakai + hook onWrong; benar tetap di makam) — DITES user di Studio (normal, 2026-10-11). JAWABAN MASIH PLACEHOLDER (ANSWER_CONFIRMED=false)
 - [ ] 5.9 Turn/attempt control (satu pemain aktif) — DIPUTUSKAN user 2026-10-10: dikerjakan bersama sistem knock/revive di Phase 6 (bukan sekarang). Catatan desain: bunga terbagi antar pemain, jadi kunci giliran tidak boleh membatasi siapa yang meletakkan bunga; rancang bersama aturan knock pada pemain yang gagal
-- [ ] Knock system + jumpscare pada bunga salah (ADR-030/031): knock = Task 6.1 (kode ada), jumpscare = 6.2; hook GravePuzzleService.onWrong sudah tersambung ke KnockService
+- [x] Knock system + jumpscare pada bunga salah (ADR-030–034): DITES user di Studio (normal, 2026-10-11); solo = respawn + reset quest, multiplayer = knock
 - [ ] Revive (Minyak Zaitun)
 - [ ] Party wipe (semua knock = wipe; solo = langsung wipe; CANTIL_PUZZLE -> SEARCHING_FLOWERS; makam otomatis dikosongkan, bunga di Backpack belum dihapus)
 - [ ] Flower reset (hapus sisa bunga dari semua Backpack saat wipe)
-- [x] Black Kantil reward (diberikan ke penempat bunga terakhir saat jawaban benar) — harness offline
+- [x] Black Kantil reward (diberikan ke penempat bunga terakhir saat jawaban benar) — DITES user di Studio (normal, 2026-10-11)
 - [x] NPC submission = simpan di RitualCollection (sudah ada di RitualConfig sejak ADR-026; belum dites untuk Kantil)
 
 # PHASE 6 — KNOCK / REVIVE
 
 Status:
-IN PROGRESS (2026-10-10). Dikerjakan bertahap sesuai ADR-031; user memvalidasi tiap tahap.
+IN PROGRESS. Dikerjakan bertahap sesuai ADR-031; user memvalidasi tiap tahap. 6.1, 6.1b, 6.2 DITES user di Studio (normal, 2026-10-11).
 
-- [x] 6.1 Knock state (KnockService, server): berbaring + tidak bisa bergerak/berinteraksi, knock dari bunga salah — kode ditulis, luau-compile OK; BELUM dites di Studio
-- [x] 6.1b Kegagalan solo vs multiplayer (FailureService, ADR-032): solo = respawn + reset quest 2 + mulai lagi dari Pemandu; multiplayer = knock — kode ditulis, luau-compile OK; BELUM dites di Studio
-- [x] 6.2 Jumpscare client-only (ViewportFrame model 3D berrig + efek layar, hanya untuk pemain yang kena) lalu knock/respawn — kode ditulis, luau-compile OK; BELUM dites di Studio. Suara jumpscare belum ada (soundId kosong di JumpscareConfig)
-- [ ] 6.3 Knock UI (overlay pemain knock, penanda untuk rekan)
+- [x] 6.1 Knock state (KnockService, server): berbaring + tidak bisa bergerak/berinteraksi, knock dari bunga salah — DITES user di Studio (normal, 2026-10-11)
+- [x] 6.1b Kegagalan solo vs multiplayer (FailureService, ADR-032): solo = respawn + reset quest 2 + mulai lagi dari Pemandu; multiplayer = knock — DITES user di Studio (normal, 2026-10-11)
+- [x] 6.2 Jumpscare client-only (ViewportFrame model 3D berrig + efek layar, hanya untuk pemain yang kena) lalu knock/respawn — DITES user di Studio (normal, 2026-10-11). Audio + state RETRY_GUIDE (ADR-034) ikut diuji; suara masih placeholder
+- [x] 6.3 Knock UI MINIMAL (keputusan user: tanpa marker): overlay vinyet + teks "Kamu pingsan" di pemain knock (KnockController) — kode ditulis, luau-compile OK; BELUM dites di Studio. Marker di kepala korban TIDAK dikerjakan (bisa ditambah nanti)
 - [ ] 6.4 Ramuan Minyak Zaitun tersebar di map (Tool) + revive (equip + dekat korban, kurangi 1, validasi server)
 - [ ] 6.5 Giliran tunggal (Task 5.9) + party wipe (semua knock) + reset bunga Kantil (hapus bunga di Backpack, spawn ulang)
 - [ ] Uji 1/2/3/4 pemain knock (jadwalkan di Phase 10 untuk 3–4 pemain)

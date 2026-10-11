@@ -9,8 +9,8 @@ PHASE 1 — FOUNDATION: SELESAI.
 PHASE 2 — QUEST SYSTEM: SELESAI (diuji 1 dan 2 pemain).
 PHASE 3 — INTERACTION & INVENTORY: ItemService selesai (boot diuji; give/consume diuji lewat Phase 4).
 PHASE 4 — KERIS PUSAKA: SELESAI dengan catatan (alur Kelor -> kunci -> peti -> puzzle -> keris -> simpan di RitualCollection; 3–4 pemain di Phase 10).
-PHASE 5 — KEMBANG KANTIL HITAM: SEDANG BERJALAN (5.1–5.8 kode selesai, belum dites di Studio; knock/revive/wipe/flower reset = Phase 6).
-PHASE 6 — KNOCK / REVIVE: SEDANG BERJALAN, bertahap (6.1 KnockService kode selesai, BELUM dites di Studio; 6.2–6.5 belum).
+PHASE 5 — KEMBANG KANTIL HITAM: 5.1–5.8 SELESAI dan DITES user di Studio (normal, 2026-10-11). Sisa (giliran tunggal, revive, wipe, flower reset) dikerjakan di Phase 6.
+PHASE 6 — KNOCK / REVIVE: SEDANG BERJALAN, bertahap. 6.1 knock, 6.1b solo/multiplayer, 6.2 jumpscare (+audio placeholder, RETRY_GUIDE) DITES user di Studio (normal, 2026-10-11). 6.3 Knock UI minimal: kode ada, BELUM dites. 6.4 (ramuan + revive) dan 6.5 (giliran tunggal, party wipe, flower reset) belum.
 
 
 ## TOOLCHAIN
@@ -89,6 +89,10 @@ Jumpscare (ADR-033): bunga salah -> pemain dikunci -> jumpscare Pocong di layar 
 
 ## UPDATE 2026-10-11 (audio jumpscare + RETRY_GUIDE)
 Jumpscare memutar suara placeholder di client pemain yang kena. Setelah solo gagal, quest 2 masuk state `RETRY_GUIDE`: Quest UI menampilkan "Kembali berbicara kepada Pemandu", dialog `Pemandu_KantilRetry` memulai ulang quest (ADR-034). Syntax OK; BELUM dites di Studio.
+
+## HASIL TES 2026-10-11 (dilaporkan user: Phase 5 dan Phase 6 sampai 6.2 berhasil, Studio normal)
+Berlaku untuk: CollectibleService/bunga (5.1–5.4), alur Pemandu KERIS->KANTIL (5.5), clue makam (5.6), placement + validasi per bunga + hadiah Kantil Hitam (5.7–5.8), KnockService (6.1), FailureService solo/multiplayer + QuestService.reset (6.1b), jumpscare (6.2), audio jumpscare placeholder dan state RETRY_GUIDE dengan Quest UI "Kembali berbicara kepada Pemandu". User hanya melaporkan "berhasil, tes Studio normal"; rincian jumlah pemain tidak dilaporkan, jadi uji 2–4 pemain tetap dijadwalkan di Phase 10. Masih placeholder: jawaban makam (ANSWER_CONFIRMED=false), teks Pemandu_KantilRetry, suara jumpscare.
+Task 6.3 (KnockController, overlay vinyet + teks "KAMU PINGSAN", hotbar disembunyikan saat knock) baru ditulis: BELUM dites.
 
 ## NEXT ACTION
 

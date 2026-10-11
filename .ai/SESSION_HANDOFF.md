@@ -162,6 +162,15 @@ Prasyarat: ServerStorage/GhostModels/Pocong ada (Model R15 dengan Humanoid, Head
 6. Spam bunga salah saat jumpscare berjalan: tidak ada jumpscare ganda/tumpuk, tidak ada error.
 Laporkan: tampilan Pocong (arah, ukuran, animasi), durasi terasa pas atau tidak, dan Output.
 
+## Uji Studio Task 6.3 (Knock UI minimal)
+Butuh pemain knock: Test > Clients 2 (multiplayer), atau Command Bar server `require(game.ServerScriptService.Server.Services.KnockService).knock(game.Players:GetPlayers()[1], "TEST")` (solo).
+1. EXPECTED saat knock: layar pemain itu menggelap perlahan (~0,4 detik) dengan bayangan di tepi, teks "KAMU PINGSAN" dan "Tunggu rekanmu menyadarkanmu dengan Minyak Zaitun." di tengah. Hotbar Roblox hilang. Pemain lain TIDAK melihat overlay.
+2. Notifikasi (toast) tetap terlihat DI ATAS overlay. Jika jumpscare dipicu (bunga salah), jumpscare menutupi overlay lalu overlay terlihat setelah pemain jatuh knock.
+3. `K.recover(p)` di Command Bar: overlay memudar dan hilang, hotbar muncul lagi, pemain bisa bergerak.
+4. Reset karakter saat knock: overlay tetap tampil setelah respawn (state tetap KNOCKED).
+5. Quest UI di kanan atas tetap bisa terbaca (overlay tidak menutup toast dan jumpscare; panel quest di bawah overlay boleh redup).
+Laporkan: tampilan teks terbaca, tidak ada error client.
+
 ## Langkah berikutnya
 1. User: uji 2.1 di atas dan lapor Output; tinjau SkyboxInserter; siapkan naskah dialog Pemandu.
 2. Task 2.2 Quest UI, Task 2.3 alur Pemandu -> quest.
