@@ -46,9 +46,12 @@ local function isAllowed(transitions: { [string]: { string } }, from: string, to
 	return table.find(allowed, to) ~= nil
 end
 
+export type StateListener = (previous: string, newState: string) -> ()
+
 local GameManager = {}
 
 local currentState: string = GameState.LOBBY
+local stateListeners: { StateListener } = {}
 local playerStates: { [Player]: string } = {}
 local initialized = false
 
@@ -78,6 +81,11 @@ function GameManager.getState(): string
 	return currentState
 end
 
+-- Daftarkan callback setelah state game berubah (dijalankan lewat task.spawn; error listener tidak menggagalkan transisi).
+function GameManager.onStateChanged(listener: StateListener)
+	table.insert(stateListeners, listener)
+end
+
 -- Return true jika transisi diterima, false jika ditolak.
 function GameManager.transitionTo(newState: string): boolean
 	if not isAllowed(GAME_TRANSITIONS, currentState, newState) then
@@ -89,6 +97,9 @@ function GameManager.transitionTo(newState: string): boolean
 	currentState = newState
 	ReplicatedStorage:SetAttribute(GAME_STATE_ATTRIBUTE, currentState)
 	Log.info(TAG, string.format("state game: %s -> %s", previous, newState))
+	for _, listener in stateListeners do
+		task.spawn(listener, previous, newState)
+	end
 	return true
 end
 

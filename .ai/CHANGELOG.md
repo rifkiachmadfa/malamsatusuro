@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## 2026-10-11 — Cutscene pembuka saat pemain masuk, TES awal (ADR-041) (belum dites di Studio)
+- Cutscene dibuat user dengan plugin Open Cutscene Editor: `ServerStorage/CutScenes/CutscenePlayer1..4` (ModuleScript berfungsi `PlayCutscene(player)`; objek Studio, tidak di Git)
+- Baru: server/Config/IntroCutsceneConfig (ENABLED, nama folder/prefix, MAX_SLOT, START_DELAY), server/Services/IntroCutsceneService; init.server memanggil `IntroCutsceneService.init()`
+- Perilaku: pemain ke-N yang masuk (slot terendah kosong, dipakai ulang saat pemain keluar) memutar CutscenePlayerN setelah karakter pertama muncul + 1 dtk; pemain yang sudah ada saat service dimuat (Play Solo) ikut diputar
+- Verifikasi AI: luau-compile OK; harness offline (file src/ asli, stub) 11 cek LULUS: slot 1-4, tunggu spawn + delay, pemain ke-5, slot dipakai ulang, keluar sebelum delay, modul error/tanpa PlayCutscene/hilang hanya warn. TIDAK dites di Studio (kamera, LocalScript plugin)
+
+## 2026-10-11 — Phase 8: ritual akhir (ADR-040) (belum dites di Studio)
+- Alur baru: KAFAN COMPLETE -> Pemandu_KafanDone -> game FINAL_RITUAL -> berkumpul (server hitung posisi) -> ENDING (cutscene) -> GAME_COMPLETE
+- Baru: shared/Config/FinalRitualConfig (radius, hold, preset lingkungan, urutan 5 langkah, kartu akhir), server/Services/FinalRitualService (syarat, gathering, readiness, cutscene, ending), client/Controllers/FinalRitualController (HUD n/N, letterbox, subtitle, Lighting, kartu TAMAT), remote `CutsceneUpdate` (server -> client saja)
+- Diubah: GameManager (`onStateChanged`), GameFlowService (`REPORT_DIALOGUES.KAFAN` + `startsFinalRitual`, `startFinalRitual`, dialog Pemandu menurut state game FINAL_RITUAL/ENDING/GAME_COMPLETE), DialogueConfig (`Pemandu_KafanDone`, `Pemandu_FinalGather`, placeholder), init.server/init.client, Remotes
+- Tidak diubah: RitualCollectionService (validasi penyimpanan item sudah ada sejak ADR-026), QuestConfig, sistem knock/revive
+- Verifikasi AI: luau-compile 9 file OK; harness offline BARU yang memuat file src/ asli (stub Roblox, jam palsu, scheduler coroutine): 65 cek LULUS (syarat 3/3, laporan ganda, gathering 1/1..4/4 termasuk batas radius, pembatalan hold, state non-NORMAL/mati tidak dihitung, knock dipulihkan, pemain keluar mengecilkan target, tick ganda tidak memulai ulang, urutan remote, freeze+release, error di tengah cutscene tidak mengunci pemain, titik kumpul hilang). Mutation test: 5 kerusakan sengaja semuanya terdeteksi. TIDAK dites di Studio: HUD, cutscene, Lighting, multiplayer sungguhan
+
 ## 2026-10-11 — Phase 7 revisi: skor 100 dipertahankan, gagal < 80 = jumpscare, musik terdengar pemain lain (ADR-039) (belum dites di Studio)
 - Arahan user: skor mulai 100 dan turun (Good -1, Miss -3; angka = asumsi AI, di GamelanConfig); skor < 80 kapan pun = UI langsung tutup + jumpscare (Pocong dulu, sama seperti makam); musik terdengar pemain lain, UI hanya untuk pemain yang bermain, pemain lain bebas bergerak
 - GamelanConfig: `START_SCORE`, `PERFECT/GOOD/MISS_PENALTY`, `MISS_GRACE`, `WORLD_SOUND_VOLUME`, `WORLD_ROLLOFF_MIN/MAX`, `MUSIC_PLAYER_ATTR`, `MUSIC_START_ATTR`; `PERFECT_POINTS`/`GOOD_POINTS` dihapus

@@ -1,7 +1,7 @@
 # CURRENT PROJECT STATE
 
 Last Updated:
-2026-10-10
+2026-10-11
 
 ## CURRENT PHASE
 
@@ -11,7 +11,10 @@ PHASE 3 — INTERACTION & INVENTORY: ItemService selesai (boot diuji; give/consu
 PHASE 4 — KERIS PUSAKA: SELESAI dengan catatan (alur Kelor -> kunci -> peti -> puzzle -> keris -> simpan di RitualCollection; 3–4 pemain di Phase 10).
 PHASE 5 — KEMBANG KANTIL HITAM: 5.1–5.8 SELESAI dan DITES user di Studio (normal, 2026-10-11). Sisa (giliran tunggal, revive, wipe, flower reset) dikerjakan di Phase 6.
 PHASE 6 — KNOCK / REVIVE: DITUTUP dan dites user di Studio (dilaporkan user 2026-10-11; rincian per-poin tidak dilaporkan).
-PHASE 7 — KAIN KAFAN / GAMELAN: SEDANG BERJALAN. Kode gamelan ritme (satu pemain, 4 kolom) ditulis; direvisi 2026-10-11 (ADR-039): skor mulai 100, gagal < 80 = UI tutup + jumpscare, musik terdengar pemain lain. Logika server lulus harness offline; client/GUI/audio BELUM dites di Studio.
+PHASE 7 — KAIN KAFAN / GAMELAN: DITUTUP user (commit 36b9c74); hasil tes Studio per-poin tidak dilaporkan. Kode gamelan ritme (satu pemain, 4 kolom) ditulis; direvisi 2026-10-11 (ADR-039): skor mulai 100, gagal < 80 = UI tutup + jumpscare, musik terdengar pemain lain. Logika server lulus harness offline; client/GUI/audio BELUM dites di Studio.
+
+
+PHASE 8 — FINAL RITUAL: SEDANG BERJALAN (ADR-040). Kode ditulis, harness offline lulus; BELUM dites di Studio.
 
 
 ## TOOLCHAIN
@@ -107,6 +110,12 @@ Gamelan ritme: RhythmGameService (server, chart + validasi + skor), KafanQuestSe
 
 ## UPDATE 2026-10-11 (Phase 7 revisi, ADR-039)
 Skor gamelan kini 100 -> turun (Good -1, Miss -3; asumsi, di GamelanConfig); Miss dinilai server real-time; skor < 80 kapan pun = `RhythmGameService.failSession` (client menutup GUI + musik) -> `KafanQuestService.onFail` -> `FailureService.scare` (jumpscare Pocong placeholder, TANPA knock/reset quest) -> boleh main lagi. Musik untuk pemain lain: Attribute `MusicPlayerUserId` + `MusicStartServerTime` di `Workspace.QuestObjects.Gamelan`, diputar `GamelanMusicController` sebagai suara spasial; pemain yang bermain memakai musik lokal. Server lulus harness offline baru (52 cek, memuat src/ asli); GUI client, jumpscare nyata, musik spasial, dan multiplayer sungguhan BELUM dites di Studio. Keputusan terbuka untuk user: apakah gagal gamelan perlu knock/respawn seperti makam (saat ini TIDAK), dan angka penalti.
+
+## UPDATE 2026-10-11 (Phase 8 final ritual, ADR-040)
+Alur: KAFAN COMPLETE (3/3 pusaka) -> notifikasi "Temui Pemandu" -> Pemandu_KafanDone selesai -> game FINAL_RITUAL (GameFlowService.startFinalRitual, cek 3 quest COMPLETE) -> FinalRitualService.GATHERING (semua pemain NORMAL dalam radius 30 studs dari RitualCollection, tahan 3 dtk; HUD n/N) -> ENDING (pemain CUTSCENE + dibekukan; remote `CutsceneUpdate` Start/Step/End/Close; subtitle + Lighting `Ritual`->`Fajar` + kartu TAMAT) -> GAME_COMPLETE (pemain dilepas). Baru: shared/Config/FinalRitualConfig, server/Services/FinalRitualService, client/Controllers/FinalRitualController, remote `CutsceneUpdate`; `GameManager.onStateChanged`; dialog `Pemandu_KafanDone`, `Pemandu_FinalGather` (placeholder). Tidak ada dependency Studio baru (titik kumpul = `Workspace.QuestObjects.RitualCollection`, sudah wajib sejak ADR-026). Harness offline (memuat src/ asli, jam palsu, 65 cek, termasuk mutation test) LULUS; syntax OK (luau-compile). BELUM dites di Studio: HUD, cutscene, Lighting, freeze pemain, multiplayer sungguhan. Risiko terbuka: (1) pemain yang bergabung saat cutscene tidak dibekukan dan hanya melihat sisa langkah; (2) tidak ada gerak kamera; (3) setelah GAME_COMPLETE belum ada kembali ke lobby; (4) pemain knock dipulihkan otomatis saat FINAL_RITUAL dibuka (tidak ada mekanik gagal di fase ini; tinjau ulang di Phase 9 jika ada hantu).
+
+## UPDATE 2026-10-11 (cutscene pembuka saat join, ADR-041)
+IntroCutsceneService memutar `ServerStorage/CutScenes/CutscenePlayerN` (buatan user, plugin Open Cutscene Editor) saat pemain masuk, N = slot join. Harness offline 11 cek lulus; BELUM dites di Studio. Belum ada: kunci pemain saat cutscene, sinyal selesai, pembatasan hanya di awal game.
 
 ## NEXT ACTION
 

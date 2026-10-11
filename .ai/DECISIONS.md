@@ -610,3 +610,55 @@ Consequences / batasan:
 
 Status:
 ACCEPTED sebagai arahan user; logika server lulus harness offline; client (GUI, musik dunia) BELUM dites di Studio.
+
+
+## ADR-040 — RITUAL AKHIR: PEMANDU MELAPOR, BERKUMPUL DIHITUNG SERVER, CUTSCENE DIMAINKAN SERVER, CLIENT HANYA TAMPILAN
+
+Context:
+
+Phase 8 (GDD bagian ritual akhir): pusaka tersimpan -> aktivasi ritual -> pemain berkumpul (1/1..4/4) -> urutan Pemandu -> dialog -> perubahan lingkungan -> cutscene -> ending -> GAME_COMPLETE. Penyimpanan dan validasi item sudah ada (ADR-026), jadi Phase 8 hanya menambah lapisan di atasnya.
+
+Decision:
+
+- Pemicu: laporan Pemandu terakhir (`Pemandu_KafanDone`, REPORT_DIALOGUES.KAFAN `startsFinalRitual`) -> `GameFlowService.startFinalRitual` -> `GameManager.transitionTo(FINAL_RITUAL)` hanya dari QUEST_KAFAN dan hanya jika SEMUA quest COMPLETE. Mengikuti pola ADR-026/028 (Pemandu melapor; keputusan di server). `FinalRitualService.beginGathering` memeriksa ulang 3/3 (sabuk pengaman bila state dipaksa dari luar).
+- `GameManager.onStateChanged(listener)` ditambahkan (additive, pola sama dengan `QuestService.onStateChanged`); FinalRitualService bereaksi pada FINAL_RITUAL tanpa GameFlowService mengenalnya (tanpa dependensi melingkar).
+- Berkumpul = SERVER menghitung: pemain dengan state NORMAL, karakter hidup, dalam `GATHER_RADIUS` (30 studs) dari pivot `Workspace.QuestObjects.RitualCollection`. Target = `PartyService.getSize()` (min 1), dihitung ulang tiap tick sehingga pemain yang keluar mengecilkan target. Semua siap terus-menerus selama `START_HOLD_SECONDS` (3 dtk) -> mulai; ada yang meninggalkan -> hold direset + notifikasi. Titik kumpul = objek yang sudah wajib ada (tanpa dependency Studio baru); jika hilang: warn sekali dan ritual tidak mulai.
+- TIDAK ADA remote client -> server di sistem ini: client tidak bisa mengaku "sudah berkumpul". Client hanya membaca Attribute ReplicatedStorage (`FinalRitual_Ready/Required/Holding`) untuk HUD "n/N" (pola ADR-014).
+- Fase internal `IDLE -> GATHERING -> SEQUENCE -> DONE`. Perpindahan ke SEQUENCE terjadi tanpa yield di dalam `tick()` sehingga tidak bisa mulai ganda; `transitionTo(ENDING)` juga menolak transisi kedua.
+- Cutscene dimainkan SERVER per langkah (`FinalRitualConfig.Sequence`), dikirim lewat satu remote server -> client `CutsceneUpdate` (`Start/Step/End/Close`) memakai `FireAllClients`. Dipilih subtitle otomatis (bukan DialogueService) karena DialogueService adalah sesi per-pemain berbasis tombol Next dan akan membuat tiap pemain bergerak dengan kecepatan sendiri; ritual harus serentak. Konsekuensi: tidak ada tombol skip. Perubahan lingkungan (Lighting) dimainkan client lokal menurut nama preset dari server (Lighting direplikasi server -> client tidak halus, jadi tween di client).
+- Selama cutscene: state pemain CUTSCENE (InteractionService dan DialogueService sudah menolak non-NORMAL) + Humanoid WalkSpeed/JumpPower/JumpHeight 0, dipulihkan saat selesai. Urutan selesai: End card -> `Close` -> GAME_COMPLETE -> pemain dilepas (NORMAL). Seluruh cutscene dibungkus pcall: error di tengah tetap menyelesaikan game dan melepas pemain (tidak ada soft-lock).
+- Pemain knock saat FINAL_RITUAL dibuka dipulihkan otomatis (KnockService.recover) karena knock tidak dihitung "siap" dan fase ini tidak punya mekanik gagal; tanpa ini satu pemain pingsan tanpa Minyak Zaitun memblokir akhir game (soft-lock). Tinjau ulang di Phase 9 bila ada hantu di fase ini.
+- Perubahan GDD: tidak ada. Teks Pemandu/ritual = PLACEHOLDER (GDD tidak tersedia di repo).
+
+Consequences / batasan:
+
+- Pemain yang bergabung di tengah cutscene tidak dibekukan dan hanya melihat sisa langkah (lobby/teleport nanti membuat ini jarang).
+- Belum ada gerak kamera; letterbox + subtitle + Lighting saja. Efek horor lengkap = Phase 9.
+- Setelah GAME_COMPLETE pemain bebas bergerak; kembali ke lobby menunggu sistem lobby.
+
+Status:
+ACCEPTED (implementasi atas arahan user "mulai kerjakan phase 8"); logika server lulus harness offline; client BELUM dites di Studio.
+
+
+## ADR-041 — CUTSCENE PEMBUKA SAAT JOIN: MODUL PLUGIN PER SLOT PEMAIN, SERVER HANYA MEMICU
+
+Context:
+
+User membuat cutscene kamera dengan plugin Open Cutscene Editor (menggantikan rencana Phase 8 "kamera lewat script"). Hasilnya ModuleScript `ServerStorage/CutScenes/CutscenePlayer1..4`, tiap modul punya `PlayCutscene(player)` yang menyalin LocalScript pemutar + CutsceneInfo ke PlayerGui. User meminta TES dulu saat pemain masuk.
+
+Decision:
+
+- `IntroCutsceneService` (server) memilih slot (terendah yang kosong, 1..4) per pemain yang masuk dan memanggil `CutscenePlayerN.PlayCutscene(player)` dalam pcall, setelah karakter pertama muncul + `START_DELAY` (1 dtk) supaya kamera tidak direset spawn. Kamera dijalankan sepenuhnya di client oleh script plugin; server tidak mengirim data kamera.
+- Objek Studio = dependency (ADR-011): modul hilang/tanpa `PlayCutscene` = warn, tidak membuat pengganti. Rojo tidak memetakan ServerStorage, jadi folder `CutScenes` aman dari sinkronisasi.
+- Saklar `IntroCutsceneConfig.ENABLED`.
+
+Consequences / batasan (jujur):
+
+- Plugin tidak memberi sinyal "selesai" ke server: pemain TIDAK dikunci selama cutscene dan alur game (dialog Pemandu, interaksi) tetap bisa berjalan; kamera bisa konflik dengan tindakan pemain. Perlu keputusan: durasi tetap untuk state CUTSCENE, atau sinyal selesai dari LocalScript.
+- Pemain yang masuk di tengah game ikut memutar cutscene (TES saja; kelak dibatasi ke LOBBY/pemain pertama).
+- Jika modul membuat kamera Scriptable dan tidak mengembalikannya, kamera macet; tergantung implementasi plugin (belum diperiksa).
+- Cutscene ritual akhir (ADR-040) belum memakai cutscene plugin; bisa disambungkan serupa (modul terpisah + pemicu dari FinalRitualService).
+
+Status:
+ACCEPTED sebagai arahan user (tes awal); logika slot lulus harness offline; BELUM dites di Studio.
+

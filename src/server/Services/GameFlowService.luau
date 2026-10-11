@@ -16,6 +16,7 @@ local ItemService = require(script.Parent:WaitForChild("ItemService") :: ModuleS
 
 local TAG = "GameFlowService"
 local INTRO_DIALOGUE_ID = "Pemandu_Intro"
+local FINAL_GATHER_DIALOGUE_ID = "Pemandu_FinalGather" -- dialog Pemandu saat game FINAL_RITUAL (ADR-040)
 
 local GameState = GameConfig.GameState
 
@@ -66,9 +67,11 @@ local QUEST_DIALOGUES: { [string]: { [string]: DialogueRule } } = {
 
 -- Dialog LAPORAN saat sebuah quest sudah COMPLETE (item sudah disimpan di RitualCollection, ADR-026).
 -- Pemandu hanya melapor; menamatkan dialog ini memberi quest berikutnya (jika masih LOCKED).
-local REPORT_DIALOGUES: { [string]: { dialogueId: string, nextQuestId: string? } } = {
+-- startsFinalRitual: quest terakhir; menamatkan laporannya membuka ritual akhir (game FINAL_RITUAL, ADR-040).
+local REPORT_DIALOGUES: { [string]: { dialogueId: string, nextQuestId: string?, startsFinalRitual: boolean? } } = {
 	KERIS = { dialogueId = "Pemandu_KerisDone", nextQuestId = "KANTIL" },
 	KANTIL = { dialogueId = "Pemandu_KantilDone", nextQuestId = "KAFAN" },
+	KAFAN = { dialogueId = "Pemandu_KafanDone", startsFinalRitual = true },
 }
 
 -- Dialog ULANGI: menamatkannya memulai ulang quest yang berada di retryState (ADR-034).
@@ -114,9 +117,29 @@ local function startGame(player: Player)
 	startQuest("KERIS")
 end
 
--- Menamatkan dialog laporan: beri quest berikutnya. Aman dipanggil ganda (hanya jika quest berikutnya LOCKED).
+-- Buka ritual akhir: hanya dari QUEST_KAFAN dan hanya jika SEMUA quest COMPLETE (pusaka tersimpan). Aman dipanggil ganda
+-- (setelah pindah ke FINAL_RITUAL, syarat state tidak terpenuhi lagi).
+local function startFinalRitual(player: Player)
+	if GameManager.getState() ~= GameState.QUEST_KAFAN then
+		return
+	end
+	for _, questId in QuestConfig.ORDER do
+		if QuestService.getState(questId) ~= "COMPLETE" then
+			Log.warn(TAG, string.format("ritual akhir ditolak: quest %s belum COMPLETE", questId))
+			return
+		end
+	end
+	Log.info(TAG, string.format("%s menamatkan laporan terakhir; membuka ritual akhir", player.Name))
+	GameManager.transitionTo(GameState.FINAL_RITUAL)
+end
+
+-- Menamatkan dialog laporan: beri quest berikutnya (atau buka ritual akhir). Aman dipanggil ganda.
 local function onReportCompleted(player: Player, questId: string)
 	local report = REPORT_DIALOGUES[questId]
+	if report and report.startsFinalRitual then
+		startFinalRitual(player)
+		return
+	end
 	local nextQuestId = report and report.nextQuestId
 	if not nextQuestId or QuestService.getState(nextQuestId) ~= "LOCKED" then
 		return
@@ -137,8 +160,15 @@ end
 
 -- Dialog Pemandu menurut state saat ini. Return nil jika belum ada dialog untuk state tersebut.
 function GameFlowService.getPemanduDialogueId(player: Player?): string?
-	if GameManager.getState() == GameState.LOBBY then
+	local gameState = GameManager.getState()
+	if gameState == GameState.LOBBY then
 		return INTRO_DIALOGUE_ID
+	end
+	if gameState == GameState.FINAL_RITUAL then
+		return FINAL_GATHER_DIALOGUE_ID
+	end
+	if gameState == GameState.ENDING or gameState == GameState.GAME_COMPLETE then
+		return nil
 	end
 
 	-- Quest berjalan = quest pertama yang bukan LOCKED dan bukan COMPLETE. Jika tidak ada,

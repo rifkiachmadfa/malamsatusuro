@@ -136,6 +136,23 @@ local DialogueConfig: { [string]: Dialogue } = {
 			"Kain itu ada pada salah satu kawanmu. Suruh dia menyimpannya di tempat ritual.",
 		},
 	},
+	-- Pemandu MELAPOR: kain kafan tersimpan = ketiga pusaka lengkap (KAFAN COMPLETE). Menamatkan dialog ini membuka ritual akhir
+	-- (game FINAL_RITUAL, ADR-040). PLACEHOLDER: ganti dengan naskah GDD.
+	Pemandu_KafanDone = {
+		speaker = "Pemandu",
+		lines = {
+			"Kain kafan sudah tersimpan. Ketiga pusaka telah kembali ke tempatnya.",
+			"Tinggal satu hal: ritual terakhir. Semua dari kalian harus berkumpul di tempat ritual.",
+			"Jangan ada yang tertinggal.",
+		},
+	},
+	-- Dipakai saat game FINAL_RITUAL (menunggu semua berkumpul). Dialog ini hanya pengingat. PLACEHOLDER.
+	Pemandu_FinalGather = {
+		speaker = "Pemandu",
+		lines = {
+			"Berkumpullah di tempat ritual. Ritual dimulai setelah kalian semua berada di sana.",
+		},
+	},
 }
 
 return table.freeze(DialogueConfig)

@@ -1,6 +1,6 @@
 # SESSION HANDOFF
 
-Last Updated: 2026-10-11
+Last Updated: 2026-10-11 (Phase 8)
 
 ## Ringkasan
 - Fase aktif: PHASE 5 — KEMBANG KANTIL HITAM (belum dimulai). Phase 1–4 selesai (Phase 4 dengan catatan: 3–4 pemain di Phase 10). Quest KERIS lengkap: Kelor -> kunci -> peti -> memory puzzle -> keris -> simpan di RitualCollection.
@@ -243,3 +243,38 @@ Laporkan Output server/client, apakah kesulitan terasa pas (angka penalti), dan 
 ## Langkah berikutnya
 1. User: uji 2.1 di atas dan lapor Output; tinjau SkyboxInserter; siapkan naskah dialog Pemandu.
 2. Task 2.2 Quest UI, Task 2.3 alur Pemandu -> quest.
+
+## Uji Studio Phase 8 (ritual akhir, ADR-040)
+Prasyarat Studio: TIDAK ada objek baru. `Workspace.QuestObjects.RitualCollection` sudah wajib (titik kumpul). Teks dialog/cutscene = PLACEHOLDER. Test > Clients 2 (idealnya 3-4; minimal tes 1 pemain dulu).
+Jalan pintas (Command Bar server) agar ketiga quest langsung COMPLETE tanpa memainkannya (efek samping: service lain bereaksi pada state itu, abaikan):
+```lua
+local S = game.ServerScriptService.Server.Services
+local Q = require(S.QuestService)
+local G = require(S.GameManager)
+local C = require(game.ReplicatedStorage.Shared.Config.QuestConfig)
+for _, st in { "INTRO", "QUEST_KERIS", "QUEST_KANTIL", "QUEST_KAFAN" } do G.transitionTo(st) end
+for _, id in C.ORDER do
+	local def = C.Quests[id]
+	Q.activate(id)
+	for i = 3, #def.states do Q.transition(id, def.states[i]) end
+end
+```
+1. EXPECTED: saat KAFAN COMPLETE: toast "Ketiga pusaka sudah tersimpan. Temui Pemandu." (semua pemain). Bicara ke Pemandu: dialog 3 baris `Pemandu_KafanDone`. Output: `[GameFlowService] ... membuka ritual akhir`, `state game: QUEST_KAFAN -> FINAL_RITUAL`, `[FinalRitualService] FINAL_RITUAL: menunggu pemain berkumpul`. Toast "Ketiga pusaka sudah lengkap. Berkumpullah di tempat ritual."
+2. HUD: label hitam di tengah atas "BERKUMPUL DI TEMPAT RITUAL  n/N" (di bawah bar menu Roblox). n naik saat pemain mendekati RitualCollection (radius 30 studs dari pusat model) dan turun saat menjauh; N = jumlah pemain. Pemandu: dialog pengingat `Pemandu_FinalGather` (bukan laporan lagi).
+3. Semua berkumpul: toast "Semua sudah berkumpul. Tetap di tempat ritual...", HUD "TAHAN POSISI...". Satu orang keluar radius sebelum 3 detik: HUD kembali, toast "Ada yang meninggalkan tempat ritual...". Tidak mulai selama ada yang di luar radius.
+4. Setelah 3 detik penuh: Output `state game: FINAL_RITUAL -> ENDING`, semua pemain berhenti bergerak (tidak bisa jalan/lompat/[E]), HUD hilang, hotbar hilang, letterbox hitam turun atas-bawah, lalu 5 subtitle bergantian (Pemandu + narasi) dengan perubahan langit/kabut: malam gelap lalu fajar (Lighting).
+5. Akhir: layar menghitam, "TAMAT / Malam Suro: Dusun Kelabu" ~8 dtk, lalu memudar. Output `state game: ENDING -> GAME_COMPLETE`, pemain bisa bergerak lagi, hotbar muncul. Bicara ke Pemandu: tidak ada dialog.
+6. Pemain knock saat ritual dibuka (Command Bar: `require(S.KnockService).knock(<player>, "TEST")` sebelum langkah 1): setelah FINAL_RITUAL dibuka pemain dipulihkan, toast "Kekuatan ritual menyadarkanmu."
+7. Pemain keluar (Clients > tutup satu) saat GATHERING: target n/N mengecil, ritual tetap bisa mulai. Keluar saat cutscene: cutscene tetap selesai untuk sisanya.
+8. 1 pemain: 1/1 langsung mulai setelah 3 detik di radius. Ulangi 2, 3, 4 pemain.
+9. Lapor: tampilan HUD (terbaca di Device Emulator HP?), transisi Lighting (apakah halus, apakah dunia terlalu gelap/terang), apakah karakter benar-benar tidak bisa bergerak, teks terbaca di atas letterbox, Output server dan client.
+10. Keamanan (dicoba di Command Bar client): tidak ada remote untuk memulai ritual; `Remotes.get("CutsceneUpdate"):FireServer()` tidak boleh berpengaruh apa pun.
+
+## Uji Studio cutscene pembuka (ADR-041)
+Prasyarat: `ServerStorage/CutScenes/CutscenePlayer1..4` (ModuleScript buatan plugin, tiap modul berisi LocalCutscenePlayer + CutsceneInfo). Play Solo lalu Test > Clients 2-4.
+1. EXPECTED Play Solo: setelah karakter muncul + ~1 dtk, kamera memutar cutscene CutscenePlayer1. Output server: `[IntroCutsceneService] siap`, lalu `cutscene CutscenePlayer1 diputar untuk <nama> (slot 1)`.
+2. Clients 2-4: pemain ke-2 memutar CutscenePlayer2, dst. Tiap pemain melihat cutscene miliknya sendiri.
+3. Setelah cutscene selesai: kamera kembali mengikuti karakter? (lapor; jika macet, itu perilaku modul plugin.)
+4. Selama cutscene: apakah karakter masih bisa digerakkan / menekan [E] Pemandu? (lapor; sekarang TIDAK dikunci.)
+5. Warn `dependency belum ada ... CutscenePlayerN` bila modul tidak ada. Matikan: `IntroCutsceneConfig.ENABLED = false`.
+

@@ -147,7 +147,7 @@ Alur target: pemain masuk ke PLACE LOBBY terpisah (belum dibuat) -> memilih area
 # PHASE 7 — KAIN KAFAN / GAMELAN
 
 Status:
-IN PROGRESS (ADR-038). Perubahan GDD disetujui user 2026-10-11: SATU pemain bermain, 4 kolom (Q W E R / ketuk), durasi 97 detik, musik placeholder. Kode ditulis; BELUM dites di Studio.
+DITUTUP oleh user (commit 36b9c74 "clsoe phase 7", 2026-10-11); hasil tes Studio per-poin TIDAK dilaporkan ke AI, jadi GUI/audio/jumpscare gamelan tetap berstatus "belum terkonfirmasi" sampai dilaporkan. Riwayat: ADR-038/039. Perubahan GDD disetujui user 2026-10-11: SATU pemain bermain, 4 kolom (Q W E R / ketuk), durasi 97 detik, musik placeholder. Kode ditulis; BELUM dites di Studio.
 
 - [x] Gamelan interaction ([E] Mainkan, KafanQuestService) — kode ditulis, belum dites Studio
 - [x] Rhythm UI (GamelanController) — kode ditulis, hanya kompilasi, belum dites Studio
@@ -168,18 +168,19 @@ IN PROGRESS (ADR-038). Perubahan GDD disetujui user 2026-10-11: SATU pemain berm
 # PHASE 8 — FINAL RITUAL
 
 Status:
-NOT STARTED
+IN PROGRESS (ADR-040, 2026-10-11). Kode ditulis; logika server lulus harness offline (65 cek, 1–4 pemain); client (HUD, cutscene) hanya kompilasi; BELUM dites di Studio.
 
-- [ ] Ritual requirements
-- [ ] Item submission validation
-- [ ] Party gathering
-- [ ] Readiness tracking
-- [ ] Pemandu sequence
-- [ ] Dialogue
-- [ ] Environment transition
-- [ ] Cutscene
-- [ ] Ending
-- [ ] Game complete state
+- [x] Ritual requirements: ritual hanya terbuka bila KERIS, KANTIL, KAFAN semua COMPLETE (dicek GameFlowService DAN FinalRitualService) — harness
+- [x] Item submission validation: SUDAH ada sejak ADR-026 (RitualCollectionService: consume item -> SUBMITTED -> COMPLETE); tidak diubah. Perlu dites Studio untuk Kantil dan Kafan (belum pernah dites)
+- [x] Pemandu sequence (bagian 1): laporan akhir `Pemandu_KafanDone` -> membuka FINAL_RITUAL; `Pemandu_FinalGather` = pengingat saat menunggu — dialog PLACEHOLDER
+- [x] Party gathering + readiness tracking: radius 30 studs dari pivot `QuestObjects.RitualCollection`, dihitung SERVER; semua pemain hidup + NORMAL, tahan 3 detik; HUD "n/N" — harness 1/1..4/4
+- [x] Pemandu sequence (bagian 2) + Dialogue: 5 langkah subtitle otomatis dari server (`FinalRitualConfig.Sequence`) — teks PLACEHOLDER
+- [x] Environment transition: preset Lighting `Ritual` -> `Fajar` (tween di client); horor penuh = Phase 9
+- [x] Cutscene: letterbox + subtitle + kartu akhir (FinalRitualController); TANPA gerak kamera (belum dikerjakan)
+- [x] Ending + Game complete state: ENDING -> GAME_COMPLETE, pemain dilepas — harness
+- [ ] Tes Studio 1–4 pemain (lihat SESSION_HANDOFF "Uji Studio Phase 8")
+- [ ] Ganti teks placeholder dengan naskah GDD (Pemandu_KafanDone, Pemandu_FinalGather, FinalRitualConfig.Sequence)
+- [ ] Opsional (butuh keputusan user): gerak kamera cutscene, kembali ke lobby setelah GAME_COMPLETE (menunggu sistem lobby), dialog interaktif per-pemain vs subtitle otomatis
 
 
 # PHASE 9 — HORROR POLISH

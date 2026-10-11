@@ -24,6 +24,7 @@ Remotes.Names = table.freeze({
 	ReviveUpdate = "ReviveUpdate", -- server -> client (penyelamat): { action = "Start", targetName, duration } | { action = "Stop", success }
 	GamelanUpdate = "GamelanUpdate", -- server -> client (pemain yang main): { action = "Start", notes, duration } | { action = "Result", ... } | { action = "Close" }
 	GamelanAction = "GamelanAction", -- client -> server: { action = "Ready" } | { action = "Hit", lane, t } | { action = "Cancel" }
+	CutsceneUpdate = "CutsceneUpdate", -- server -> semua client: { action = "Start" | "Step" | "End" | "Close", ... } (ritual akhir, ADR-040); tanpa remote balik
 })
 
 -- Server only: buat folder dan semua RemoteEvent (aman dipanggil ulang).
