@@ -33,6 +33,9 @@ Project: MALAM SURO: DUSUN KELABU (Roblox, horor co-op 1–4 pemain, bahasa Indo
 - Objective koleksi baru = tambah entri di CollectionConfig (+ counter di QuestConfig + titik spawn di Workspace.QuestObjects). Perilaku yang belum didukung modul = perluas modul generik, bukan membuat salinan.
 - Penyimpanan item akhir selalu lewat RitualCollection (ADR-026); notifikasi selalu lewat NoticeService (ADR-025).
 
+## Cutscene (ADR-041, ADR-042)
+- Scene kamera = modul plugin Open Cutscene Editor di ServerStorage (objek Studio). Baca `.ai/CUTSCENE_GUIDE.md` sebelum membuat atau memutar cutscene. Server hanya memicu; kamera berjalan di client. Cutscene ritual akhir memakai set modul terpisah dari cutscene join (hindari bentrok nama `CutscenePlayerN`).
+
 ## Alur task
 AUDIT -> CURRENT STATE -> PLAN -> IMPLEMENT -> TEST -> DEBUG -> REVIEW DIFF -> UPDATE .ai/ -> COMMIT -> HANDOFF
 

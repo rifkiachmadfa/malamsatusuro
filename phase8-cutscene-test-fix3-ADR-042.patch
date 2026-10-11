@@ -1,0 +1,271 @@
+diff --git a/.ai/CHANGELOG.md b/.ai/CHANGELOG.md
+index 0766cee..31c384c 100644
+--- a/.ai/CHANGELOG.md
++++ b/.ai/CHANGELOG.md
+@@ -1,5 +1,11 @@
+ # CHANGELOG
+ 
++## 2026-10-11 — Trigger tes cutscene: mode MERGED tanpa jeda antar scene (ADR-042) (belum dites di Studio)
++- Laporan tes Studio: 4 cutscene muncul semua, tetapi ada jeda panjang dan kamera kembali ke pemain di antara scene
++- CutsceneTestConfig: `MODE` ("MERGED" default / "SEQUENTIAL"), `SCENE_JOIN_TIME` (0.05)
++- CutsceneTestService: `playMerged` menggabungkan CutsceneInfo semua modul jadi satu pemutaran; `waitForClones` dipakai bersama; loop tunggu min(0.25, sisa); fallback otomatis ke SEQUENTIAL
++- Verifikasi AI: luau-compile OK; harness offline (src/ asli, stub Roblox dengan perilaku Parent, 15 cek) LULUS: satu pemutaran (PlayCutscene per modul tidak dipanggil), 6 titik berurutan walau urutan anak terbalik, Time scene ke-2 dst = 0.05, durasi 6.15 + 0.25, tanpa jeda, modul asli tak berubah, fallback SEQUENTIAL. Tidak dites di Studio
++
+ ## 2026-10-11 — Trigger tes cutscene: durasi otomatis dari CutsceneInfo (ADR-042) (belum dites di Studio)
+ - Laporan tes Studio: hanya CutscenePlayer1 berjalan (clone Open Cutscene Editor tidak menghilang sendiri); dump menunjukkan CutsceneInfo = Position1..N dengan NumberValue `Time`
+ - CutsceneTestConfig: `AUTO_DURATION`, `INFO_NAME`, `TIME_VALUE_NAME`, `DURATION_MARGIN` (0.25); `DUMP_CLONE_INFO` default false
+diff --git a/.ai/DECISIONS.md b/.ai/DECISIONS.md
+index ee235b7..80bb340 100644
+--- a/.ai/DECISIONS.md
++++ b/.ai/DECISIONS.md
+@@ -686,6 +686,8 @@ Revisi (tes Studio pertama, 2026-10-11): clone `LocalCutscenePlayer` TIDAK mengh
+ 
+ Revisi 2 (tes Studio kedua): dump clone menunjukkan `CutsceneInfo` (Open Cutscene Editor) = titik kamera `Position1..N` (CFrameValue), tiap titik punya `Time` (NumberValue, detik), `EasingStyle`, `EasingDirection`. Contoh: Position1 Time=3, Position2 Time=1.5 (total 4,5 dtk). Keputusan: durasi OTOMATIS = jumlah `Time` semua titik + `DURATION_MARGIN` (0,25 dtk); prioritas `DURATIONS` manual > otomatis > tunggu clone hilang (maks 120 dtk). `DUMP_CLONE_INFO` default mati. Asumsi: `Time` = detik menuju titik itu (sesuai nilai 3 dan 1,5); penyimpangan sedikit antara durasi hitung dan tampilan = sesuaikan `DURATION_MARGIN`/`DURATIONS`. Margin berarti ada jeda sangat singkat sebelum cutscene berikutnya (kamera bisa sempat kembali ke karakter).
+ 
++Revisi 3 (tes Studio ketiga): urutan 1->4 jalan penuh dengan durasi otomatis, tetapi ada jeda panjang dan kamera kembali ke pemain di antara scene (tiap `PlayCutscene` = pemutaran terpisah yang dimulai dari kamera pemain dan melepas kamera di akhir). Keputusan: `MODE = "MERGED"` (default): titik `PositionN` dari semua modul digabung jadi satu `CutsceneInfo` (Position1..N berurutan, urut numerik) dan diputar SATU kali memakai `LocalCutscenePlayer` milik modul pertama, meniru isi `PlayCutscene` bawaan (info jadi anak LocalScript, parent ke PlayerGui, `Disabled = false`). Titik pertama scene ke-2 dst memakai `Time = SCENE_JOIN_TIME` (0,05) agar perpindahan berupa cut; nil = kamera terbang. Modul asli di ServerStorage tidak diubah (hanya salinan). Jatuh otomatis ke SEQUENTIAL bila LocalCutscenePlayer/CutsceneInfo tidak ada. Asumsi (belum terverifikasi): LocalCutscenePlayer semua modul identik (dipakai milik modul pertama); script membaca `CutsceneInfo` anak LocalScript dan memutar `PositionN` berurutan; `Time` titik pertama = waktu menuju titik itu. Loop tunggu diperhalus (tidur min(0.25, sisa)) agar tidak terlambat sampai 0,25 dtk.
++
+ Status:
+ ACCEPTED sebagai alat tes; BELUM lulus tes Studio (urutan berhenti di modul 1; perbaikan di atas belum dites).
+ 
+diff --git a/src/server/Config/CutsceneTestConfig.luau b/src/server/Config/CutsceneTestConfig.luau
+index c773bae..18b22f0 100644
+--- a/src/server/Config/CutsceneTestConfig.luau
++++ b/src/server/Config/CutsceneTestConfig.luau
+@@ -38,6 +38,15 @@ CutsceneTestConfig.TIME_VALUE_NAME = "Time"
+ CutsceneTestConfig.DURATION_MARGIN = 0.25 -- detik tambahan agar akhir tween (dan pemulihan kamera script) selesai dulu
+ CutsceneTestConfig.DURATIONS = table.freeze({} :: { [string]: number }) -- override manual, mis. CutscenePlayer1 = 12
+ 
++-- MODE "MERGED": titik kamera (Position1..N) dari SEMUA modul digabung menjadi satu CutsceneInfo lalu diputar sebagai SATU
++-- pemutaran (memakai LocalCutscenePlayer milik modul pertama), sehingga kamera tidak kembali ke pemain di antara scene.
++-- Titik pertama scene ke-2 dst: `Time`-nya diganti SCENE_JOIN_TIME (detik) agar perpindahan antar scene berupa cut cepat;
++-- nil = pakai `Time` aslinya (kamera terbang dari akhir scene sebelumnya ke awal scene berikutnya).
++-- MODE "SEQUENTIAL": tiap modul memanggil PlayCutscene sendiri-sendiri (kamera kembali ke pemain di antara scene).
++-- Bila penggabungan gagal (LocalCutscenePlayer / CutsceneInfo tidak ditemukan), otomatis jatuh ke SEQUENTIAL.
++CutsceneTestConfig.MODE = "MERGED"
++CutsceneTestConfig.SCENE_JOIN_TIME = 0.05 :: number?
++
+ -- Diagnostik: cetak isi clone ke Output saat cutscene mulai (mati secara default; nyalakan bila perlu).
+ CutsceneTestConfig.DUMP_CLONE_INFO = false
+ CutsceneTestConfig.DUMP_MAX_ITEMS = 25
+diff --git a/src/server/Services/CutsceneTestService.luau b/src/server/Services/CutsceneTestService.luau
+index acfb55b..7360fac 100644
+--- a/src/server/Services/CutsceneTestService.luau
++++ b/src/server/Services/CutsceneTestService.luau
+@@ -108,6 +108,51 @@ local function computeAutoDuration(clone: Instance): number?
+ 	return total
+ end
+ 
++-- Tunggu semua clone hilang, atau durasi `fixed` habis (bila ada), atau MAX_WAIT_PER_CUTSCENE; lalu bersihkan clone.
++local function waitForClones(label: string, clones: { Instance }, fixed: number?, source: string)
++	local limit: number = fixed or Config.MAX_WAIT_PER_CUTSCENE
++	if fixed then
++		Log.info(TAG, string.format("%s durasi %.2fs (%s)", label, fixed, source))
++	end
++	local started = os.clock()
++	while true do
++		local elapsed = os.clock() - started
++		if elapsed >= limit then
++			break
++		end
++		local alive = false
++		for _, clone in clones do
++			if clone.Parent ~= nil then
++				alive = true
++				break
++			end
++		end
++		if not alive then
++			Log.info(TAG, string.format("%s selesai (%.1f detik)", label, elapsed))
++			return
++		end
++		task.wait(math.min(0.25, limit - elapsed))
++	end
++
++	if fixed then
++		Log.info(TAG, string.format("%s selesai menurut durasi %.2fs; clone dibersihkan", label, limit))
++	else
++		Log.warn(
++			TAG,
++			string.format(
++				"%s timeout %ds: clone tidak menghilang sendiri; dihancurkan paksa (durasi tidak bisa dihitung dari CutsceneInfo; isi DURATIONS agar tidak menunggu lama)",
++				label,
++				limit
++			)
++		)
++	end
++	for _, clone in clones do
++		if clone.Parent ~= nil then
++			clone:Destroy()
++		end
++	end
++end
++
+ -- Putar satu modul untuk semua peserta, lalu tunggu semua clone LocalCutscenePlayer hilang (atau timeout).
+ local function playModule(moduleScript: ModuleScript, participants: { Player })
+ 	local okRequire, loaded = pcall(require, moduleScript)
+@@ -168,43 +213,124 @@ local function playModule(moduleScript: ModuleScript, participants: { Player })
+ 			source = string.format("otomatis dari %s: %.2fs + margin %.2fs", Config.INFO_NAME, auto, Config.DURATION_MARGIN)
+ 		end
+ 	end
+-	local limit: number = fixed or Config.MAX_WAIT_PER_CUTSCENE
+-	if fixed then
+-		Log.info(TAG, string.format("%s durasi %.2fs (%s)", moduleScript.Name, fixed, source))
++	waitForClones(moduleScript.Name, clones, fixed, source)
++end
++
++-- Titik kamera "PositionN" pada satu CutsceneInfo, terurut menurut angka N.
++local function sortedPositions(info: Instance): { Instance }
++	local points: { Instance } = {}
++	for _, child in info:GetChildren() do
++		if string.match(child.Name, "^Position%d+$") then
++			table.insert(points, child)
++		end
+ 	end
+-	local started = os.clock()
+-	while os.clock() - started < limit do
+-		local alive = false
+-		for _, clone in clones do
+-			if clone.Parent ~= nil then
+-				alive = true
+-				break
++	table.sort(points, function(a: Instance, b: Instance): boolean
++		return (tonumber(string.match(a.Name, "%d+")) or 0) < (tonumber(string.match(b.Name, "%d+")) or 0)
++	end)
++	return points
++end
++
++-- Gabungkan CutsceneInfo semua modul menjadi satu Folder (Position1..N berurutan). Mengembalikan folder + total `Time`.
++local function buildMergedInfo(modules: { ModuleScript }): (Folder?, number)
++	local merged = Instance.new("Folder")
++	merged.Name = Config.INFO_NAME
++	local index = 0
++	local total = 0
++	for sceneIndex, moduleScript in modules do
++		local info = moduleScript:FindFirstChild(Config.INFO_NAME)
++		if not info then
++			Log.warn(TAG, string.format("%s tidak punya %s; penggabungan dibatalkan", moduleScript.Name, Config.INFO_NAME))
++			merged:Destroy()
++			return nil, 0
++		end
++		if sceneIndex == 1 then
++			-- Anak non-Position (bila ada) dan atribut dipakai dari scene pertama saja.
++			for _, child in info:GetChildren() do
++				if not string.match(child.Name, "^Position%d+$") then
++					child:Clone().Parent = merged
++				end
++			end
++			for name, value in info:GetAttributes() do
++				merged:SetAttribute(name, value)
+ 			end
+ 		end
+-		if not alive then
+-			Log.info(TAG, string.format("%s selesai (%.1f detik)", moduleScript.Name, os.clock() - started))
+-			return
++		for pointIndex, point in sortedPositions(info) do
++			local copy = point:Clone()
++			index += 1
++			copy.Name = "Position" .. tostring(index)
++			local timeValue = copy:FindFirstChild(Config.TIME_VALUE_NAME)
++			if timeValue and timeValue:IsA("NumberValue") then
++				if sceneIndex > 1 and pointIndex == 1 and Config.SCENE_JOIN_TIME ~= nil then
++					timeValue.Value = Config.SCENE_JOIN_TIME
++				end
++				total += timeValue.Value
++			end
++			copy.Parent = merged
+ 		end
+-		task.wait(0.25)
+ 	end
++	if index == 0 then
++		merged:Destroy()
++		return nil, 0
++	end
++	return merged, total
++end
+ 
+-	if fixed then
+-		Log.info(TAG, string.format("%s selesai menurut durasi %.2fs; clone dibersihkan", moduleScript.Name, limit))
+-	else
+-		Log.warn(
+-			TAG,
+-			string.format(
+-				"%s timeout %ds: clone tidak menghilang sendiri; dihancurkan paksa (durasi tidak bisa dihitung dari CutsceneInfo; isi DURATIONS agar tidak menunggu lama)",
+-				moduleScript.Name,
+-				limit
+-			)
+-		)
++-- MODE MERGED. true bila ditangani (sukses atau sudah dibersihkan); false = pemanggil jatuh ke SEQUENTIAL.
++local function playMerged(folder: Instance, participants: { Player }): boolean
++	local modules: { ModuleScript } = {}
++	for _, name in Config.MODULE_NAMES do
++		local found = folder:FindFirstChild(name)
++		if found and found:IsA("ModuleScript") then
++			table.insert(modules, found)
++		else
++			Log.warn(TAG, string.format("ServerStorage.%s.%s (ModuleScript) tidak ditemukan; dilewati", Config.FOLDER_NAME, name))
++		end
+ 	end
+-	for _, clone in clones do
+-		if clone.Parent ~= nil then
+-			clone:Destroy()
++	if #modules == 0 then
++		return false
++	end
++
++	local template = modules[1]:FindFirstChild(Config.LOCAL_PLAYER_NAME)
++	if not template or not template:IsA("LocalScript") then
++		Log.warn(TAG, string.format("%s tidak punya LocalScript '%s'; MERGED dibatalkan", modules[1].Name, Config.LOCAL_PLAYER_NAME))
++		return false
++	end
++	local merged, total = buildMergedInfo(modules)
++	if not merged or total <= 0 then
++		if merged then
++			merged:Destroy()
+ 		end
++		Log.warn(TAG, "penggabungan CutsceneInfo gagal / total durasi 0; MERGED dibatalkan")
++		return false
+ 	end
++
++	-- Sama dengan PlayCutscene bawaan modul: info jadi anak LocalScript, parent ke PlayerGui, lalu Disabled = false.
++	local clones: { Instance } = {}
++	for _, player in participants do
++		local gui = player:FindFirstChildOfClass("PlayerGui")
++		if player.Parent == Players and gui then
++			local ok, err = pcall(function()
++				local localPlayer = template:Clone() :: LocalScript
++				merged:Clone().Parent = localPlayer
++				localPlayer.Parent = gui
++				localPlayer.Disabled = false
++				table.insert(clones, localPlayer)
++			end)
++			if not ok then
++				Log.warn(TAG, string.format("MERGED gagal untuk %s: %s", player.Name, tostring(err)))
++			end
++		end
++	end
++	merged:Destroy()
++
++	if #clones == 0 then
++		Log.warn(TAG, "MERGED: tidak ada pemain yang berhasil memulai cutscene")
++		return true
++	end
++
++	Log.info(TAG, string.format("memutar gabungan %d cutscene sebagai satu pemutaran (total Time %.2fs)", #modules, total))
++	waitForClones("Gabungan", clones, total + Config.DURATION_MARGIN, string.format("jumlah Time %.2fs + margin %.2fs", total, Config.DURATION_MARGIN))
++	return true
+ end
+ 
+ -- Putar semua modul berurutan untuk peserta. Pemain NORMAL dikunci ke CUTSCENE selama sesi lalu dikembalikan.
+@@ -223,6 +349,12 @@ function CutsceneTestService.playSequence(participants: { Player })
+ 	end
+ 
+ 	local ok, err = pcall(function()
++		if Config.MODE == "MERGED" and playMerged(folder, participants) then
++			return
++		end
++		if Config.MODE == "MERGED" then
++			Log.warn(TAG, "jatuh ke mode SEQUENTIAL")
++		end
+ 		for index, name in Config.MODULE_NAMES do
+ 			local moduleScript = folder:FindFirstChild(name)
+ 			if moduleScript and moduleScript:IsA("ModuleScript") then

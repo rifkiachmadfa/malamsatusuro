@@ -278,3 +278,10 @@ Prasyarat: `ServerStorage/CutScenes/CutscenePlayer1..4` (ModuleScript buatan plu
 4. Selama cutscene: apakah karakter masih bisa digerakkan / menekan [E] Pemandu? (lapor; sekarang TIDAK dikunci.)
 5. Warn `dependency belum ada ... CutscenePlayerN` bila modul tidak ada. Matikan: `IntroCutsceneConfig.ENABLED = false`.
 
+## Uji Studio trigger tes cutscene (ADR-042)
+1. Pastikan `Workspace.triggerCutscene` (Part) dan `ServerStorage.CutScenes.CutscenePlayer1..4` ada. Rojo sync, Play (Solo lalu multi-pemain). Tunggu cutscene pembuka (ADR-041) selesai.
+2. Output awal: `[CutsceneTestService] siap: ...ProximityPrompt (tes cutscene, hanya Studio)`.
+3. Dekati part, tekan prompt: Output `dipicu oleh <nama>`, `memutar 1/4: CutscenePlayer1`, `CutscenePlayer1 selesai (N detik)`, dst sampai `urutan cutscene selesai; trigger aktif lagi`.
+4. Prompt mati selama urutan (tidak ada urutan ganda). Attribute `PlayerState` = CUTSCENE saat berjalan, NORMAL sesudahnya.
+5. Lapor: apakah tiap modul `selesai` sendiri atau `timeout`/`clone ... tidak terdeteksi`; tempel Output.
+

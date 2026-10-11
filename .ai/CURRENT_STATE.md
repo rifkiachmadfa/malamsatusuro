@@ -117,6 +117,9 @@ Alur: KAFAN COMPLETE (3/3 pusaka) -> notifikasi "Temui Pemandu" -> Pemandu_Kafan
 ## UPDATE 2026-10-11 (cutscene pembuka saat join, ADR-041)
 IntroCutsceneService memutar `ServerStorage/CutScenes/CutscenePlayerN` (buatan user, plugin Open Cutscene Editor) saat pemain masuk, N = slot join. Harness offline 11 cek lulus; BELUM dites di Studio. Belum ada: kunci pemain saat cutscene, sinyal selesai, pembatasan hanya di awal game.
 
+## UPDATE 2026-10-11 (trigger tes cutscene, ADR-042)
+`CutsceneTestService`: ProximityPrompt pada `Workspace.triggerCutscene` memutar `ServerStorage/CutScenes/CutscenePlayer1..4` berurutan untuk semua pemain (hanya Studio). Terpisah dari IntroCutsceneService (ADR-041) dan FinalRitualService (ADR-040). BELUM dites di Studio. DEPENDENCY: Workspace.triggerCutscene (Part).
+
 ## NEXT ACTION
 
 1. User: cocokkan GravePuzzleConfig.ANSWER dengan clue SurfaceGui lalu set ANSWER_CONFIRMED=true; pastikan Graves/Grave_1..4 dan template KembangKantilHitam ada; cek Handle.Anchored=false di semua template Tool.

@@ -662,3 +662,32 @@ Consequences / batasan (jujur):
 Status:
 ACCEPTED sebagai arahan user (tes awal); logika slot lulus harness offline; BELUM dites di Studio.
 
+
+## ADR-042 — TRIGGER TES CUTSCENE (PROXIMITYPROMPT, SEMENTARA)
+
+Context:
+
+User sedang membuat cutscene (plugin Open Cutscene Editor, ADR-041) dan butuh cara memutarnya tanpa menyelesaikan quest atau masuk ulang. `Workspace.triggerCutscene` dibuat user di Studio (tidak ada di Git, ADR-011). IntroCutsceneService (ADR-041) hanya memutar saat join, per slot pemain.
+
+Decision:
+
+- `CutsceneTestService` (server) memakai ProximityPrompt (bukan InteractionService) karena ini alat tes, bukan interaksi gameplay; sengaja terpisah supaya mudah dicabut. Memakai ProximityPrompt yang sudah ada di trigger; bila tidak ada, dibuat di BasePart trigger.
+- `Triggered` hanya jalan di server; penjaga `running` mencegah urutan ganda; prompt dimatikan selama urutan.
+- Urutan: CutscenePlayer1 -> 2 -> 3 -> 4, tiap modul diputar untuk SEMUA pemain yang ada, lalu menunggu semua clone `LocalCutscenePlayer` hilang dari PlayerGui sebelum modul berikutnya. Timeout 120 dtk per modul (clone dihancurkan paksa); bila clone tidak terdeteksi, jeda 5 dtk.
+- Pemain NORMAL dikunci ke CUTSCENE selama urutan lalu dikembalikan ke NORMAL; pemain dengan state lain tidak disentuh.
+- Tidak mengubah state game/quest. Hanya aktif di Studio (`ONLY_IN_STUDIO`); saklar `ENABLED`.
+
+Assumptions (belum diverifikasi, minta konfirmasi user):
+
+- "Berurutan" = Player1..4 diputar satu per satu untuk semua pemain. ADR-041 memakai N sebagai slot pemain (satu modul per pemain, paralel); jika tes ingin meniru itu, tambahkan mode PER_SLOT.
+- LocalScript `LocalCutscenePlayer` menghancurkan dirinya sendiri saat cutscene selesai (plugin tidak memberi callback ke server, ADR-041). Bila tidak, tiap modul menunggu sampai timeout.
+
+Revisi (tes Studio pertama, 2026-10-11): clone `LocalCutscenePlayer` TIDAK menghilang sendiri setelah `CutscenePlayer1` dimulai (Output berhenti di "memutar 1/4"), jadi asumsi kedua salah/belum terbukti. Perbaikan: `GAP_BETWEEN = 0` (langsung sambung); `DURATIONS` per modul di CutsceneTestConfig (lanjut saat clone hilang ATAU durasi habis, lalu clone dibersihkan); `DUMP_CLONE_INFO` mencetak isi clone/CutsceneInfo ke Output untuk mencari nilai durasi atau sinyal selesai bawaan plugin. Solusi final (sinyal selesai sungguhan dari script plugin) menunggu isi `LocalCutscenePlayer` dari user.
+
+Revisi 2 (tes Studio kedua): dump clone menunjukkan `CutsceneInfo` (Open Cutscene Editor) = titik kamera `Position1..N` (CFrameValue), tiap titik punya `Time` (NumberValue, detik), `EasingStyle`, `EasingDirection`. Contoh: Position1 Time=3, Position2 Time=1.5 (total 4,5 dtk). Keputusan: durasi OTOMATIS = jumlah `Time` semua titik + `DURATION_MARGIN` (0,25 dtk); prioritas `DURATIONS` manual > otomatis > tunggu clone hilang (maks 120 dtk). `DUMP_CLONE_INFO` default mati. Asumsi: `Time` = detik menuju titik itu (sesuai nilai 3 dan 1,5); penyimpangan sedikit antara durasi hitung dan tampilan = sesuaikan `DURATION_MARGIN`/`DURATIONS`. Margin berarti ada jeda sangat singkat sebelum cutscene berikutnya (kamera bisa sempat kembali ke karakter).
+
+Revisi 3 (tes Studio ketiga): urutan 1->4 jalan penuh dengan durasi otomatis, tetapi ada jeda panjang dan kamera kembali ke pemain di antara scene (tiap `PlayCutscene` = pemutaran terpisah yang dimulai dari kamera pemain dan melepas kamera di akhir). Keputusan: `MODE = "MERGED"` (default): titik `PositionN` dari semua modul digabung jadi satu `CutsceneInfo` (Position1..N berurutan, urut numerik) dan diputar SATU kali memakai `LocalCutscenePlayer` milik modul pertama, meniru isi `PlayCutscene` bawaan (info jadi anak LocalScript, parent ke PlayerGui, `Disabled = false`). Titik pertama scene ke-2 dst memakai `Time = SCENE_JOIN_TIME` (0,05) agar perpindahan berupa cut; nil = kamera terbang. Modul asli di ServerStorage tidak diubah (hanya salinan). Jatuh otomatis ke SEQUENTIAL bila LocalCutscenePlayer/CutsceneInfo tidak ada. Asumsi (belum terverifikasi): LocalCutscenePlayer semua modul identik (dipakai milik modul pertama); script membaca `CutsceneInfo` anak LocalScript dan memutar `PositionN` berurutan; `Time` titik pertama = waktu menuju titik itu. Loop tunggu diperhalus (tidur min(0.25, sisa)) agar tidak terlambat sampai 0,25 dtk.
+
+Status:
+ACCEPTED sebagai alat tes; BELUM lulus tes Studio (urutan berhenti di modul 1; perbaikan di atas belum dites).
+

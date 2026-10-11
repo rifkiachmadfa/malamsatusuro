@@ -1,5 +1,34 @@
 # CHANGELOG
 
+## 2026-10-11 — Catatan implementasi cutscene (dokumentasi saja)
+- Baru: `.ai/CUTSCENE_GUIDE.md` (struktur modul OCE, temuan tes, cara membuat scene, rencana implementasi nyata, risiko, alat debug); AGENTS.md menunjuk ke panduan itu; TASKS 8.1 ditambahkan
+- Tidak ada perubahan kode
+
+## 2026-10-11 — Trigger tes cutscene: mode MERGED tanpa jeda antar scene (ADR-042) (belum dites di Studio)
+- Laporan tes Studio: 4 cutscene muncul semua, tetapi ada jeda panjang dan kamera kembali ke pemain di antara scene
+- CutsceneTestConfig: `MODE` ("MERGED" default / "SEQUENTIAL"), `SCENE_JOIN_TIME` (0.05)
+- CutsceneTestService: `playMerged` menggabungkan CutsceneInfo semua modul jadi satu pemutaran; `waitForClones` dipakai bersama; loop tunggu min(0.25, sisa); fallback otomatis ke SEQUENTIAL
+- Verifikasi AI: luau-compile OK; harness offline (src/ asli, stub Roblox dengan perilaku Parent, 15 cek) LULUS: satu pemutaran (PlayCutscene per modul tidak dipanggil), 6 titik berurutan walau urutan anak terbalik, Time scene ke-2 dst = 0.05, durasi 6.15 + 0.25, tanpa jeda, modul asli tak berubah, fallback SEQUENTIAL. Tidak dites di Studio
+
+## 2026-10-11 — Trigger tes cutscene: durasi otomatis dari CutsceneInfo (ADR-042) (belum dites di Studio)
+- Laporan tes Studio: hanya CutscenePlayer1 berjalan (clone Open Cutscene Editor tidak menghilang sendiri); dump menunjukkan CutsceneInfo = Position1..N dengan NumberValue `Time`
+- CutsceneTestConfig: `AUTO_DURATION`, `INFO_NAME`, `TIME_VALUE_NAME`, `DURATION_MARGIN` (0.25); `DUMP_CLONE_INFO` default false
+- CutsceneTestService: durasi = jumlah `Time` + margin (prioritas DURATIONS manual > otomatis > tunggu clone hilang); lanjut ke cutscene berikutnya langsung setelah durasi habis
+- Verifikasi AI: luau-compile OK; harness offline (src/ asli, stub, struktur clone mirip aslinya yang tidak menghilang sendiri, 9 cek) LULUS: urutan 1->4, durasi 4.75 dtk per modul, tanpa timeout 120 dtk, clone dibersihkan, state dipulihkan. Tidak dites di Studio
+
+## 2026-10-11 — Perbaikan trigger tes cutscene: tanpa jeda, durasi tetap, dump isi clone (ADR-042) (belum dites di Studio)
+- Laporan tes Studio: hanya CutscenePlayer1 yang diputar; clone LocalCutscenePlayer tidak menghilang sendiri sehingga urutan menunggu
+- CutsceneTestConfig: `GAP_BETWEEN = 0`, `DURATIONS` (detik per modul, kosong = menunggu clone hilang maks 120 dtk), `DUMP_CLONE_INFO`, `DUMP_MAX_ITEMS`
+- CutsceneTestService: lanjut saat clone hilang ATAU durasi tetap habis; cetak isi clone ke Output
+- Verifikasi AI: luau-compile OK; harness offline (src/ asli, stub, 11 cek) LULUS termasuk durasi tetap, tanpa jeda antar modul, dump CutsceneInfo. Tidak dites di Studio
+
+## 2026-10-11 — Trigger TES cutscene via ProximityPrompt (ADR-042) (belum dites di Studio)
+- Arahan user: tes cutscene lewat ProximityPrompt pada `Workspace.triggerCutscene` yang memutar semua modul `ServerStorage/CutScenes/CutscenePlayer1..4` berurutan
+- Baru: server/Services/CutsceneTestService, server/Config/CutsceneTestConfig; init.server memanggil `CutsceneTestService.init()`. Tidak mengubah IntroCutsceneService, FinalRitualService, state game/quest, atau remote
+- Hanya aktif di Studio (`ONLY_IN_STUDIO`); saklar `ENABLED`. Hapus sebelum publish
+- Menghapus `phase8-cutscene-test-ADR-040.patch` dari root repo (patch usang dari sesi sebelumnya yang salah ter-commit; nomor ADR bentrok dengan ADR-040 ritual akhir)
+- Verifikasi AI: luau-compile OK (3 file berubah); harness offline (memuat src/ asli, stub Roblox, jam palsu, 8 cek) LULUS: urutan 1->2->3->4 untuk semua pemain, modul selesai saat clone hilang, timeout 120 dtk menghancurkan clone, fallback tanpa clone, state NORMAL dipulihkan dan KNOCKED tidak disentuh. TIDAK tercakup/tidak dites: pembuatan ProximityPrompt, event Triggered, modul plugin asli, Studio
+
 ## 2026-10-11 — Cutscene pembuka saat pemain masuk, TES awal (ADR-041) (belum dites di Studio)
 - Cutscene dibuat user dengan plugin Open Cutscene Editor: `ServerStorage/CutScenes/CutscenePlayer1..4` (ModuleScript berfungsi `PlayCutscene(player)`; objek Studio, tidak di Git)
 - Baru: server/Config/IntroCutsceneConfig (ENABLED, nama folder/prefix, MAX_SLOT, START_DELAY), server/Services/IntroCutsceneService; init.server memanggil `IntroCutsceneService.init()`

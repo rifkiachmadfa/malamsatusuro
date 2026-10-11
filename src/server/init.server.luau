@@ -29,6 +29,7 @@ local RhythmGameService = require(Services:WaitForChild("RhythmGameService") :: 
 local KafanQuestService = require(Services:WaitForChild("KafanQuestService") :: ModuleScript)
 local FinalRitualService = require(Services:WaitForChild("FinalRitualService") :: ModuleScript)
 local IntroCutsceneService = require(Services:WaitForChild("IntroCutsceneService") :: ModuleScript)
+local CutsceneTestService = require(Services:WaitForChild("CutsceneTestService") :: ModuleScript)
 local GravePuzzleService = require(Services:WaitForChild("GravePuzzleService") :: ModuleScript)
 local KnockService = require(Services:WaitForChild("KnockService") :: ModuleScript)
 local ReviveService = require(Services:WaitForChild("ReviveService") :: ModuleScript)
@@ -60,6 +61,7 @@ RhythmGameService.init()
 KafanQuestService.init()
 FinalRitualService.init()
 IntroCutsceneService.init()
+CutsceneTestService.init() -- trigger TES cutscene (ADR-042); hapus sebelum publish
 
 -- Bunga salah di makam -> kebijakan gagal (ADR-030/032): multiplayer = knock, solo = respawn + reset quest.
 -- Jumpscare (ADR-033) dimainkan di dalam FailureService sebelum hukuman.
