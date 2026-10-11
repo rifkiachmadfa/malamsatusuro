@@ -537,3 +537,24 @@ Decision:
 
 Status:
 ACCEPTED (Phase 4 ditutup 2026-10-05)
+
+## ADR-037 — MINYAK ZAITUN SELALU 2 PICKUP AKTIF (REPLENISH) DI TITIK BERBEDA
+
+Context:
+
+Revive memakai Minyak Zaitun (ADR-035/036) dan ADR-036 menetapkan zaitun tidak respawn setelah diambil. Kesalahan berulang (knock berkali-kali) bisa menghabiskan zaitun yang ada. REVISI user 2026-10-11: zaitun harus SELALU ada 2 di dunia walau sudah dibawa pemain; spawn berikutnya tidak boleh di titik yang pernah dipakai.
+
+Decision:
+
+- Opsi generik baru `replenish` di `CollectionConfig` (bukan service baru; ADR-027 tetap DRY). Dipakai entri `Zaitun`. Hanya untuk entri tanpa `counterId` (di-assert saat register).
+- `CollectibleService`: tiap pickup `COLLECTED`, server langsung `refill`: jumlah aktif dipulihkan ke `target` (2). Pengganti dipilih acak (server) dari titik di `ZaitunSpawns` yang BELUM PERNAH dipakai sejak spawn awal (`usedSpawns`). Titik yang dipakai pickup yang tidak diambil juga tetap tercatat "terpakai".
+- `RandomSpawnService.pickSpawns(container, count, exclude?)`: parameter `exclude` opsional (kompatibel mundur; Kelor/bunga tidak berubah).
+- Pool habis (semua titik pernah dipakai): ASUMSI (belum diputuskan user) = daftar "pernah dipakai" di-reset agar revive tidak buntu, TAPI titik yang sedang aktif dan titik yang baru saja diambil tetap dikecualikan; log warning "siklus baru". Alternatif bila user mau: berhenti respawn saat pool habis.
+- `usedSpawns` di-reset hanya bila spawnAll berjalan ulang (masuk lagi ke SEARCHING_KELOR). Itu tidak terjadi pada alur normal (KERIS hanya sekali).
+- Tidak mengubah: validasi pickup (AVAILABLE -> COLLECTING -> COLLECTED), ReviveService, pengurangan zaitun saat revive berhasil.
+- Tidak termasuk: zaitun yang hilang dari Backpack karena pemain mati/respawn (risiko ADR-018) tidak memicu spawn pengganti; pengganti hanya muncul saat pickup di dunia diambil.
+
+Konsekuensi: jumlah titik di `ZaitunSpawns` menentukan berapa kali pengganti bisa muncul sebelum siklus baru (N titik: 2 awal + N-2 pengganti). Disarankan >= 6 titik.
+
+Status:
+ACCEPTED sebagai arahan user; logika lulus harness offline; BELUM dites di Studio.

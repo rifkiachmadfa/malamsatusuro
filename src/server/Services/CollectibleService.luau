@@ -5,6 +5,7 @@
 --   [E] -> server validasi -> item ke Backpack pemain -> progres party-wide +1 (bila ada counter) -> notifikasi
 --   keluar dari SEMUA activeStates -> pickup tersisa dihapus (kecuali clearOnLeave = false). Masuk activeStates[1] lagi = spawn ulang.
 -- Entri tanpa counterId (Minyak Zaitun, ADR-035) hanya memberi item; jumlah titik aktif dari `spawnCount`.
+-- `replenish` (ADR-037): tiap pickup diambil, spawn pengganti di titik yang belum pernah dipakai; jumlah aktif selalu = target.
 --
 -- State pickup (server): AVAILABLE -> COLLECTING -> COLLECTED. Pickup hanya diterima dari objek yang
 -- terdaftar di tabel server dan saat quest berada di salah satu activeStates, sehingga tidak bisa digandakan.
@@ -29,6 +30,7 @@ local TAG = "CollectibleService"
 type Pickup = {
 	status: "AVAILABLE" | "COLLECTING" | "COLLECTED",
 	spawnName: string,
+	spawn: Instance,
 	itemId: string,
 }
 
@@ -83,6 +85,9 @@ local function register(config: CollectionConfig.Collection)
 		target = config.spawnCount
 	end
 
+	local replenish = config.replenish == true
+	assert(not (replenish and counterId), string.format("[%s] %s: replenish hanya untuk entri tanpa counterId", TAG, config.id))
+
 	local spawnState = config.activeStates[1]
 	local persistent = config.clearOnLeave == false -- pickup tetap ada & bisa diambil setelah keluar dari activeStates
 	local function isActiveState(state: string): boolean
@@ -94,6 +99,28 @@ local function register(config: CollectionConfig.Collection)
 	end
 
 	local pickups: { [Instance]: Pickup } = {}
+	local usedSpawns: { [Instance]: boolean } = {} -- titik yang sudah pernah dipakai (untuk replenish, ADR-037)
+
+	-- Buat satu pickup di titik `spawn`; mencatat titik sebagai "pernah dipakai". Return true bila berhasil.
+	local function placePickup(spawn: Instance, itemId: string, folder: Instance): boolean
+		local template = ItemService.getTemplate(itemId)
+		if not template then
+			Log.warn(TAG, "dependency belum ada: template " .. itemId)
+			return false
+		end
+		local model = RandomSpawnService.createPickup(template, spawn, folder, {
+			interactionId = config.interactionId,
+			actionText = config.actionText,
+			objectText = displayName(itemId),
+			maxDistance = config.pickupDistance,
+		})
+		if not model then
+			return false
+		end
+		pickups[model] = { status = "AVAILABLE", spawnName = spawn.Name, spawn = spawn, itemId = itemId }
+		usedSpawns[spawn] = true
+		return true
+	end
 
 	local function clear()
 		local toRemove: { Instance } = {}
@@ -101,6 +128,7 @@ local function register(config: CollectionConfig.Collection)
 			table.insert(toRemove, model)
 		end
 		table.clear(pickups)
+		table.clear(usedSpawns)
 		for _, model in toRemove do
 			model:Destroy()
 		end
@@ -122,20 +150,8 @@ local function register(config: CollectionConfig.Collection)
 
 		for i, spawn in picked do
 			local itemId = assigned[i]
-			local template = ItemService.getTemplate(itemId)
-			if not template then
-				Log.warn(TAG, "dependency belum ada: template " .. itemId)
-			else
-				local model = RandomSpawnService.createPickup(template, spawn, folder, {
-					interactionId = config.interactionId,
-					actionText = config.actionText,
-					objectText = displayName(itemId),
-					maxDistance = config.pickupDistance,
-				})
-				if model then
-					pickups[model] = { status = "AVAILABLE", spawnName = spawn.Name, itemId = itemId }
-					table.insert(summary, string.format("%s=%s", spawn.Name, itemId))
-				end
+			if placePickup(spawn, itemId, folder) then
+				table.insert(summary, string.format("%s=%s", spawn.Name, itemId))
 			end
 		end
 
@@ -152,6 +168,67 @@ local function register(config: CollectionConfig.Collection)
 		)
 		if #summary < target then
 			Log.warn(TAG, string.format("%s: hanya %d pickup ter-spawn, quest butuh %d", config.id, #summary, target))
+		end
+	end
+
+	-- ADR-037: jaga jumlah pickup aktif = target. Pengganti selalu di titik yang belum pernah dipakai.
+	-- Semua titik habis dipakai -> daftar "pernah dipakai" di-reset, tetapi titik yang sedang aktif dan titik
+	-- yang baru saja diambil tetap dikecualikan (tidak muncul lagi di tempat yang sama berturut-turut).
+	local function refill(justTaken: Instance)
+		local container = findSpawnContainer(config.spawnFolder)
+		if not container then
+			Log.warn(TAG, string.format("dependency belum ada: Workspace.QuestObjects.%s", config.spawnFolder))
+			return
+		end
+
+		local active = 0
+		for _ in pickups do
+			active += 1
+		end
+		local missing = target - active
+		if missing <= 0 then
+			return
+		end
+
+		local picked = RandomSpawnService.pickSpawns(container, missing, usedSpawns)
+		local recycled = false
+		if #picked < missing then
+			recycled = true
+			table.clear(usedSpawns)
+			usedSpawns[justTaken] = true
+			for _, pickup in pickups do
+				usedSpawns[pickup.spawn] = true
+			end
+			for _, spawn in picked do
+				usedSpawns[spawn] = true
+			end
+			local more = RandomSpawnService.pickSpawns(container, missing - #picked, usedSpawns)
+			for _, spawn in more do
+				table.insert(picked, spawn)
+			end
+			Log.warn(TAG, string.format("%s: semua titik sudah pernah dipakai, daftar titik di-reset (siklus baru)", config.id))
+		end
+
+		local folder = RandomSpawnService.getRuntimeFolder()
+		local placed: { string } = {}
+		for _, spawn in picked do
+			if placePickup(spawn, config.itemIds[1], folder) then
+				table.insert(placed, spawn.Name)
+			end
+		end
+		Log.info(
+			TAG,
+			string.format(
+				"%s pengganti ter-spawn%s: %s (aktif %d/%d)",
+				config.id,
+				if recycled then " [siklus baru]" else "",
+				table.concat(placed, ", "),
+				active + #placed,
+				target
+			)
+		)
+		if active + #placed < target then
+			Log.warn(TAG, string.format("%s: hanya %d pickup aktif, target %d (titik spawn kurang)", config.id, active + #placed, target))
 		end
 	end
 
@@ -189,6 +266,9 @@ local function register(config: CollectionConfig.Collection)
 		pickup.status = "COLLECTED"
 		pickups[instance] = nil
 		instance:Destroy()
+		if replenish then
+			refill(pickup.spawn)
+		end
 
 		local name = displayName(pickup.itemId)
 		if progress ~= nil then

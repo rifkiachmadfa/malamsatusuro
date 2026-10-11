@@ -53,11 +53,12 @@ function RandomSpawnService.getRuntimeFolder(): Folder
 end
 
 -- Pilih `count` titik spawn berbeda secara acak dari anak-anak `container`.
+-- `exclude` (opsional): titik yang tidak boleh dipilih (mis. titik yang sudah pernah dipakai, ADR-037).
 -- Jika titik yang tersedia kurang dari `count`, semuanya dipakai dan dicatat sebagai warning.
-function RandomSpawnService.pickSpawns(container: Instance, count: number): { Instance }
+function RandomSpawnService.pickSpawns(container: Instance, count: number, exclude: { [Instance]: boolean }?): { Instance }
 	local candidates: { Instance } = {}
 	for _, child in container:GetChildren() do
-		if isSpawnable(child) then
+		if isSpawnable(child) and not (exclude and exclude[child]) then
 			table.insert(candidates, child)
 		end
 	end

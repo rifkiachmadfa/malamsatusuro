@@ -122,6 +122,7 @@ IN PROGRESS. Dikerjakan bertahap sesuai ADR-031; user memvalidasi tiap tahap. 6.
 - [x] 6.2 Jumpscare client-only (ViewportFrame model 3D berrig + efek layar, hanya untuk pemain yang kena) lalu knock/respawn — DITES user di Studio (normal, 2026-10-11). Audio + state RETRY_GUIDE (ADR-034) ikut diuji; suara masih placeholder
 - [x] 6.3 Knock UI MINIMAL (keputusan user: tanpa marker): overlay vinyet + teks "Kamu pingsan" di pemain knock (KnockController) — kode ditulis, luau-compile OK; BELUM dites di Studio. Marker di kepala korban TIDAK dikerjakan (bisa ditambah nanti)
 - [x] 6.4 Ramuan Minyak Zaitun + revive (ADR-035/036): spawn 2 dari semua Part di `QuestObjects/ZaitunSpawns` (CollectibleService); revive = pegang zaitun, dekat korban, tahan [E] 3 detik, validasi + hitung waktu di server, kurangi 1 saat berhasil — kode ditulis, luau-compile OK; BELUM dites di Studio (lihat SESSION_HANDOFF "Uji Studio Task 6.4")
+- [x] 6.4b Revisi zaitun (ADR-037): selalu 2 pickup aktif, pengganti di titik yang belum pernah dipakai — kode ditulis, harness offline lulus; BELUM dites di Studio
 - [ ] 6.5 Giliran tunggal (Task 5.9) + party wipe (semua knock) + reset bunga Kantil (hapus bunga di Backpack, spawn ulang)
 - [ ] Uji 1/2/3/4 pemain knock (jadwalkan di Phase 10 untuk 3–4 pemain)
 

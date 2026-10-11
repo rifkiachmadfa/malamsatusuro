@@ -190,6 +190,15 @@ B. REVIVE (pemain A knock, pemain B penyelamat)
 13. KNOCK A, B menyadarkan, A berjalan normal, bisa [E] lagi; A knock lagi lalu disadarkan lagi (tidak ada sisa state REVIVING/Anchored).
 Laporkan Output (server dan client) dan perilaku yang berbeda dari EXPECTED.
 
+## Uji Studio Revisi Zaitun (ADR-037)
+Prasyarat: `Workspace.QuestObjects.ZaitunSpawns` berisi >= 6 Part/Model; template `MinyakZaitun` ada. Lihat Output server.
+1. EXPECTED: setelah dialog intro, `[CollectibleService] Zaitun aktif (2/N titik): ...` dan hanya 2 pickup zaitun di `Workspace.QuestRuntime`.
+2. Ambil 1 zaitun ([E]): pickup hilang dan SEGERA muncul 1 pickup baru. Output `Zaitun pengganti ter-spawn: <titik> (aktif 2/2)`; titik BUKAN titik yang pernah dipakai. Selalu ada 2 pickup di dunia.
+3. Ulangi sampai titik habis: tiap pengganti di titik berbeda. Setelah N titik: warning `semua titik sudah pernah dipakai... (siklus baru)`; titik baru tidak sama dengan yang baru diambil / yang sedang aktif.
+4. Spam [E] / 2 pemain bersamaan di satu pickup: item hanya masuk satu kali; pengganti hanya satu.
+5. Kelor/bunga tidak berubah (tanpa pengganti). Revive (6.4) tetap jalan.
+Laporkan Output dan jika ada pickup yang muncul di titik yang sama dua kali sebelum siklus baru.
+
 ## Langkah berikutnya
 1. User: uji 2.1 di atas dan lapor Output; tinjau SkyboxInserter; siapkan naskah dialog Pemandu.
 2. Task 2.2 Quest UI, Task 2.3 alur Pemandu -> quest.

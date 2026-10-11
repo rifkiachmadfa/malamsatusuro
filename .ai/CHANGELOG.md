@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 2026-10-11 — Revisi Minyak Zaitun: selalu 2 pickup aktif, pengganti di titik berbeda (ADR-037) (belum dites di Studio)
+- CollectionConfig: opsi baru `replenish`; entri `Zaitun` memakainya. Komentar entri diperbarui (menggantikan "tidak respawn setelah diambil" di ADR-036)
+- CollectibleService: `placePickup` (diekstrak dari spawnAll), `usedSpawns`, `refill` setelah pickup diambil; Pickup menyimpan referensi titik spawn
+- RandomSpawnService.pickSpawns: parameter opsional `exclude`
+- Verifikasi AI: luau-compile 3 file OK; harness offline (stub Roblox, 7 skenario/20 cek, dijalankan 3x karena acak) LULUS: spawn awal 2, pengganti segera, titik baru tiap kali, tanpa duplikasi item, pool habis -> siklus baru, Kelor tidak terpengaruh. TIDAK ada tes Studio
+
 ## 2026-10-11 — Phase 6 Task 6.4: Minyak Zaitun spawner + revive tahan 3 detik (ADR-035, ADR-036) (belum dites di Studio)
 - CollectionConfig/CollectibleService diperluas (generik, bukan salinan): `activeStates` (banyak state), `counterId` opsional, `spawnCount`, `clearOnLeave`. Kelor/Flowers hanya ganti ke `activeStates = { ... }`. Entri baru `Zaitun`: folder `QuestObjects/ZaitunSpawns`, 2 titik aktif dari semua Part, spawn di AWAL GAME (KERIS masuk SEARCHING_KELOR, setelah dialog intro), `clearOnLeave = false` (tidak dihapus saat quest berganti), tanpa progres quest
 - Baru: shared/Config/ReviveConfig, server/Services/ReviveService (sesi revive server-authoritative), client/Controllers/ReviveController (prompt tahan + progress bar), remote `ReviveRequest` dan `ReviveUpdate`

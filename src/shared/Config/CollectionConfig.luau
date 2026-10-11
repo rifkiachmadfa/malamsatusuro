@@ -20,6 +20,9 @@ export type Collection = {
 	completeNotice: string?, -- notifikasi ke semua pemain saat target tercapai (hanya bila ada counterId)
 	clearOnLeave: boolean?, -- default true. false = pickup TIDAK dihapus dan tetap bisa diambil setelah keluar dari activeStates
 	-- (spawn sekali saat masuk activeStates[1]; dipakai Minyak Zaitun: ada sejak awal game)
+	replenish: boolean?, -- default false. true = jumlah pickup aktif SELALU dijaga = target: tiap pickup diambil, server langsung
+	-- men-spawn pengganti di titik yang BELUM PERNAH dipakai sejak spawn awal (ADR-037). Hanya untuk entri tanpa counterId.
+	-- Bila semua titik sudah pernah dipakai, daftar "pernah dipakai" di-reset (titik aktif dan titik yang baru diambil tetap dikecualikan).
 }
 
 local CollectionConfig = {}
@@ -54,8 +57,10 @@ CollectionConfig.Collections = table.freeze({
 	},
 	-- Minyak Zaitun (ramuan revive, ADR-035/036): 2 titik aktif dari semua titik di ZaitunSpawns, tanpa progres quest.
 	-- Spawn di AWAL GAME: saat quest Keris mulai (SEARCHING_KELOR, tepat setelah dialog intro) agar pemain sudah bisa
-	-- mengambil dan terbiasa memegangnya sebelum quest Kantil. Tidak dihapus saat quest berganti, tidak respawn
-	-- setelah diambil (bahan langka; spawn ulang saat party wipe = keputusan terbuka, Task 6.5).
+	-- mengambil dan terbiasa memegangnya sebelum quest Kantil. Tidak dihapus saat quest berganti.
+	-- REVISI 2026-10-11 (ADR-037, menggantikan "tidak respawn" di ADR-036): `replenish = true` -> SELALU ada 2 pickup aktif
+	-- walau yang lain sudah dibawa pemain (mengakomodasi kesalahan berulang); pengganti selalu di titik berbeda dari
+	-- semua spawn sebelumnya.
 	{
 		id = "Zaitun",
 		questId = "KERIS",
@@ -63,6 +68,7 @@ CollectionConfig.Collections = table.freeze({
 		spawnCount = 2,
 		activeStates = { "SEARCHING_KELOR" },
 		clearOnLeave = false,
+		replenish = true,
 		spawnFolder = "ZaitunSpawns",
 		interactionId = "Zaitun",
 		itemIds = { "MinyakZaitun" },
