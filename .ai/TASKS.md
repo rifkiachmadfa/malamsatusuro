@@ -107,8 +107,8 @@ KODE & TES STUDIO OK untuk 5.1–5.8 (dilaporkan user, Studio normal, 2026-10-11
 - [ ] 5.9 Turn/attempt control (satu pemain aktif) — DIPUTUSKAN user 2026-10-10: dikerjakan bersama sistem knock/revive di Phase 6 (bukan sekarang). Catatan desain: bunga terbagi antar pemain, jadi kunci giliran tidak boleh membatasi siapa yang meletakkan bunga; rancang bersama aturan knock pada pemain yang gagal
 - [x] Knock system + jumpscare pada bunga salah (ADR-030–034): DITES user di Studio (normal, 2026-10-11); solo = respawn + reset quest, multiplayer = knock
 - [x] Revive (Minyak Zaitun) — Task 6.4, kode ditulis, BELUM dites di Studio
-- [ ] Party wipe (semua knock = wipe; solo = langsung wipe; CANTIL_PUZZLE -> SEARCHING_FLOWERS; makam otomatis dikosongkan, bunga di Backpack belum dihapus)
-- [ ] Flower reset (hapus sisa bunga dari semua Backpack saat wipe)
+- [x] Party wipe (semua knock = wipe; solo = langsung wipe; CANTIL_PUZZLE -> SEARCHING_FLOWERS; makam otomatis dikosongkan, bunga di Backpack belum dihapus)
+- [x] Flower reset (hapus sisa bunga dari semua Backpack saat wipe)
 - [x] Black Kantil reward (diberikan ke penempat bunga terakhir saat jawaban benar) — DITES user di Studio (normal, 2026-10-11)
 - [x] NPC submission = simpan di RitualCollection (sudah ada di RitualConfig sejak ADR-026; belum dites untuk Kantil)
 
@@ -151,7 +151,7 @@ NOT STARTED
 
 - [ ] Gamelan interaction
 - [ ] Rhythm UI
-- [ ] Six columns
+- [ ] four columns
 - [ ] Note system
 - [ ] Input handling
 - [ ] Score
