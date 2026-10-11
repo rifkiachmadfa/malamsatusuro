@@ -28,8 +28,10 @@ local GAME_TRANSITIONS: { [string]: { string } } = {
 	[GameState.GAME_COMPLETE] = {},
 }
 
+-- REVIVING = state PENYELAMAT selama menahan [E] menyadarkan rekan (ADR-035). Pemain yang knock tetap KNOCKED
+-- sampai ReviveService menyelesaikan sesi (KnockService.recover).
 local PLAYER_TRANSITIONS: { [string]: { string } } = {
-	[PlayerState.NORMAL] = { PlayerState.KNOCKED, PlayerState.MINIGAME, PlayerState.CUTSCENE },
+	[PlayerState.NORMAL] = { PlayerState.KNOCKED, PlayerState.MINIGAME, PlayerState.CUTSCENE, PlayerState.REVIVING },
 	[PlayerState.KNOCKED] = { PlayerState.REVIVING, PlayerState.NORMAL },
 	[PlayerState.REVIVING] = { PlayerState.NORMAL, PlayerState.KNOCKED },
 	[PlayerState.MINIGAME] = { PlayerState.NORMAL, PlayerState.KNOCKED },

@@ -106,7 +106,7 @@ KODE & TES STUDIO OK untuk 5.1–5.8 (dilaporkan user, Studio normal, 2026-10-11
 - [x] 5.8 Puzzle validation PER BUNGA (server; bunga salah tidak dipakai + hook onWrong; benar tetap di makam) — DITES user di Studio (normal, 2026-10-11). JAWABAN MASIH PLACEHOLDER (ANSWER_CONFIRMED=false)
 - [ ] 5.9 Turn/attempt control (satu pemain aktif) — DIPUTUSKAN user 2026-10-10: dikerjakan bersama sistem knock/revive di Phase 6 (bukan sekarang). Catatan desain: bunga terbagi antar pemain, jadi kunci giliran tidak boleh membatasi siapa yang meletakkan bunga; rancang bersama aturan knock pada pemain yang gagal
 - [x] Knock system + jumpscare pada bunga salah (ADR-030–034): DITES user di Studio (normal, 2026-10-11); solo = respawn + reset quest, multiplayer = knock
-- [ ] Revive (Minyak Zaitun)
+- [x] Revive (Minyak Zaitun) — Task 6.4, kode ditulis, BELUM dites di Studio
 - [ ] Party wipe (semua knock = wipe; solo = langsung wipe; CANTIL_PUZZLE -> SEARCHING_FLOWERS; makam otomatis dikosongkan, bunga di Backpack belum dihapus)
 - [ ] Flower reset (hapus sisa bunga dari semua Backpack saat wipe)
 - [x] Black Kantil reward (diberikan ke penempat bunga terakhir saat jawaban benar) — DITES user di Studio (normal, 2026-10-11)
@@ -121,7 +121,7 @@ IN PROGRESS. Dikerjakan bertahap sesuai ADR-031; user memvalidasi tiap tahap. 6.
 - [x] 6.1b Kegagalan solo vs multiplayer (FailureService, ADR-032): solo = respawn + reset quest 2 + mulai lagi dari Pemandu; multiplayer = knock — DITES user di Studio (normal, 2026-10-11)
 - [x] 6.2 Jumpscare client-only (ViewportFrame model 3D berrig + efek layar, hanya untuk pemain yang kena) lalu knock/respawn — DITES user di Studio (normal, 2026-10-11). Audio + state RETRY_GUIDE (ADR-034) ikut diuji; suara masih placeholder
 - [x] 6.3 Knock UI MINIMAL (keputusan user: tanpa marker): overlay vinyet + teks "Kamu pingsan" di pemain knock (KnockController) — kode ditulis, luau-compile OK; BELUM dites di Studio. Marker di kepala korban TIDAK dikerjakan (bisa ditambah nanti)
-- [ ] 6.4 Ramuan Minyak Zaitun tersebar di map (Tool) + revive (equip + dekat korban, kurangi 1, validasi server)
+- [x] 6.4 Ramuan Minyak Zaitun + revive (ADR-035/036): spawn 2 dari semua Part di `QuestObjects/ZaitunSpawns` (CollectibleService); revive = pegang zaitun, dekat korban, tahan [E] 3 detik, validasi + hitung waktu di server, kurangi 1 saat berhasil — kode ditulis, luau-compile OK; BELUM dites di Studio (lihat SESSION_HANDOFF "Uji Studio Task 6.4")
 - [ ] 6.5 Giliran tunggal (Task 5.9) + party wipe (semua knock) + reset bunga Kantil (hapus bunga di Backpack, spawn ulang)
 - [ ] Uji 1/2/3/4 pemain knock (jadwalkan di Phase 10 untuk 3–4 pemain)
 

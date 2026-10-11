@@ -1,12 +1,13 @@
 --!strict
 -- CollectibleService: objective "kumpulkan N item di titik spawn acak" yang dipakai berulang (ADR-027).
 -- Dipakai Kelor (Keris) dan bunga (Kantil); definisi ada di CollectionConfig. Satu logika untuk semuanya:
---   masuk activeState -> server memilih N titik acak (+ jenis item bila DISTINCT) -> pickup Model di dunia
---   [E] -> server validasi -> item ke Backpack pemain -> progres party-wide +1 -> notifikasi
---   keluar activeState -> pickup tersisa dihapus. Masuk activeState lagi (mis. party wipe) = spawn ulang.
+--   masuk activeStates[1] -> server memilih N titik acak (+ jenis item bila DISTINCT) -> pickup Model di dunia
+--   [E] -> server validasi -> item ke Backpack pemain -> progres party-wide +1 (bila ada counter) -> notifikasi
+--   keluar dari SEMUA activeStates -> pickup tersisa dihapus (kecuali clearOnLeave = false). Masuk activeStates[1] lagi = spawn ulang.
+-- Entri tanpa counterId (Minyak Zaitun, ADR-035) hanya memberi item; jumlah titik aktif dari `spawnCount`.
 --
 -- State pickup (server): AVAILABLE -> COLLECTING -> COLLECTED. Pickup hanya diterima dari objek yang
--- terdaftar di tabel server dan saat quest berada di activeState, sehingga tidak bisa digandakan.
+-- terdaftar di tabel server dan saat quest berada di salah satu activeStates, sehingga tidak bisa digandakan.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
@@ -68,9 +69,25 @@ end
 
 local function register(config: CollectionConfig.Collection)
 	local def = (QuestConfig.Quests :: any)[config.questId] :: QuestConfig.QuestDef?
-	local counterDef = def and def.counters[config.counterId]
-	assert(counterDef, string.format("[%s] counter %s.%s tidak ada di QuestConfig", TAG, config.questId, config.counterId))
-	local target = counterDef.target
+	assert(def, string.format("[%s] quest %s tidak ada di QuestConfig", TAG, config.questId))
+	assert(#config.activeStates > 0, string.format("[%s] %s: activeStates kosong", TAG, config.id))
+
+	local counterId = config.counterId
+	local target: number
+	if counterId then
+		local counterDef = def.counters[counterId]
+		assert(counterDef, string.format("[%s] counter %s.%s tidak ada di QuestConfig", TAG, config.questId, counterId))
+		target = config.spawnCount or counterDef.target
+	else
+		assert(config.spawnCount, string.format("[%s] %s: tanpa counterId wajib punya spawnCount", TAG, config.id))
+		target = config.spawnCount
+	end
+
+	local spawnState = config.activeStates[1]
+	local persistent = config.clearOnLeave == false -- pickup tetap ada & bisa diambil setelah keluar dari activeStates
+	local function isActiveState(state: string): boolean
+		return table.find(config.activeStates, state) ~= nil
+	end
 
 	if config.assignment == "DISTINCT" and #config.itemIds < target then
 		Log.warn(TAG, string.format("%s: jenis item (%d) kurang dari target (%d)", config.id, #config.itemIds, target))
@@ -143,8 +160,11 @@ local function register(config: CollectionConfig.Collection)
 		if not pickup or pickup.status ~= "AVAILABLE" then
 			return
 		end
-		if QuestService.getState(config.questId) ~= config.activeState then
-			return
+		if not persistent then
+			local questState = QuestService.getState(config.questId)
+			if questState == nil or not isActiveState(questState) then
+				return
+			end
 		end
 
 		pickup.status = "COLLECTING"
@@ -154,30 +174,43 @@ local function register(config: CollectionConfig.Collection)
 			return
 		end
 
-		local progress = QuestService.addProgress(config.questId, config.counterId, 1)
-		if progress == nil then
-			-- Progres ditolak (state berubah): batalkan item agar tidak ada duplikat.
-			ItemService.consume(player, pickup.itemId, 1)
-			pickup.status = "AVAILABLE"
-			return
+		-- Progres party-wide hanya untuk objective ber-counter. Tanpa counter: item saja.
+		local progress: number? = nil
+		if counterId then
+			progress = QuestService.addProgress(config.questId, counterId, 1)
+			if progress == nil then
+				-- Progres ditolak (state berubah): batalkan item agar tidak ada duplikat.
+				ItemService.consume(player, pickup.itemId, 1)
+				pickup.status = "AVAILABLE"
+				return
+			end
 		end
 
 		pickup.status = "COLLECTED"
 		pickups[instance] = nil
 		instance:Destroy()
-		Log.info(
-			TAG,
-			string.format("%s mengambil %s di %s (party %d/%d)", player.Name, pickup.itemId, pickup.spawnName, progress, target)
-		)
 
 		local name = displayName(pickup.itemId)
-		NoticeService.notifyParty(
-			player,
-			string.format("Kamu mendapatkan %s (%d/%d).", name, progress, target),
-			string.format("%s mendapatkan %s (%d/%d).", player.Name, name, progress, target)
-		)
-		if progress >= target and config.completeNotice then
-			NoticeService.broadcast(config.completeNotice)
+		if progress ~= nil then
+			Log.info(
+				TAG,
+				string.format("%s mengambil %s di %s (party %d/%d)", player.Name, pickup.itemId, pickup.spawnName, progress, target)
+			)
+			NoticeService.notifyParty(
+				player,
+				string.format("Kamu mendapatkan %s (%d/%d).", name, progress, target),
+				string.format("%s mendapatkan %s (%d/%d).", player.Name, name, progress, target)
+			)
+			if progress >= target and config.completeNotice then
+				NoticeService.broadcast(config.completeNotice)
+			end
+		else
+			Log.info(TAG, string.format("%s mengambil %s di %s", player.Name, pickup.itemId, pickup.spawnName))
+			NoticeService.notifyParty(
+				player,
+				string.format("Kamu mendapatkan %s.", name),
+				string.format("%s mendapatkan %s.", player.Name, name)
+			)
 		end
 	end
 
@@ -186,9 +219,9 @@ local function register(config: CollectionConfig.Collection)
 		if questId ~= config.questId then
 			return
 		end
-		if toState == config.activeState then
-			spawnAll()
-		elseif fromState == config.activeState then
+		if toState == spawnState then
+			spawnAll() -- masuk (atau masuk ulang setelah party wipe) = spawn ulang acak
+		elseif not persistent and isActiveState(fromState) and not isActiveState(toState) then
 			clear()
 		end
 	end)

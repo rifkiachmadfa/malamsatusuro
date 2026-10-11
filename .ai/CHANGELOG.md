@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 2026-10-11 — Phase 6 Task 6.4: Minyak Zaitun spawner + revive tahan 3 detik (ADR-035, ADR-036) (belum dites di Studio)
+- CollectionConfig/CollectibleService diperluas (generik, bukan salinan): `activeStates` (banyak state), `counterId` opsional, `spawnCount`, `clearOnLeave`. Kelor/Flowers hanya ganti ke `activeStates = { ... }`. Entri baru `Zaitun`: folder `QuestObjects/ZaitunSpawns`, 2 titik aktif dari semua Part, spawn di AWAL GAME (KERIS masuk SEARCHING_KELOR, setelah dialog intro), `clearOnLeave = false` (tidak dihapus saat quest berganti), tanpa progres quest
+- Baru: shared/Config/ReviveConfig, server/Services/ReviveService (sesi revive server-authoritative), client/Controllers/ReviveController (prompt tahan + progress bar), remote `ReviveRequest` dan `ReviveUpdate`
+- GameManager: transisi pemain NORMAL -> REVIVING (REVIVING = state penyelamat selama sesi)
+- init.server: ReviveService.init() setelah KnockService. init.client: ReviveController.init; prompt interaksi lain disembunyikan saat prompt revive memegang tombol E
+- Verifikasi AI: luau-compile semua file berubah/baru OK. TIDAK ada tes Studio dan tidak ada harness logika
+
 ## 2026-10-11 — Phase 6 Task 6.3: Knock UI minimal + pencatatan hasil tes
 - Baru: client/Controllers/KnockController: overlay vinyet + "KAMU PINGSAN" + petunjuk Minyak Zaitun saat Attribute PlayerState = KNOCKED; fade in/out; hotbar Roblox disembunyikan selama knock. DisplayOrder 20 (di bawah notifikasi dan jumpscare). Tanpa marker di kepala korban (keputusan user: minimal)
 - Hasil tes (dilaporkan user, Studio normal): Phase 5 (5.1–5.8) dan Phase 6 sampai 6.2 BERHASIL. ADR-027/028/029/032/033/034 ACCEPTED, ADR-031 ACCEPTED untuk 6.1–6.2, ADR-030 sebagian dibangun

@@ -20,6 +20,8 @@ Remotes.Names = table.freeze({
 	MemoryPuzzleAction = "MemoryPuzzleAction", -- client -> server: { action = "Submit", answer = { string } } | { action = "Cancel" }
 	Notice = "Notice", -- server -> client: (text: string), pesan singkat
 	Jumpscare = "Jumpscare", -- server -> client (hanya pemain yang kena): (ghostId: string)
+	ReviveRequest = "ReviveRequest", -- client -> server: { action = "Start", target = Player } | { action = "Cancel" }
+	ReviveUpdate = "ReviveUpdate", -- server -> client (penyelamat): { action = "Start", targetName, duration } | { action = "Stop", success }
 })
 
 -- Server only: buat folder dan semua RemoteEvent (aman dipanggil ulang).

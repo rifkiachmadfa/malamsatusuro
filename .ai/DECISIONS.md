@@ -340,6 +340,35 @@ ACCEPTED (menunggu uji Studio, Task 3.1)
 
 
 
+## ADR-036 — COLLECTIBLESERVICE: BANYAK STATE AKTIF + OBJECTIVE TANPA COUNTER (MINYAK ZAITUN)
+
+Decision (2026-10-11, memperluas ADR-027; bukan salinan logika):
+
+- `CollectionConfig.Collection` berubah: `activeState: string` -> `activeStates: { string }`; `counterId` jadi opsional; ditambah `spawnCount`. Kelor dan Flowers hanya mengganti ke `activeStates = { <state lama> }`, perilakunya tidak berubah.
+- Aturan siklus: MASUK `activeStates[1]` = spawn ulang acak (juga saat party wipe CANTIL_PUZZLE -> SEARCHING_FLOWERS); KELUAR dari semua `activeStates` = pickup dihapus; pindah antar state aktif tidak mengubah apa pun. Pickup hanya bisa diambil selama quest berada di salah satu `activeStates`.
+- Entri tanpa `counterId` = pickup pendukung: hanya memberi item (tanpa `QuestService.addProgress`), notifikasi tanpa (n/N). Jumlah titik aktif dari `spawnCount` (wajib bila tanpa counter; bila ada counter default = target counter).
+- Opsi baru `clearOnLeave = false`: pickup tidak dihapus dan tetap bisa diambil setelah keluar dari `activeStates` (spawn sekali saat masuk `activeStates[1]`).
+- Minyak Zaitun = entri `Zaitun` (REVISI arahan user 2026-10-11: spawn di AWAL GAME agar pemain tahu dan bisa memegangnya sejak awal): quest KERIS, `activeStates = { "SEARCHING_KELOR" }` (= tepat setelah dialog intro selesai), `clearOnLeave = false`, folder `Workspace.QuestObjects.ZaitunSpawns`, `spawnCount = 2` (2 titik aktif dari seluruh Part di folder), `assignment = SAME`. Sebelumnya terikat quest KANTIL (SEARCHING_FLOWERS..CANTIL_PUZZLE).
+- ASUMSI (belum diputuskan di GDD, minta konfirmasi user): zaitun TIDAK respawn setelah diambil (bahan langka); spawn ulang saat party wipe diputuskan di Task 6.5. Zaitun juga ter-spawn saat solo (tidak dibedakan). Pickup yang tidak diambil tidak pernah dihapus.
+
+Status:
+PROPOSED (kode ditulis, luau-compile OK, BELUM dites di Studio)
+
+## ADR-035 — REVIVE: TAHAN 3 DETIK, SESI DI SERVER, PENYELAMAT = REVIVING
+
+Decision (2026-10-11, Phase 6 Task 6.4; arahan user):
+
+- Syarat: penyelamat (state NORMAL) MEMEGANG (equip) Minyak Zaitun, berada dalam `MAX_DISTANCE` (8 studs, toleransi lag +4 di server) dari pemain KNOCK, menahan [E] (PC) / menahan tombol prompt (mobile, mouse) selama `HOLD_SECONDS` = 3. Config di `shared/Config/ReviveConfig` (client dan server memakai nilai yang sama).
+- `ReviveService` (server) memiliki SESI: client hanya mengirim `ReviveRequest {action="Start", target=Player}` / `{action="Cancel"}`. Server memvalidasi (payload, target Player, target KNOCK, penyelamat NORMAL, memegang zaitun, jarak, kunci target, cooldown 0,5 dtk), membalas `ReviveUpdate {action="Start", targetName, duration}`, lalu memvalidasi ulang tiap 0,1 dtk dan MENGHITUNG waktu sendiri (client hanya menggambar progress bar). Selesai: consume 1 Minyak Zaitun -> `KnockService.recover(target)`; recover gagal = zaitun dikembalikan.
+- Pembatalan tanpa kehilangan zaitun: lepas tombol, menjauh, ganti/hilang tool, mati/keluar, target pulih/keluar. Zaitun hanya berkurang saat berhasil.
+- Kunci: satu sesi per penyelamat, satu sesi per korban (dua penyelamat tidak bisa memakai dua zaitun pada satu korban).
+- State: `GameManager` mendapat transisi NORMAL -> REVIVING. REVIVING = state PENYELAMAT selama sesi (memblokir interaksi/dialog lain lewat guard NORMAL yang sudah ada); korban tetap KNOCKED sampai recover. Konsekuensi: `KnockService.knock` menolak pemain REVIVING (relevan untuk serangan hantu nanti: sesi harus dibatalkan dulu).
+- Client (`ReviveController`): prompt muncul bila ada pemain KNOCK dalam jarak. Memegang zaitun = "Tahan [E] Sadarkan" (mengikat E dengan prioritas tinggi + menyembunyikan prompt interaksi lain). Tidak memegang = hanya petunjuk ("Pegang Minyak Zaitun" / "Butuh Minyak Zaitun"), tidak memblokir prompt lain (korban sering jatuh di makam yang masih perlu diisi bunga).
+- Notifikasi (ADR-025): penyelamat menerima "Kamu menyadarkan X. Sisa Minyak Zaitun: n."; korban/rekan dapat "sadar kembali" dari KnockService; penolakan bermakna (tidak memegang zaitun, korban sedang disadarkan, terlalu jauh) lewat NoticeService.
+
+Status:
+PROPOSED (kode ditulis, luau-compile OK, BELUM dites di Studio)
+
 ## ADR-034 — RESET QUEST = STATE RETRY_GUIDE ("KEMBALI BICARA KE PEMANDU")
 
 Decision (arahan user 2026-10-11, merevisi langkah reset di ADR-032):

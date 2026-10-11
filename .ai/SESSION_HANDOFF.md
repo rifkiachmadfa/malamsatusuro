@@ -1,6 +1,6 @@
 # SESSION HANDOFF
 
-Last Updated: 2026-10-10
+Last Updated: 2026-10-11
 
 ## Ringkasan
 - Fase aktif: PHASE 5 — KEMBANG KANTIL HITAM (belum dimulai). Phase 1–4 selesai (Phase 4 dengan catatan: 3–4 pemain di Phase 10). Quest KERIS lengkap: Kelor -> kunci -> peti -> memory puzzle -> keris -> simpan di RitualCollection.
@@ -170,6 +170,25 @@ Butuh pemain knock: Test > Clients 2 (multiplayer), atau Command Bar server `req
 4. Reset karakter saat knock: overlay tetap tampil setelah respawn (state tetap KNOCKED).
 5. Quest UI di kanan atas tetap bisa terbaca (overlay tidak menutup toast dan jumpscare; panel quest di bawah overlay boleh redup).
 Laporkan: tampilan teks terbaca, tidak ada error client.
+
+## Uji Studio Task 6.4 (Minyak Zaitun spawner + revive)
+Prasyarat Studio: `Workspace.QuestObjects.ZaitunSpawns` berisi >= 3 Part/Model spawn; `ServerStorage.QuestTemplates.MinyakZaitun` (Tool) dengan Handle (Anchored=false, ada Part visual). Test > Clients 2 (minimal 2 pemain; revive butuh rekan). Lihat Output server dan client.
+A. SPAWNER
+1. EXPECTED: Output tepat setelah dialog intro selesai (KERIS masuk SEARCHING_KELOR, bersamaan dengan Kelor): `[CollectibleService] Zaitun aktif (2/N titik): ZaitunSpawn_x=MinyakZaitun, ZaitunSpawn_y=MinyakZaitun` (N = jumlah Part di folder). Hanya 2 pickup Minyak Zaitun di `Workspace.QuestRuntime`.
+2. [E] Ambil di pickup: item "Minyak Zaitun" di Backpack, toast "Kamu mendapatkan Minyak Zaitun." (rekan: "<nama> mendapatkan ..."), TANPA angka (n/N), counter Bunga 0/4 tidak berubah. Pickup hilang. Ambil yang kedua: Backpack jadi "Minyak Zaitun x2" atau dua pemain masing-masing satu.
+3. Zaitun TIDAK hilang saat quest Keris selesai atau Kantil dimulai: pickup yang belum diambil tetap ada dan bisa diambil kapan saja. Solo gagal / reset Kantil tidak men-spawn zaitun lagi dan tidak menghapusnya.
+4. Spam [E] / 2 pemain [E] bersamaan di satu pickup: hanya satu yang mendapat item.
+B. REVIVE (pemain A knock, pemain B penyelamat)
+5. Knock A (bunga salah di makam saat 2 pemain, atau Command Bar server: `require(game.ServerScriptService.Server.Services.KnockService).knock(game.Players:GetPlayers()[1], "TEST")`).
+6. B dekat A TANPA zaitun: prompt kecil "A pingsan / Butuh Minyak Zaitun" (tanpa [E]). B punya zaitun tapi tidak di-equip: "Pegang Minyak Zaitun". Tekan E: tidak terjadi apa-apa.
+7. B equip zaitun: prompt jadi "Tahan [E] Sadarkan". Tahan E: progress bar terisi ~3 detik, Output `mulai menyadarkan`, lalu `menyadarkan`; A berdiri (state NORMAL), B toast "Kamu menyadarkan A. Sisa Minyak Zaitun: n." (stack x2 -> x1; x1 -> tool hilang).
+8. Lepas E sebelum 3 detik: bar hilang, A tetap knock, zaitun TIDAK berkurang, Output `melepas tombol`. Tahan lagi dari awal berfungsi.
+9. Menjauh > ~12 studs saat menahan: batal + toast "terlalu jauh". Un-equip / ganti tool saat menahan: batal + toast "pegang Minyak Zaitun". Reset karakter B saat menahan: batal, tidak ada error, B kembali NORMAL.
+10. Dua penyelamat (B dan C) menahan pada A bersamaan: hanya satu sesi berjalan, yang kedua toast "sedang disadarkan rekan lain"; zaitun yang berkurang hanya satu.
+11. Mobile (Device Emulator): tombol prompt bisa ditahan (jari ditahan), lepas = batal.
+12. Prompt revive dan prompt interaksi lain (mis. makam) berdekatan: saat memegang bunga, prompt makam tetap berfungsi (E ke makam); saat memegang zaitun, E ke revive.
+13. KNOCK A, B menyadarkan, A berjalan normal, bisa [E] lagi; A knock lagi lalu disadarkan lagi (tidak ada sisa state REVIVING/Anchored).
+Laporkan Output (server dan client) dan perilaku yang berbeda dari EXPECTED.
 
 ## Langkah berikutnya
 1. User: uji 2.1 di atas dan lapor Output; tinjau SkyboxInserter; siapkan naskah dialog Pemandu.
