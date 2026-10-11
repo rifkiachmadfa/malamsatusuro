@@ -67,6 +67,14 @@ local DialogueConfig: { [string]: Dialogue } = {
 			"Carilah mawar merah, mawar putih, melati, dan kantil kuning.",
 		},
 	},
+	-- Dipakai saat KANTIL di RETRY_GUIDE (solo gagal, ADR-034). Menamatkannya memulai ulang quest. PLACEHOLDER.
+	Pemandu_KantilRetry = {
+		speaker = "Pemandu",
+		lines = {
+			"Kau kembali. Dusun ini tidak memaafkan kesalahan, tapi masih memberi kesempatan.",
+			"Kita mulai lagi dari awal. Carilah empat bunga: mawar merah, mawar putih, melati, dan kantil kuning.",
+		},
+	},
 	-- Dipakai saat KANTIL di SEARCHING_FLOWERS. PLACEHOLDER.
 	Pemandu_KantilSearch = {
 		speaker = "Pemandu",

@@ -18,7 +18,7 @@ export type GhostDef = {
 	shake: number, -- amplitudo goyang layar (pixel)
 	flashTime: number, -- detik kilat putih di awal
 	fadeOutTime: number, -- detik layar menggelap di akhir
-	soundId: string, -- "" = tanpa suara (isi rbxassetid://... jika sudah ada)
+	soundId: string, -- diputar saat jumpscare di client pemain itu; "" = tanpa suara; ganti ke rbxassetid://...
 	soundVolume: number,
 }
 
@@ -41,7 +41,7 @@ JumpscareConfig.Ghosts = table.freeze({
 		shake = 14,
 		flashTime = 0.25,
 		fadeOutTime = 0.3,
-		soundId = "",
+		soundId = "rbxasset://sounds/bass.mp3", -- PLACEHOLDER (suara bawaan Roblox): ganti dengan aset jumpscare asli
 		soundVolume = 1,
 	} :: GhostDef,
 } :: { [string]: GhostDef })

@@ -87,6 +87,9 @@ KnockService + KnockConfig (ADR-031): `knock(player, reason)` / `recover(player)
 ## UPDATE 2026-10-11 (Task 6.2)
 Jumpscare (ADR-033): bunga salah -> pemain dikunci -> jumpscare Pocong di layar pemain itu saja (ViewportFrame, animasi 121504540587696) -> solo: respawn + reset quest 2; multiplayer: knock. Model: ServerStorage/GhostModels/Pocong. Syntax OK; BELUM dites di Studio. Belum ada: suara jumpscare, UI knock (6.3), ramuan/revive (6.4), party wipe (6.5).
 
+## UPDATE 2026-10-11 (audio jumpscare + RETRY_GUIDE)
+Jumpscare memutar suara placeholder di client pemain yang kena. Setelah solo gagal, quest 2 masuk state `RETRY_GUIDE`: Quest UI menampilkan "Kembali berbicara kepada Pemandu", dialog `Pemandu_KantilRetry` memulai ulang quest (ADR-034). Syntax OK; BELUM dites di Studio.
+
 ## NEXT ACTION
 
 1. User: cocokkan GravePuzzleConfig.ANSWER dengan clue SurfaceGui lalu set ANSWER_CONFIRMED=true; pastikan Graves/Grave_1..4 dan template KembangKantilHitam ada; cek Handle.Anchored=false di semua template Tool.

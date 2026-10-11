@@ -143,8 +143,8 @@ Laporkan: berbaringnya terlihat benar (tidak tenggelam/melayang/miring), serta O
 Play Solo (1 pemain). Jalankan sampai 4 bunga terkumpul (FLOWERS_COMPLETE).
 1. EXPECTED: letakkan bunga SALAH di makam -> toast "bunga tidak cocok", toast "Kamu gagal. Kembali ke Pemandu ...". Pemain TIDAK berbaring/knock. Output: `[FailureService] solo gagal (WRONG_FLOWER, quest KANTIL)`, `state pemain: NORMAL -> CUTSCENE`.
 2. Setelah ~1,5 detik: Output `quest direset (KANTIL): <state> -> LOCKED`, karakter respawn di titik spawn, `CUTSCENE -> NORMAL`, Backpack kosong dari bunga.
-3. Panel Quest tidak lagi menampilkan KANTIL aktif (KANTIL LOCKED). Bunga di map hilang, makam kosong dan tanpa prompt.
-4. Bicara ke Pemandu: dialog laporan (Pemandu_KerisDone). Tamatkan dialog -> Output `memulai quest KANTIL`, state LOCKED -> ACTIVE -> SEARCHING_FLOWERS, 4 bunga baru muncul acak, counter 0/4.
+3. Panel Quest hanya menampilkan KANTIL: judul "KEMBANG KANTIL HITAM" dengan satu baris "○ Kembali berbicara kepada Pemandu" (state RETRY_GUIDE; bukan Keris tercentang). Bunga di map hilang, makam kosong dan tanpa prompt.
+4. Bicara ke Pemandu: dialog ulangi (Pemandu_KantilRetry, bukan dialog laporan Keris). Tamatkan dialog -> Output `menamatkan dialog ulangi; memulai ulang quest KANTIL`, state RETRY_GUIDE -> ACTIVE -> SEARCHING_FLOWERS, 4 bunga baru muncul acak, counter 0/4, panel Quest kembali ke "Cari 4 Bunga 0/4". Bicara ke Pemandu lagi sebelum/sesudahnya tidak memulai ganda.
 5. Selesaikan quest dengan benar sampai Kembang Kantil Hitam: tidak ada sisa state lama (makam penuh/hadiah ganda).
 6. Spam bunga salah beberapa kali cepat: hanya satu urutan gagal berjalan (tidak ada reset ganda/error).
 7. Gagal di tengah (sebagian bunga sudah benar di makam): setelah reset, makam kosong dan semua mulai dari 0.
@@ -155,8 +155,8 @@ Laporkan Output dan apakah panel Quest/dialog Pemandu terlihat benar setelah res
 Prasyarat: ServerStorage/GhostModels/Pocong ada (Model R15 dengan Humanoid, Head, HumanoidRootPart). Animasi 121504540587696 harus milik akun/grup pemilik place (atau publik) agar bisa dimuat.
 1. Play Solo. Output server saat boot: `[JumpscareService] 1 model hantu dipublikasikan ke client` lalu `siap`. Explorer saat Play: ReplicatedStorage/GhostModels/Pocong ada (tanpa script).
 2. Uji cepat tanpa quest, Command Bar server: `require(game.ServerScriptService.Server.Services.JumpscareService).play(game.Players:GetPlayers()[1], "Pocong")`
-   EXPECTED: kilat putih, Pocong melonjak ke depan layar dengan animasi, layar bergoyang, menggelap di akhir (~2 detik). Karakter diam selama itu (tidak bisa jalan), lalu bisa bergerak lagi. Tidak ada error di Output server/client.
-3. Jika Pocong membelakangi kamera: ubah `yawOffset = 180` di JumpscareConfig. Jika terlalu dekat/jauh: ubah distanceStartScale/distanceEndScale. Jika animasi tidak jalan: lihat warn `animasi jumpscare gagal dimuat` (biasanya izin aset).
+   EXPECTED: kilat putih disertai suara placeholder (bass bawaan Roblox) hanya di pemain itu, Pocong melonjak ke depan layar dengan animasi, layar bergoyang, menggelap di akhir (~2 detik). Karakter diam selama itu (tidak bisa jalan), lalu bisa bergerak lagi. Tidak ada error di Output server/client.
+3. Jika TIDAK ada suara: Output client mungkin memuat warn aset; ganti `soundId` di JumpscareConfig dengan rbxassetid:// milik Anda (placeholder ini belum diverifikasi AI). Jika Pocong membelakangi kamera: ubah `yawOffset = 180` di JumpscareConfig. Jika terlalu dekat/jauh: ubah distanceStartScale/distanceEndScale. Jika animasi tidak jalan: lihat warn `animasi jumpscare gagal dimuat` (biasanya izin aset).
 4. Quest nyata, SOLO: bunga salah di makam -> jumpscare -> setelah selesai respawn dan quest 2 direset (lihat uji 6.1b langkah 2–8). Notifikasi "Kamu gagal..." muncul setelah respawn.
 5. 2 pemain (Test > Clients 2): pemain 1 bunga salah -> jumpscare HANYA di layar pemain 1, pemain 2 tidak melihat apa pun dan masih bisa bergerak -> setelah itu pemain 1 knock (berbaring).
 6. Spam bunga salah saat jumpscare berjalan: tidak ada jumpscare ganda/tumpuk, tidak ada error.

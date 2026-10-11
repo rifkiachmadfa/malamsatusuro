@@ -340,6 +340,19 @@ ACCEPTED (menunggu uji Studio, Task 3.1)
 
 
 
+## ADR-034 — RESET QUEST = STATE RETRY_GUIDE ("KEMBALI BICARA KE PEMANDU")
+
+Decision (arahan user 2026-10-11, merevisi langkah reset di ADR-032):
+
+- `QuestService.reset(questId)` mengembalikan quest ke `retryState` (KANTIL: `RETRY_GUIDE`), bukan LOCKED. Sebelumnya KANTIL LOCKED membuat Quest UI menampilkan Keris yang sudah selesai, membingungkan pemain.
+- `RETRY_GUIDE` adalah state sungguhan milik server (direplikasi seperti state lain), di luar rantai linear: hanya transisi RETRY_GUIDE -> ACTIVE. Quest UI cukup membaca state: tampil satu objective "Kembali berbicara kepada Pemandu" (`retryObjective`).
+- Pemandu memberi dialog khusus `Pemandu_KantilRetry`; menamatkannya memanggil `startQuest` (state game tetap QUEST_KANTIL), quest masuk ACTIVE -> SEARCHING_FLOWERS dengan counter 0 dan bunga baru. Penyelesaian dialog ganda aman (hanya jika state masih retryState).
+- `QuestService.activate` menerima quest di LOCKED atau retryState. Quest lain tanpa `retryState` tetap kembali ke state awal.
+- Aturan baru untuk quest lain: jika ingin dukungan "ulangi", cukup tambah `retryState`/`retryObjective` di QuestConfig, transisi retryState -> ACTIVE, dan dialog ulangi di GameFlowService.
+
+Status:
+PROPOSED (menunggu uji Studio)
+
 ## ADR-033 — JUMPSCARE: VIEWPORTFRAME LOKAL, SERVER MENUNGGU DURASI
 
 Decision (2026-10-11, melaksanakan ADR-031):

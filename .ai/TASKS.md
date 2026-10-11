@@ -128,7 +128,7 @@ IN PROGRESS (2026-10-10). Dikerjakan bertahap sesuai ADR-031; user memvalidasi t
 Catatan masa depan (belum dikerjakan, JANGAN dilupakan):
 - Serangan hantu: knock via jalur yang sama (jumpscare -> KnockService.knock(player, "GHOST")). Perlu: AI hantu, deteksi serangan, knock saat pemain MINIGAME/dialog (batalkan sesi puzzle/dialog dulu).
 - Aset jumpscare (model 3D berrig + animasi) disiapkan user; ID aset dikonfigurasi di Config.
-- Dialog Pemandu khusus "ulangi quest" setelah solo gagal (sekarang memakai dialog laporan Pemandu_KerisDone).
+- Teks dialog Pemandu_KantilRetry dan audio jumpscare (`rbxasset://sounds/bass.mp3`) masih PLACEHOLDER: ganti dengan teks final dan aset suara asli.
 - Pemain knock yang rekan-rekannya keluar hingga tersisa satu: tangani di 6.5 (onAllKnocked -> jalur solo).
 
 # LOBBY & MATCHMAKING (DIJADWALKAN, belum dikerjakan — catatan arahan user 2026-10-10)

@@ -118,7 +118,10 @@ end
 
 -- Aktifkan quest: harus LOCKED, dan semua quest sebelumnya di urutan harus COMPLETE.
 function QuestService.activate(questId: string): boolean
-	if questStates[questId] ~= "LOCKED" then
+	local activateDef = getDef(questId)
+	local currentState = questStates[questId]
+	local isRetry = activateDef ~= nil and activateDef.retryState ~= nil and currentState == activateDef.retryState
+	if currentState ~= "LOCKED" and not isRetry then
 		Log.warn(TAG, string.format("activate ditolak (%s): state %s", tostring(questId), tostring(questStates[questId])))
 		return false
 	end
@@ -136,8 +139,9 @@ function QuestService.activate(questId: string): boolean
 	return QuestService.transition(questId, "ACTIVE")
 end
 
--- Ulangi quest dari awal: kembali ke state awal (LOCKED), semua counter 0. Bukan transisi biasa; dipakai
--- kegagalan solo (FailureService, ADR-032). Quest COMPLETE atau yang sudah di state awal ditolak.
+-- Ulangi quest dari awal: kembali ke retryState quest (mis. RETRY_GUIDE = "kembali bicara ke Pemandu"), atau ke
+-- state awal jika quest tidak punya retryState; semua counter 0. Bukan transisi biasa; dipakai kegagalan solo
+-- (FailureService, ADR-032/034). Quest COMPLETE, yang belum dimulai (state awal), atau yang sudah di retryState ditolak.
 function QuestService.reset(questId: string): boolean
 	local def = getDef(questId)
 	local current = questStates[questId]
@@ -145,21 +149,22 @@ function QuestService.reset(questId: string): boolean
 		Log.warn(TAG, "quest tidak dikenal: " .. tostring(questId))
 		return false
 	end
-	if current == def.initialState or current == "COMPLETE" then
+	local target = def.retryState or def.initialState
+	if current == def.initialState or current == target or current == "COMPLETE" then
 		Log.warn(TAG, string.format("reset ditolak (%s): state %s", questId, current))
 		return false
 	end
 
-	questStates[questId] = def.initialState
+	questStates[questId] = target
 	for counterId in def.counters do
 		counters[questId][counterId] = 0
 		publishCounter(questId, counterId)
 	end
 	publishState(questId)
-	Log.info(TAG, string.format("quest direset (%s): %s -> %s", questId, current, def.initialState))
+	Log.info(TAG, string.format("quest direset (%s): %s -> %s", questId, current, target))
 
 	for _, listener in listeners do
-		task.spawn(listener, questId, current, def.initialState)
+		task.spawn(listener, questId, current, target)
 	end
 	return true
 end

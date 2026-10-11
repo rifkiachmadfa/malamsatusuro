@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 2026-10-11 — Audio jumpscare (placeholder) + state RETRY_GUIDE (ADR-034) (belum dites di Studio)
+- JumpscareConfig: soundId placeholder `rbxasset://sounds/bass.mp3` (suara bawaan Roblox, belum diverifikasi AI di Studio); ganti dengan aset asli. Diputar client hanya pada pemain yang kena
+- QuestConfig: field opsional `retryState`/`retryObjective`; KANTIL punya state `RETRY_GUIDE` (di luar rantai linear, transisi RETRY_GUIDE -> ACTIVE)
+- QuestService.reset memakai retryState (bukan LOCKED) dan activate menerima quest di retryState; GravePuzzleService mengosongkan makam saat RETRY_GUIDE
+- Quest UI (QuestView): saat retryState hanya tampil "○ Kembali berbicara kepada Pemandu"
+- GameFlowService: dialog Pemandu_KantilRetry (placeholder, DialogueConfig); menamatkannya memulai ulang quest (aman dipanggil ganda). Notifikasi solo gagal disesuaikan
+- Verifikasi AI: luau-compile file berubah OK. Tidak ada tes Studio
+
 ## 2026-10-11 — Phase 6 Task 6.2: jumpscare client-only (ADR-033) (belum dites di Studio)
 - Baru: shared/Config/JumpscareConfig, server/Services/JumpscareService, client/Controllers/JumpscareController, remote `Jumpscare`
 - Model dibaca dari ServerStorage/GhostModels/Pocong, disalin server ke ReplicatedStorage/GhostModels (script dibuang); animasi 121504540587696

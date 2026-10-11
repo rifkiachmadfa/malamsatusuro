@@ -49,6 +49,7 @@ local QUEST_DIALOGUES: { [string]: { [string]: DialogueRule } } = {
 		FLOWERS_PLACEMENT = "Pemandu_KantilPuzzle",
 		CANTIL_PUZZLE = "Pemandu_KantilPuzzle",
 		CANTIL_BLACK_OBTAINED = "Pemandu_KantilStore",
+		RETRY_GUIDE = "Pemandu_KantilRetry", -- setelah solo gagal (ADR-034)
 	},
 }
 
@@ -56,6 +57,11 @@ local QUEST_DIALOGUES: { [string]: { [string]: DialogueRule } } = {
 -- Pemandu hanya melapor; menamatkan dialog ini memberi quest berikutnya (jika masih LOCKED).
 local REPORT_DIALOGUES: { [string]: { dialogueId: string, nextQuestId: string? } } = {
 	KERIS = { dialogueId = "Pemandu_KerisDone", nextQuestId = "KANTIL" },
+}
+
+-- Dialog ULANGI: menamatkannya memulai ulang quest yang berada di retryState (ADR-034).
+local RETRY_DIALOGUES: { [string]: string } = {
+	KANTIL = "Pemandu_KantilRetry",
 }
 
 local GameFlowService = {}
@@ -107,6 +113,16 @@ local function onReportCompleted(player: Player, questId: string)
 	startQuest(nextQuestId)
 end
 
+-- Menamatkan dialog ulangi: mulai ulang quest hanya jika masih di retryState (aman dipanggil ganda).
+local function onRetryCompleted(player: Player, questId: string)
+	local def = (QuestConfig.Quests :: any)[questId] :: QuestConfig.QuestDef?
+	if not def or not def.retryState or QuestService.getState(questId) ~= def.retryState then
+		return
+	end
+	Log.info(TAG, string.format("%s menamatkan dialog ulangi; memulai ulang quest %s", player.Name, questId))
+	startQuest(questId)
+end
+
 -- Dialog Pemandu menurut state saat ini. Return nil jika belum ada dialog untuk state tersebut.
 function GameFlowService.getPemanduDialogueId(player: Player?): string?
 	if GameManager.getState() == GameState.LOBBY then
@@ -140,6 +156,12 @@ function GameFlowService.init()
 		if dialogueId == INTRO_DIALOGUE_ID then
 			startGame(player)
 			return
+		end
+		for questId, retryDialogueId in RETRY_DIALOGUES do
+			if retryDialogueId == dialogueId then
+				onRetryCompleted(player, questId)
+				return
+			end
 		end
 		for questId, report in REPORT_DIALOGUES do
 			if report.dialogueId == dialogueId then

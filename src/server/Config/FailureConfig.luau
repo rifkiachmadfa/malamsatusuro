@@ -14,7 +14,7 @@ FailureConfig.JumpscareByReason = table.freeze({
 } :: { [string]: string })
 FailureConfig.DEFAULT_JUMPSCARE = "Pocong"
 
-FailureConfig.SOLO_FAIL_NOTICE = "Kamu gagal. Kembali ke Pemandu untuk mengulang dari awal."
+FailureConfig.SOLO_FAIL_NOTICE = "Kamu gagal. Kembali berbicara kepada Pemandu untuk mengulang."
 
 -- Item yang dibersihkan dari Backpack saat quest di-reset (selain Backpack yang memang reset saat respawn, ADR-018).
 FailureConfig.RESET_ITEMS = table.freeze({

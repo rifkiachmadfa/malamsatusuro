@@ -23,6 +23,10 @@ export type QuestDef = {
 	transitions: { [string]: { string } },
 	counters: { [string]: CounterDef },
 	resetCountersOnEnter: { [string]: { string } }, -- state -> daftar counter yang di-reset saat masuk state itu
+	-- Opsional: state "ulangi" di luar rantai linear. QuestService.reset() mengembalikan quest ke state ini
+	-- (bukan LOCKED) dan Pemandu memulai ulang lewat dialog; Quest UI hanya menampilkan retryObjective.
+	retryState: string?,
+	retryObjective: string?,
 }
 
 local QuestConfig = {}
@@ -82,6 +86,8 @@ local kantilStates = {
 }
 local kantilTransitions = chain(kantilStates)
 kantilTransitions["CANTIL_PUZZLE"] = { "CANTIL_BLACK_OBTAINED", "SEARCHING_FLOWERS" }
+-- Solo gagal (ADR-034): quest direset ke RETRY_GUIDE; bicara ke Pemandu -> ACTIVE (state di luar rantai linear).
+kantilTransitions["RETRY_GUIDE"] = { "ACTIVE" }
 
 -- QUEST 03 — KAIN KAFAN
 -- State party saja. Skor dan PLAYER_COMPLETE bersifat per pemain (Phase 7), bukan state party.
@@ -132,6 +138,8 @@ QuestConfig.Quests = table.freeze({
 		resetCountersOnEnter = {
 			SEARCHING_FLOWERS = { "Flowers" }, -- party wipe mengulang pencarian bunga dari 0
 		},
+		retryState = "RETRY_GUIDE",
+		retryObjective = "Kembali berbicara kepada Pemandu",
 	} :: QuestDef,
 	KAFAN = {
 		id = "KAFAN",

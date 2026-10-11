@@ -53,6 +53,16 @@ function QuestView.build(
 
 	table.insert(lines, { kind = "title", text = string.upper(def.displayName), done = state == "COMPLETE" })
 
+	-- Quest direset (mis. solo gagal): satu-satunya tujuan = kembali bicara ke Pemandu.
+	if def.retryState and state == def.retryState then
+		table.insert(lines, {
+			kind = "objective",
+			text = "○ " .. (def.retryObjective or "Kembali berbicara kepada Pemandu"),
+			done = false,
+		})
+		return lines
+	end
+
 	for _, objective in def.objectives do
 		local doneIndex = table.find(def.states, objective.doneAt) or math.huge
 		local done = stateIndex >= doneIndex
