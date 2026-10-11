@@ -119,7 +119,7 @@ IN PROGRESS (2026-10-10). Dikerjakan bertahap sesuai ADR-031; user memvalidasi t
 
 - [x] 6.1 Knock state (KnockService, server): berbaring + tidak bisa bergerak/berinteraksi, knock dari bunga salah — kode ditulis, luau-compile OK; BELUM dites di Studio
 - [x] 6.1b Kegagalan solo vs multiplayer (FailureService, ADR-032): solo = respawn + reset quest 2 + mulai lagi dari Pemandu; multiplayer = knock — kode ditulis, luau-compile OK; BELUM dites di Studio
-- [ ] 6.2 Jumpscare client-only (ViewportFrame model 3D berrig + efek layar, hanya untuk pemain yang kena) lalu knock
+- [x] 6.2 Jumpscare client-only (ViewportFrame model 3D berrig + efek layar, hanya untuk pemain yang kena) lalu knock/respawn — kode ditulis, luau-compile OK; BELUM dites di Studio. Suara jumpscare belum ada (soundId kosong di JumpscareConfig)
 - [ ] 6.3 Knock UI (overlay pemain knock, penanda untuk rekan)
 - [ ] 6.4 Ramuan Minyak Zaitun tersebar di map (Tool) + revive (equip + dekat korban, kurangi 1, validasi server)
 - [ ] 6.5 Giliran tunggal (Task 5.9) + party wipe (semua knock) + reset bunga Kantil (hapus bunga di Backpack, spawn ulang)

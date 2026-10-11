@@ -84,6 +84,9 @@ GravePuzzleService (ADR-029): placement bunga (equip + [E] di makam) dengan vali
 ## UPDATE 2026-10-10 (Task 6.1)
 KnockService + KnockConfig (ADR-031): `knock(player, reason)` / `recover(player)`. Knock = state KNOCKED, root di-Anchor berbaring, tidak bisa gerak/equip/interaksi, respawn dikembalikan ke titik knock. Bunga salah di makam lewat `FailureService.fail` (ADR-032): MULTIPLAYER = knock; SOLO = respawn + quest KANTIL direset ke LOCKED, mulai lagi lewat Pemandu (saklar `FailureConfig.FAIL_ON_WRONG_FLOWER`). `PartyService.isSolo()` = jumlah pemain live (rencana: dari lobby). Pulihkan knock manual lewat Command Bar `require(game.ServerScriptService.Server.Services.KnockService).recover(<player>)`. Syntax OK (luau-compile); logika BELUM dites. Belum ada: jumpscare, UI knock, ramuan, revive, party wipe, giliran tunggal, reset bunga.
 
+## UPDATE 2026-10-11 (Task 6.2)
+Jumpscare (ADR-033): bunga salah -> pemain dikunci -> jumpscare Pocong di layar pemain itu saja (ViewportFrame, animasi 121504540587696) -> solo: respawn + reset quest 2; multiplayer: knock. Model: ServerStorage/GhostModels/Pocong. Syntax OK; BELUM dites di Studio. Belum ada: suara jumpscare, UI knock (6.3), ramuan/revive (6.4), party wipe (6.5).
+
 ## NEXT ACTION
 
 1. User: cocokkan GravePuzzleConfig.ANSWER dengan clue SurfaceGui lalu set ANSWER_CONFIRMED=true; pastikan Graves/Grave_1..4 dan template KembangKantilHitam ada; cek Handle.Anchored=false di semua template Tool.

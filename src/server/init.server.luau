@@ -29,6 +29,7 @@ local GravePuzzleService = require(Services:WaitForChild("GravePuzzleService") :
 local KnockService = require(Services:WaitForChild("KnockService") :: ModuleScript)
 local KnockConfig = require(script:WaitForChild("Config"):WaitForChild("KnockConfig") :: ModuleScript)
 local FailureConfig = require(script:WaitForChild("Config"):WaitForChild("FailureConfig") :: ModuleScript)
+local JumpscareService = require(Services:WaitForChild("JumpscareService") :: ModuleScript)
 local FailureService = require(Services:WaitForChild("FailureService") :: ModuleScript)
 
 Log.info("Server", string.format("Malam Suro server siap (MAX_PLAYERS=%d)", GameConfig.MAX_PLAYERS))
@@ -47,10 +48,11 @@ KerisQuestService.init()
 RitualCollectionService.init()
 GravePuzzleService.init()
 KnockService.init()
+JumpscareService.init()
 FailureService.init()
 
 -- Bunga salah di makam -> kebijakan gagal (ADR-030/032): multiplayer = knock, solo = respawn + reset quest.
--- Task 6.2 menyisipkan jumpscare sebelum hukuman.
+-- Jumpscare (ADR-033) dimainkan di dalam FailureService sebelum hukuman.
 GravePuzzleService.onWrong(function(player: Player, _graveName: string, _itemId: string)
 	if FailureConfig.FAIL_ON_WRONG_FLOWER then
 		FailureService.fail(player, KnockConfig.Reason.WRONG_FLOWER, "KANTIL")

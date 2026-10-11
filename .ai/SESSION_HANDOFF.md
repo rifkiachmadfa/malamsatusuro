@@ -151,6 +151,17 @@ Play Solo (1 pemain). Jalankan sampai 4 bunga terkumpul (FLOWERS_COMPLETE).
 8. 2 pemain (Test > Clients 2): bunga salah -> pemain itu knock (BUKAN respawn); quest tidak direset. Pemain 2 keluar sehingga tersisa 1: bunga salah berikutnya = jalur solo.
 Laporkan Output dan apakah panel Quest/dialog Pemandu terlihat benar setelah reset.
 
+## Uji Studio Task 6.2 (jumpscare)
+Prasyarat: ServerStorage/GhostModels/Pocong ada (Model R15 dengan Humanoid, Head, HumanoidRootPart). Animasi 121504540587696 harus milik akun/grup pemilik place (atau publik) agar bisa dimuat.
+1. Play Solo. Output server saat boot: `[JumpscareService] 1 model hantu dipublikasikan ke client` lalu `siap`. Explorer saat Play: ReplicatedStorage/GhostModels/Pocong ada (tanpa script).
+2. Uji cepat tanpa quest, Command Bar server: `require(game.ServerScriptService.Server.Services.JumpscareService).play(game.Players:GetPlayers()[1], "Pocong")`
+   EXPECTED: kilat putih, Pocong melonjak ke depan layar dengan animasi, layar bergoyang, menggelap di akhir (~2 detik). Karakter diam selama itu (tidak bisa jalan), lalu bisa bergerak lagi. Tidak ada error di Output server/client.
+3. Jika Pocong membelakangi kamera: ubah `yawOffset = 180` di JumpscareConfig. Jika terlalu dekat/jauh: ubah distanceStartScale/distanceEndScale. Jika animasi tidak jalan: lihat warn `animasi jumpscare gagal dimuat` (biasanya izin aset).
+4. Quest nyata, SOLO: bunga salah di makam -> jumpscare -> setelah selesai respawn dan quest 2 direset (lihat uji 6.1b langkah 2–8). Notifikasi "Kamu gagal..." muncul setelah respawn.
+5. 2 pemain (Test > Clients 2): pemain 1 bunga salah -> jumpscare HANYA di layar pemain 1, pemain 2 tidak melihat apa pun dan masih bisa bergerak -> setelah itu pemain 1 knock (berbaring).
+6. Spam bunga salah saat jumpscare berjalan: tidak ada jumpscare ganda/tumpuk, tidak ada error.
+Laporkan: tampilan Pocong (arah, ukuran, animasi), durasi terasa pas atau tidak, dan Output.
+
 ## Langkah berikutnya
 1. User: uji 2.1 di atas dan lapor Output; tinjau SkyboxInserter; siapkan naskah dialog Pemandu.
 2. Task 2.2 Quest UI, Task 2.3 alur Pemandu -> quest.

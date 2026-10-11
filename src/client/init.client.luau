@@ -13,6 +13,7 @@ local InteractionController = require(Controllers:WaitForChild("InteractionContr
 local QuestController = require(Controllers:WaitForChild("QuestController") :: ModuleScript)
 local NoticeController = require(Controllers:WaitForChild("NoticeController") :: ModuleScript)
 local MemoryPuzzleController = require(Controllers:WaitForChild("MemoryPuzzleController") :: ModuleScript)
+local JumpscareController = require(Controllers:WaitForChild("JumpscareController") :: ModuleScript)
 
 Log.info("Client", string.format("Malam Suro client siap (MAX_PLAYERS=%d)", GameConfig.MAX_PLAYERS))
 
@@ -23,3 +24,4 @@ end)
 QuestController.init()
 NoticeController.init()
 MemoryPuzzleController.init()
+JumpscareController.init()

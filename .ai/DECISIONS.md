@@ -340,6 +340,20 @@ ACCEPTED (menunggu uji Studio, Task 3.1)
 
 
 
+## ADR-033 — JUMPSCARE: VIEWPORTFRAME LOKAL, SERVER MENUNGGU DURASI
+
+Decision (2026-10-11, melaksanakan ADR-031):
+
+- Model hantu hidup di ServerStorage/GhostModels (dikelola di Studio, bukan Rojo). JumpscareService menyalinnya saat boot ke ReplicatedStorage/GhostModels tanpa script supaya client bisa membuat ViewportFrame. Model baru yang ditambah saat Play baru terlihat setelah Play ulang.
+- Remote `Jumpscare` memakai FireClient ke SATU pemain: pemain lain tidak melihat jumpscare. Client hanya presentasi (model + animasi + kamera + efek layar) dan tidak mengirim apa pun balik.
+- Server menunggu `duration` (JumpscareConfig) lalu FailureService menjatuhkan hukuman. Durasi dibaca dari config bersama, client berhenti sendiri pada durasi yang sama; GUI tidak reset saat respawn sehingga tetap menutup layar sampai selesai.
+- Selama jumpscare pemain berstatus CUTSCENE dan root di-anchor di server. Jika model/definisi tidak ada, jumpscare dilewati dan hukuman tetap berjalan (fail-open).
+- Jarak kamera dinyatakan dalam kelipatan tinggi model (tidak tergantung skala model). Parameter tampilan per hantu ada di JumpscareConfig (yawOffset, fov, jarak, goyang, kilat, suara).
+- Menambah hantu = satu entri baru di JumpscareConfig.Ghosts + model di ServerStorage/GhostModels.
+
+Status:
+PROPOSED (menunggu uji Studio)
+
 ## ADR-032 — KEGAGALAN SOLO = JUMPSCARE + RESPAWN + RESET QUEST; MULTIPLAYER = KNOCK
 
 Decision (arahan user 2026-10-10, MENGGANTIKAN bagian solo di ADR-030):

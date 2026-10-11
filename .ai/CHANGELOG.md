@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 2026-10-11 — Phase 6 Task 6.2: jumpscare client-only (ADR-033) (belum dites di Studio)
+- Baru: shared/Config/JumpscareConfig, server/Services/JumpscareService, client/Controllers/JumpscareController, remote `Jumpscare`
+- Model dibaca dari ServerStorage/GhostModels/Pocong, disalin server ke ReplicatedStorage/GhostModels (script dibuang); animasi 121504540587696
+- Tampilan: ViewportFrame layar penuh HANYA di pemain yang kena: model berrig + animasi, kamera melonjak dekat, goyang layar, kilat putih awal, gelap akhir
+- FailureService: urutan gagal = CUTSCENE -> jumpscare (server menunggu durasi, root di-anchor) -> hukuman (solo: respawn + reset quest, multiplayer: knock). Penyebab gagal ganda diabaikan lewat gate state NORMAL
+- FailureConfig: SOLO_RESPAWN_DELAY dihapus; ditambah JumpscareByReason/DEFAULT_JUMPSCARE
+- Verifikasi AI: luau-compile semua file berubah OK. Tidak ada tes Studio
+
 ## 2026-10-10 — Kegagalan solo vs multiplayer (ADR-032) (belum dites di Studio)
 - Baru: FailureService + FailureConfig (satu pintu `fail(player, reason, questId)`), PartyService (getSize/isSolo dari jumlah pemain)
 - Solo: bunga salah -> pemain dikunci (CUTSCENE) -> jeda -> item quest dibersihkan -> QuestService.reset("KANTIL") -> respawn -> NORMAL; Pemandu memulai ulang quest. Multiplayer: knock

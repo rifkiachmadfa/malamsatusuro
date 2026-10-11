@@ -8,8 +8,12 @@ local FailureConfig = {}
 -- Saklar hukuman bunga salah di makam. false = bunga salah hanya notifikasi (untuk menguji makam tanpa hukuman).
 FailureConfig.FAIL_ON_WRONG_FLOWER = true
 
--- Solo: jeda sebelum respawn (detik). Task 6.2 menggantikannya dengan durasi jumpscare.
-FailureConfig.SOLO_RESPAWN_DELAY = 1.5
+-- Jumpscare per penyebab gagal (id hantu dari JumpscareConfig.Ghosts). Penyebab tanpa entri memakai DEFAULT_JUMPSCARE.
+FailureConfig.JumpscareByReason = table.freeze({
+	WRONG_FLOWER = "Pocong",
+} :: { [string]: string })
+FailureConfig.DEFAULT_JUMPSCARE = "Pocong"
+
 FailureConfig.SOLO_FAIL_NOTICE = "Kamu gagal. Kembali ke Pemandu untuk mengulang dari awal."
 
 -- Item yang dibersihkan dari Backpack saat quest di-reset (selain Backpack yang memang reset saat respawn, ADR-018).
