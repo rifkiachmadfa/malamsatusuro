@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 2026-10-11 — Cutscene kamera final diintegrasikan ke ritual akhir; kode tes cutscene dihapus (ADR-043) (belum dites di Studio)
+- Arahan user: tes cutscene sudah berjalan; integrasikan ke cutscene ritual, hapus cutscene saat join dan trigger ProximityPrompt
+- DIHAPUS: IntroCutsceneService, IntroCutsceneConfig, CutsceneTestService, CutsceneTestConfig, `cutscene-guide-notes.patch`, `phase8-cutscene-test-fix3-ADR-042.patch`, dua baris bootstrap di init.server.luau
+- BARU: server/Services/CutsceneService (`play(participants)`, mode MERGED hasil tes, yield sampai selesai, tidak mengubah state pemain), server/Config/CutsceneConfig (ENABLED, LAYOUT PARALLEL/BEFORE_STEPS, folder/modul, margin, SCENE_JOIN_TIME)
+- UBAH: FinalRitualService — `freeze` mengembalikan boolean; `runSequence` mengumpulkan pemain yang dibekukan lalu `playSequence(participants)` memutar kamera setelah letterbox masuk; kartu TAMAT menunggu kamera selesai (PARALLEL)
+- Verifikasi AI: luau-compile OK (4 file); harness offline (src/ asli: CutsceneService, FinalRitualService, GameManager, config; stub Roblox, scheduler + jam palsu, 23 cek) LULUS: 1 pemutaran gabungan, titik terurut numerik, Time scene 2-4 = 0.05, durasi total + margin, clone dibersihkan, modul asli tak berubah, dependency/pemain hilang tanpa error, ritual selesai tanpa kamera, PARALLEL (kartu TAMAT menunggu kamera panjang), BEFORE_STEPS, ENABLED=false. Mutation test (hapus penantian kamera) terdeteksi. TIDAK dites: Studio, client, modul plugin asli, multiplayer sungguhan
+
 ## 2026-10-11 — Catatan implementasi cutscene (dokumentasi saja)
 - Baru: `.ai/CUTSCENE_GUIDE.md` (struktur modul OCE, temuan tes, cara membuat scene, rencana implementasi nyata, risiko, alat debug); AGENTS.md menunjuk ke panduan itu; TASKS 8.1 ditambahkan
 - Tidak ada perubahan kode

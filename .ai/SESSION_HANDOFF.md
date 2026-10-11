@@ -1,6 +1,6 @@
 # SESSION HANDOFF
 
-Last Updated: 2026-10-11 (Phase 8)
+Last Updated: 2026-10-11 (Phase 8, ADR-043 cutscene final)
 
 ## Ringkasan
 - Fase aktif: PHASE 5 — KEMBANG KANTIL HITAM (belum dimulai). Phase 1–4 selesai (Phase 4 dengan catatan: 3–4 pemain di Phase 10). Quest KERIS lengkap: Kelor -> kunci -> peti -> memory puzzle -> keris -> simpan di RitualCollection.
@@ -270,18 +270,12 @@ end
 9. Lapor: tampilan HUD (terbaca di Device Emulator HP?), transisi Lighting (apakah halus, apakah dunia terlalu gelap/terang), apakah karakter benar-benar tidak bisa bergerak, teks terbaca di atas letterbox, Output server dan client.
 10. Keamanan (dicoba di Command Bar client): tidak ada remote untuk memulai ritual; `Remotes.get("CutsceneUpdate"):FireServer()` tidak boleh berpengaruh apa pun.
 
-## Uji Studio cutscene pembuka (ADR-041)
-Prasyarat: `ServerStorage/CutScenes/CutscenePlayer1..4` (ModuleScript buatan plugin, tiap modul berisi LocalCutscenePlayer + CutsceneInfo). Play Solo lalu Test > Clients 2-4.
-1. EXPECTED Play Solo: setelah karakter muncul + ~1 dtk, kamera memutar cutscene CutscenePlayer1. Output server: `[IntroCutsceneService] siap`, lalu `cutscene CutscenePlayer1 diputar untuk <nama> (slot 1)`.
-2. Clients 2-4: pemain ke-2 memutar CutscenePlayer2, dst. Tiap pemain melihat cutscene miliknya sendiri.
-3. Setelah cutscene selesai: kamera kembali mengikuti karakter? (lapor; jika macet, itu perilaku modul plugin.)
-4. Selama cutscene: apakah karakter masih bisa digerakkan / menekan [E] Pemandu? (lapor; sekarang TIDAK dikunci.)
-5. Warn `dependency belum ada ... CutscenePlayerN` bila modul tidak ada. Matikan: `IntroCutsceneConfig.ENABLED = false`.
-
-## Uji Studio trigger tes cutscene (ADR-042)
-1. Pastikan `Workspace.triggerCutscene` (Part) dan `ServerStorage.CutScenes.CutscenePlayer1..4` ada. Rojo sync, Play (Solo lalu multi-pemain). Tunggu cutscene pembuka (ADR-041) selesai.
-2. Output awal: `[CutsceneTestService] siap: ...ProximityPrompt (tes cutscene, hanya Studio)`.
-3. Dekati part, tekan prompt: Output `dipicu oleh <nama>`, `memutar 1/4: CutscenePlayer1`, `CutscenePlayer1 selesai (N detik)`, dst sampai `urutan cutscene selesai; trigger aktif lagi`.
-4. Prompt mati selama urutan (tidak ada urutan ganda). Attribute `PlayerState` = CUTSCENE saat berjalan, NORMAL sesudahnya.
-5. Lapor: apakah tiap modul `selesai` sendiri atau `timeout`/`clone ... tidak terdeteksi`; tempel Output.
+## Uji Studio cutscene kamera ritual akhir (ADR-043)
+Prasyarat: `ServerStorage/CutScenes/CutscenePlayer1..4` (ModuleScript plugin, urutan scene = nomor; modul 1 wajib punya LocalCutscenePlayer + CutsceneInfo). Cutscene join dan trigger tes SUDAH DIHAPUS: tidak ada kamera saat masuk game, `Workspace.triggerCutscene` tidak berfungsi lagi (hapus objeknya). Pakai jalan pintas Command Bar di "Uji Studio Phase 8" di atas supaya ritual cepat sampai.
+1. EXPECTED: semua berkumpul + tahan 3 dtk -> pemain beku, letterbox turun (~1,5 dtk), lalu kamera memutar 4 scene berurutan TANPA kembali ke karakter di antaranya, bersamaan dengan subtitle (LAYOUT PARALLEL). Output server: `[CutsceneService] memutar 4 scene sebagai satu pemutaran untuk N pemain (X.XXs)` lalu `kamera selesai`.
+2. Kartu TAMAT muncul hanya setelah kamera selesai dan subtitle habis. Lalu `ENDING -> GAME_COMPLETE`, pemain bisa bergerak, kamera kembali ke karakter.
+3. Lapor: apakah letterbox + subtitle terlihat di atas kamera plugin (urutan tumpuk GUI); apakah hotbar/HUD plugin menimpa; apakah kamera kembali ke karakter dengan benar di akhir; apakah subtitle lebih pendek/panjang dari kamera (sesuaikan `FinalRitualConfig.Sequence` atau coba `CutsceneConfig.LAYOUT = "BEFORE_STEPS"`).
+4. 2-4 pemain: tiap pemain melihat kamera yang sama di layar masing-masing, mulai bersamaan. Pemain keluar saat cutscene: sisanya tetap selesai tanpa error.
+5. Warn `dependency belum ada: ServerStorage.CutScenes` / `tidak ditemukan; dilewati`: kamera dilewati, ritual tetap selesai. Matikan kamera: `CutsceneConfig.ENABLED = false`.
+6. Tempel Output server dan client (tag CutsceneService, FinalRitualService).
 

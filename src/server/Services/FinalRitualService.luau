@@ -3,7 +3,8 @@
 --
 -- Alur: KAFAN COMPLETE (3/3 pusaka tersimpan) -> Pemandu melapor (GameFlowService) -> game FINAL_RITUAL
 --   -> GATHERING: semua pemain hidup + NORMAL harus berada di radius titik ritual selama START_HOLD_SECONDS
---   -> SEQUENCE: game ENDING, semua pemain CUTSCENE (dibekukan), cutscene/dialog dimainkan server per langkah
+--   -> SEQUENCE: game ENDING, semua pemain CUTSCENE (dibekukan); kamera plugin (CutsceneService, ADR-043) +
+--      subtitle/lighting/kartu TAMAT dimainkan server per langkah
 --   -> game GAME_COMPLETE, pemain dilepas.
 -- Posisi pemain dihitung di server. Tidak ada remote client -> server di sistem ini (client tidak bisa memalsukan
 -- "sudah berkumpul"). Item pusaka sudah divalidasi saat disimpan (RitualCollectionService, ADR-026).
@@ -20,6 +21,8 @@ local Log = require(Shared:WaitForChild("Util"):WaitForChild("Log") :: ModuleScr
 local Spatial = require(Shared:WaitForChild("Util"):WaitForChild("Spatial") :: ModuleScript)
 local Remotes = require(Shared:WaitForChild("Remotes") :: ModuleScript)
 local Services = script.Parent
+local CutsceneConfig = require(Services.Parent:WaitForChild("Config"):WaitForChild("CutsceneConfig") :: ModuleScript)
+local CutsceneService = require(Services:WaitForChild("CutsceneService") :: ModuleScript)
 local GameManager = require(Services:WaitForChild("GameManager") :: ModuleScript)
 local KnockService = require(Services:WaitForChild("KnockService") :: ModuleScript)
 local NoticeService = require(Services:WaitForChild("NoticeService") :: ModuleScript)
@@ -100,9 +103,10 @@ end
 
 -- ===== Pemain saat cutscene =====
 
-local function freeze(player: Player)
+-- true bila pemain berhasil dibekukan (state CUTSCENE); hanya mereka yang ikut kamera dan dilepas kembali.
+local function freeze(player: Player): boolean
 	if not GameManager.setPlayerState(player, PlayerState.CUTSCENE) then
-		return
+		return false
 	end
 	local character = player.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
@@ -112,6 +116,7 @@ local function freeze(player: Player)
 		humanoid.JumpPower = 0
 		humanoid.JumpHeight = 0
 	end
+	return true
 end
 
 local function release(player: Player)
@@ -133,9 +138,29 @@ end
 
 -- ===== Urutan ritual + ending =====
 
-local function playSequence()
+-- Kamera plugin untuk pemain yang dibekukan. Tidak pernah melempar error (CutsceneService + pcall); yield sampai selesai.
+local function playCamera(participants: { Player })
+	local ok, err = pcall(CutsceneService.play, participants)
+	if not ok then
+		Log.warn(TAG, "kamera cutscene error: " .. tostring(err))
+	end
+end
+
+local function playSequence(participants: { Player })
 	updateRemote:FireAllClients({ action = "Start" })
 	task.wait(FinalRitualConfig.INTRO_SECONDS)
+
+	-- Kamera dimulai setelah letterbox masuk. PARALLEL: berjalan bersama subtitle; BEFORE_STEPS: selesai dulu.
+	local camera = { done = true }
+	if CutsceneConfig.LAYOUT == "PARALLEL" then
+		camera.done = false
+		task.spawn(function()
+			playCamera(participants)
+			camera.done = true
+		end)
+	else
+		playCamera(participants)
+	end
 
 	for _, step in FinalRitualConfig.Sequence do
 		updateRemote:FireAllClients({
@@ -146,6 +171,11 @@ local function playSequence()
 			env = step.env,
 		})
 		task.wait(step.duration)
+	end
+
+	-- Kartu TAMAT menunggu kamera selesai (CutsceneService.play punya batas waktu, jadi loop ini pasti berakhir).
+	while not camera.done do
+		task.wait(0.25)
 	end
 
 	updateRemote:FireAllClients({
@@ -159,12 +189,15 @@ local function playSequence()
 end
 
 local function runSequence()
+	local participants: { Player } = {}
 	for _, player in Players:GetPlayers() do
-		freeze(player)
+		if freeze(player) then
+			table.insert(participants, player)
+		end
 	end
 
 	-- Error di tengah cutscene tidak boleh membuat pemain terkunci selamanya.
-	local ok, err = pcall(playSequence)
+	local ok, err = pcall(playSequence, participants)
 	if not ok then
 		Log.warn(TAG, "cutscene error: " .. tostring(err))
 		updateRemote:FireAllClients({ action = "Close" })

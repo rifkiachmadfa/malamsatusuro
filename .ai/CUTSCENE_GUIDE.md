@@ -1,7 +1,7 @@
 # CUTSCENE GUIDE — membuat scene kamera dan memutarnya (implementasi nyata)
 
 Last Updated: 2026-10-11
-Sumber: tes Studio user (Output ditempel) + ADR-041 (cutscene join) + ADR-042 (trigger tes, mode MERGED).
+Sumber: tes Studio user (Output ditempel) + ADR-041/042 (tes, kini dihapus) + ADR-043 (implementasi nyata).
 
 Legenda status: **[TERBUKTI]** = terlihat di Output Studio. **[DILAPORKAN]** = user melapor berhasil, tanpa Output. **[ASUMSI]** = belum diverifikasi.
 
@@ -45,24 +45,16 @@ ServerStorage/CutScenes/<NamaScene>        (ModuleScript, punya function PlayCut
 6. Hindari lebih dari 9 titik per rangkaian gabungan sampai urutan Position di script plugin dipastikan numerik **[ASUMSI]** (penggabungan kita mengurutkan numerik dan menamai Position1..N, tetapi cara script plugin mengurutkan belum diperiksa).
 7. Tes: nyalakan `DUMP_CLONE_INFO` di `CutsceneTestConfig` untuk melihat isi clone di Output; cek durasi hitung vs tampilan; sesuaikan `DURATION_MARGIN` / `DURATIONS` bila meleset.
 
-## 5. PERHATIAN: bentrok nama dengan cutscene join
+## 5. Penamaan modul (ADR-043)
 
-`CutscenePlayerN` dipakai dengan DUA arti:
-- ADR-041 (`IntroCutsceneService`): N = **slot pemain** (pemain ke-N memutar modul ke-N, paralel).
-- ADR-042 (`CutsceneTestService`, mode MERGED): N = **urutan scene**, semua diputar untuk semua pemain.
+Cutscene join (ADR-041) dan trigger tes (ADR-042) sudah DIHAPUS, jadi `CutscenePlayerN` hanya berarti urutan scene ritual akhir (N = urutan). Daftar modul ada di `CutsceneConfig.MODULE_NAMES` (server/Config); mengganti nama modul di Studio = ubah daftar itu.
 
-Keduanya membaca folder dan nama yang sama, jadi trigger tes memutar modul yang sama dengan cutscene join. Untuk implementasi nyata ritual akhir, **buat set modul terpisah** (mis. folder `ServerStorage/CutScenes/Ending/` berisi `Scene1..N`, atau prefix `EndingScene`) dan buat daftarnya di config baru. Jangan memakai ulang `CutscenePlayerN` untuk ending.
+## 6. Implementasi nyata (SELESAI di kode, ADR-043; belum dites Studio)
 
-## 6. Rencana implementasi nyata (Phase 8, BELUM dikerjakan)
-
-Titik integrasi: `FinalRitualService.runSequence` -> `playSequence` (state ENDING, semua pemain sudah `freeze` ke state CUTSCENE + WalkSpeed 0, lalu `release` + `GAME_COMPLETE`).
-
-Usulan bertahap:
-1. Ekstrak logika dari `CutsceneTestService` (`buildMergedInfo`, `playMerged`, `waitForClones`) menjadi service server permanen, mis. `CutsceneService.play(participants, sceneConfig)` yang **yield sampai selesai** dan TIDAK mengubah state pemain (pemanggil yang `freeze`/`release`, supaya tidak ada dua pemilik state).
-2. Config scene (mis. `CutsceneConfig`): nama folder, daftar modul berurutan, `SCENE_JOIN_TIME`, `DURATION_MARGIN`, `DURATIONS` (override).
-3. Panggil dari `FinalRitualService.playSequence` di dalam `pcall` yang sudah ada. Pilih satu: **serial** (kamera dulu, lalu subtitle/ending) atau **paralel** (`task.spawn` kamera sambil langkah subtitle jalan; selaraskan durasi `FinalRitualConfig.Sequence` dengan total Time). Serial paling sederhana dan paling aman.
-4. Jangan menumpuk UI: letterbox/subtitle `FinalRitualController` dan kamera plugin berjalan di client yang sama; uji agar tidak saling menimpa. Transisi Lighting (`Ritual` -> `Fajar`) tidak terpengaruh kamera.
-5. Hapus trigger tes sebelum publish: `CutsceneTestService.luau`, `CutsceneTestConfig.luau`, dua baris di `init.server.luau`, dan objek `Workspace.triggerCutscene`.
+- `server/Services/CutsceneService.play(participants): boolean` — logika MERGED hasil tes: gabung CutsceneInfo semua modul, satu pemutaran, durasi = jumlah `Time` + margin; yield sampai selesai; TIDAK mengubah state pemain; tidak pernah melempar error.
+- `server/Config/CutsceneConfig` — `ENABLED`, `LAYOUT` (`PARALLEL` | `BEFORE_STEPS`), `FOLDER_NAME`, `MODULE_NAMES`, nama objek plugin, `DURATION_MARGIN`, `SCENE_JOIN_TIME`.
+- Titik integrasi: `FinalRitualService.runSequence` membekukan pemain (state CUTSCENE) lalu memanggil `playSequence(participants)`: letterbox masuk -> kamera (PARALLEL: berjalan bersama subtitle; kartu TAMAT menunggu kamera selesai) -> kartu TAMAT -> `release`.
+- Menambah scene: tambah modul OCE di ServerStorage/CutScenes lalu tambah namanya di `MODULE_NAMES`.
 
 ## 7. Aturan wajib (selaras AGENTS.md)
 
@@ -82,10 +74,10 @@ Usulan bertahap:
 - Durasi dihitung dari `Time`; jika script plugin menambah jeda internal, tampilan bisa lebih panjang dari hitungan (naikkan margin atau isi `DURATIONS`).
 - Respawn/mati saat cutscene: script plugin menonaktifkan state mati hanya bila memang dibuat begitu **[ASUMSI]**; belum diuji.
 
-## 9. Alat debug (sementara, CutsceneTestConfig)
+## 9. Alat debug
 
-- `MODE = "SEQUENTIAL"` = perilaku lama (satu pemutaran per modul, ada jeda).
-- `DUMP_CLONE_INFO = true` = cetak isi clone ke Output.
-- `DURATIONS = { NamaModul = detik }` = paksa durasi satu modul.
-- `SCENE_JOIN_TIME = nil` = kamera terbang mulus antar scene (bukan cut).
-- Hanya aktif di Studio (`ONLY_IN_STUDIO`).
+- Matikan kamera tanpa menghapus kode: `CutsceneConfig.ENABLED = false` (ritual tetap jalan dengan letterbox + subtitle).
+- Ubah tata letak: `CutsceneConfig.LAYOUT = "BEFORE_STEPS"`.
+- Kamera terbang mulus antar scene: `CutsceneConfig.SCENE_JOIN_TIME = nil`.
+- Mengecek durasi hitung vs tampilan: lihat Output `[CutsceneService] memutar N scene ... (X.XXs)`; sesuaikan `DURATION_MARGIN` bila kamera kepotong/telat.
+- Alat tes lama (`DUMP_CLONE_INFO`, `DURATIONS`, `MODE`) ikut dihapus bersama CutsceneTestService.

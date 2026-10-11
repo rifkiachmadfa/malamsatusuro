@@ -640,7 +640,7 @@ Status:
 ACCEPTED (implementasi atas arahan user "mulai kerjakan phase 8"); logika server lulus harness offline; client BELUM dites di Studio.
 
 
-## ADR-041 — CUTSCENE PEMBUKA SAAT JOIN: MODUL PLUGIN PER SLOT PEMAIN, SERVER HANYA MEMICU
+## ADR-041 — CUTSCENE PEMBUKA SAAT JOIN: MODUL PLUGIN PER SLOT PEMAIN, SERVER HANYA MEMICU  [DICABUT oleh ADR-043: kode dihapus]
 
 Context:
 
@@ -663,7 +663,7 @@ Status:
 ACCEPTED sebagai arahan user (tes awal); logika slot lulus harness offline; BELUM dites di Studio.
 
 
-## ADR-042 — TRIGGER TES CUTSCENE (PROXIMITYPROMPT, SEMENTARA)
+## ADR-042 — TRIGGER TES CUTSCENE (PROXIMITYPROMPT, SEMENTARA)  [DIGANTIKAN oleh ADR-043: logika MERGED dipindah ke CutsceneService, trigger dihapus]
 
 Context:
 
@@ -691,3 +691,27 @@ Revisi 3 (tes Studio ketiga): urutan 1->4 jalan penuh dengan durasi otomatis, te
 Status:
 ACCEPTED sebagai alat tes; BELUM lulus tes Studio (urutan berhenti di modul 1; perbaikan di atas belum dites).
 
+
+## ADR-043 — CUTSCENE KAMERA RITUAL AKHIR: CutsceneService PERMANEN, KODE TES DIHAPUS
+
+Context:
+
+Tes cutscene (ADR-041 join, ADR-042 trigger ProximityPrompt, mode MERGED) dilaporkan user berjalan semua. User meminta cutscene final diintegrasikan ke ritual akhir (ADR-040) dan seluruh kode tes (cutscene saat join, trigger ProximityPrompt) dihapus.
+
+Decision:
+
+- DIHAPUS: `IntroCutsceneService` + `IntroCutsceneConfig` (cutscene saat join), `CutsceneTestService` + `CutsceneTestConfig` (trigger tes), dua baris di `init.server.luau`, dan dua file patch usang di root repo. Objek Studio `Workspace.triggerCutscene` tidak lagi dipakai (hapus manual di Studio; tidak ada di Git).
+- BARU `server/Services/CutsceneService.play(participants): boolean` + `server/Config/CutsceneConfig`. Logika MERGED hasil tes dipindah apa adanya: CutsceneInfo semua modul `ServerStorage/CutScenes/CutscenePlayer1..4` digabung (Position1..N, urut numerik, titik pertama scene ke-2 dst Time = 0.05) dan diputar SATU kali memakai LocalCutscenePlayer modul pertama; durasi = jumlah `Time` + margin 0.25. Kontrak: yield sampai selesai, TIDAK mengubah state pemain, tidak pernah melempar error (gagal = warn + false), pemain keluar dilewati.
+- Dibuang dari versi tes (tidak dibutuhkan): mode SEQUENTIAL, `DURATIONS`, `DUMP_CLONE_INFO`, `MAX_WAIT`/`NO_CLONE_DELAY`, trigger. Dependency hilang = kamera dilewati, ritual tetap lanjut.
+- `FinalRitualService` pemilik state: `runSequence` membekukan pemain (CUTSCENE) dan hanya yang berhasil dibekukan ikut kamera; `release` di akhir. Kamera dipicu di `playSequence` setelah letterbox masuk (`INTRO_SECONDS`). `CutsceneConfig.LAYOUT`: `"PARALLEL"` (default; kamera bersama subtitle, kartu TAMAT menunggu kamera selesai) atau `"BEFORE_STEPS"` (kamera dulu, subtitle setelahnya). Saklar `CutsceneConfig.ENABLED`.
+- Himbauan ADR-042/CUTSCENE_GUIDE bagian 5 (pakai set modul terpisah dari join) digugurkan atas arahan user: cutscene join sudah dihapus, jadi `CutscenePlayerN` kini HANYA berarti urutan scene ritual (tidak ada bentrok). Ganti nama modul = ubah `CutsceneConfig.MODULE_NAMES`.
+
+Consequences / batasan (jujur):
+
+- Client (letterbox/subtitle `FinalRitualController` + kamera plugin) belum dites bersama di Studio: urutan tumpuk GUI, apakah script plugin menyembunyikan GUI/mengubah CameraType, dan kamera kembali ke karakter di akhir adalah ASUMSI.
+- Pada PARALLEL, bila kamera lebih pendek dari subtitle total, kamera kembali ke pemain sementara subtitle masih berjalan; selaraskan durasi `FinalRitualConfig.Sequence` dengan total `Time` scene, atau pakai BEFORE_STEPS.
+- Plugin tanpa audio/sinyal selesai; musik/suara = timeline sendiri (belum ada).
+- Pemain yang bergabung saat cutscene tidak ikut kamera (peserta ditentukan saat dimulai).
+
+Status:
+ACCEPTED atas arahan user; logika server lulus harness offline (CutsceneService + FinalRitualService + GameManager asli, 23 cek + mutation test); client/Studio BELUM dites.

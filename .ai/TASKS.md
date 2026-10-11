@@ -178,13 +178,8 @@ IN PROGRESS (ADR-040, 2026-10-11). Kode ditulis; logika server lulus harness off
 - [x] Environment transition: preset Lighting `Ritual` -> `Fajar` (tween di client); horor penuh = Phase 9
 - [x] Cutscene: letterbox + subtitle + kartu akhir (FinalRitualController); TANPA gerak kamera (belum dikerjakan)
 - [x] Ending + Game complete state: ENDING -> GAME_COMPLETE, pemain dilepas — harness
-- [x] 8.0 Trigger TES cutscene (ADR-042): ProximityPrompt `Workspace.triggerCutscene` memutar CutscenePlayer1..4 berurutan — kode ditulis; BELUM dites Studio; HAPUS sebelum publish
-- [ ] 8.1 Cutscene kamera ending NYATA: ekstrak `CutsceneService` dari CutsceneTestService, set modul terpisah dari CutscenePlayerN, sambungkan ke FinalRitualService.playSequence, hapus trigger tes (lihat `.ai/CUTSCENE_GUIDE.md` bagian 6) — BELUM dikerjakan
-- [ ] Tes Studio 1–4 pemain (lihat SESSION_HANDOFF "Uji Studio Phase 8")
-- [ ] Ganti teks placeholder dengan naskah GDD (Pemandu_KafanDone, Pemandu_FinalGather, FinalRitualConfig.Sequence)
-- [ ] Opsional (butuh keputusan user): gerak kamera cutscene, kembali ke lobby setelah GAME_COMPLETE (menunggu sistem lobby), dialog interaktif per-pemain vs subtitle otomatis
-
-
+- [x] 8.0 Trigger TES cutscene (ADR-042) — SUDAH DIHAPUS (ADR-043)
+- [x] 8.1 Cutscene kamera ending NYATA (ADR-043): `CutsceneService` + `CutsceneConfig`, disambung ke `FinalRitualService.playSequence`; cutscene join dan trigger tes dihapus — harness offline lulus; BELUM dites Studio
 # PHASE 9 — HORROR POLISH
 
 Status:
