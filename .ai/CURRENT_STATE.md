@@ -1,7 +1,7 @@
 # CURRENT PROJECT STATE
 
 Last Updated:
-2026-10-11
+2026-10-12
 
 ## CURRENT PHASE
 
@@ -37,6 +37,7 @@ AI bekerja tanpa MCP Studio (ADR-012): hasil test Studio/Output ditempel oleh us
 - client/Controllers/QuestController + shared/Util/QuestView (Task 2.2, ADR-021): Quest UI kanan atas dari Attribute QuestState. STATUS: DITES user di Studio (1 pemain, 2026-10-05): panel muncul setelah intro, addProgress via Command Bar mengubah panel, minimize berfungsi. Belum dilaporkan: Device Emulator, 2+ pemain.
 - server/Services/ItemService + shared/Config/ItemConfig (Task 3.1, ADR-022): give/has/count/consume Tool di Backpack, stack lewat Attribute Count, item unique. STATUS: logika lulus harness offline (28 cek); BELUM dites di Studio. Dipakai KerisQuestService untuk pickup Kelor.
 - server/Services/RandomSpawnService + KerisQuestService (Task 4.1–4.2, ADR-023): saat KERIS masuk SEARCHING_KELOR, server memilih 4 dari 8 titik di Workspace.QuestObjects.KelorSpawns, membuat pickup Model dari template DaunKelor di Workspace.QuestRuntime; [E] Ambil -> item ke Backpack + progres party. STATUS: logika lulus harness offline (18 cek); pembuatan Model visual dan pickup di Studio BELUM dites.
+- Dialog NPC kini punya jeda wajib per baris, tidak bisa di-skip (ADR-044; server `readyAt` + client gating). BELUM dites di Studio.
 - Pemandu NPC: dialog berjalan; teks dialog masih PLACEHOLDER (ganti dengan naskah GDD)
 
 Hasil test (dilaporkan user, 2026-10-04):

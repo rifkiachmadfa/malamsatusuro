@@ -9,13 +9,15 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared:WaitForChild("Remotes") :: ModuleScript)
+local GameConfig = require(Shared:WaitForChild("Config"):WaitForChild("GameConfig") :: ModuleScript)
 local Theme = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("Theme") :: ModuleScript)
 
 local ACTION_ADVANCE = "MalamSuroDialogueAdvance"
 local ACTION_CLOSE = "MalamSuroDialogueClose"
-local TYPE_SPEED = 45 -- karakter per detik
+local TYPE_SPEED = GameConfig.Dialogue.TYPE_SPEED -- karakter per detik
 local HINT_NEXT = "Ketuk untuk lanjut"
 local HINT_LAST = "Ketuk untuk menutup"
+local HINT_WAIT = "..."
 
 local localPlayer = Players.LocalPlayer
 
@@ -31,6 +33,8 @@ local open = false
 local typing = false
 local typingToken = 0
 local currentIsLast = false
+local readyAt = 0 -- os.clock(): sebelum ini input lanjut diabaikan (jeda dialog, ADR-044)
+local readyToken = 0
 
 local function addTextConstraint(label: TextLabel, minSize: number, maxSize: number)
 	local constraint = Instance.new("UITextSizeConstraint")
@@ -53,12 +57,33 @@ local function makeLabel(name: string, font: Enum.Font, color: Color3, parent: I
 	return label
 end
 
+local function showHint()
+	hintLabel.Text = if currentIsLast then HINT_LAST else HINT_NEXT
+	hintLabel.Visible = true
+end
+
 local function finishTyping()
 	typingToken += 1
 	typing = false
 	textLabel.MaxVisibleGraphemes = -1
-	hintLabel.Text = if currentIsLast then HINT_LAST else HINT_NEXT
-	hintLabel.Visible = true
+	-- Petunjuk "Ketuk untuk lanjut" baru muncul setelah jeda baca habis.
+	if os.clock() >= readyAt then
+		showHint()
+	else
+		hintLabel.Text = HINT_WAIT
+		hintLabel.Visible = true
+	end
+end
+
+-- Jadwalkan kemunculan petunjuk saat jeda habis (dibatalkan oleh baris baru / tutup).
+local function scheduleReady(delay: number)
+	readyToken += 1
+	local token = readyToken
+	task.delay(delay, function()
+		if token == readyToken and open and not typing then
+			showHint()
+		end
+	end)
 end
 
 local function startTyping(text: string)
@@ -91,8 +116,8 @@ local function advance()
 	if not open then
 		return
 	end
-	if typing then
-		finishTyping() -- ketukan pertama: tampilkan teks penuh
+	-- Dialog tidak bisa dilewati: selama teks diketik atau jeda baca belum habis, input diabaikan.
+	if typing or os.clock() < readyAt then
 		return
 	end
 	actionRemote:FireServer("Next")
@@ -104,6 +129,7 @@ local function closeLocal()
 	end
 	open = false
 	typingToken += 1
+	readyToken += 1
 	typing = false
 	ContextActionService:UnbindAction(ACTION_ADVANCE)
 	ContextActionService:UnbindAction(ACTION_CLOSE)
@@ -244,8 +270,11 @@ local function onUpdate(payload: unknown)
 		return
 	end
 
+	local rawDelay = data.delay
+	local delay: number = if typeof(rawDelay) == "number" then rawDelay else GameConfig.Dialogue.MIN_LINE_DELAY
 	currentIsLast = data.isLast == true
 	nameLabel.Text = speaker
+	readyAt = os.clock() + delay
 
 	if not open then
 		open = true
@@ -253,6 +282,7 @@ local function onUpdate(payload: unknown)
 		bindInput()
 	end
 	startTyping(text)
+	scheduleReady(delay)
 end
 
 function DialogueController.isOpen(): boolean

@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 2026-10-12 — Jeda wajib per baris dialog NPC, dialog tidak bisa di-skip (ADR-044) (belum dites di Studio)
+- Arahan user: pemain masih bisa skip dialog Pemandu; beri delay/cooldown agar fokus
+- UBAH: shared/Config/GameConfig (blok `Dialogue`), server/Services/DialogueService (`readyAt` per sesi, `delay` di payload Show, Next dini ditolak), client/Controllers/DialogueController (skip-ketik dihapus, input lanjut ditahan sampai jeda habis, hint "..." lalu "Ketuk untuk lanjut")
+- Verifikasi AI: hanya baca ulang diff; Luau compiler tidak tersedia di sandbox, TIDAK ada test dijalankan
+
 ## 2026-10-11 — Cutscene kamera final diintegrasikan ke ritual akhir; kode tes cutscene dihapus (ADR-043) (belum dites di Studio)
 - Arahan user: tes cutscene sudah berjalan; integrasikan ke cutscene ritual, hapus cutscene saat join dan trigger ProximityPrompt
 - DIHAPUS: IntroCutsceneService, IntroCutsceneConfig, CutsceneTestService, CutsceneTestConfig, `cutscene-guide-notes.patch`, `phase8-cutscene-test-fix3-ADR-042.patch`, dua baris bootstrap di init.server.luau

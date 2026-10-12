@@ -16,6 +16,7 @@ local GameManager = require(script.Parent:WaitForChild("GameManager") :: ModuleS
 local InteractionService = require(script.Parent:WaitForChild("InteractionService") :: ModuleScript)
 
 local Config = GameConfig.Interaction
+local DialogueTiming = GameConfig.Dialogue
 local TAG = "DialogueService"
 local WATCH_INTERVAL = 0.5
 local NEXT_COOLDOWN = 0.1
@@ -24,6 +25,7 @@ type Session = {
 	dialogueId: string,
 	index: number,
 	npc: Instance,
+	readyAt: number, -- os.clock(): sebelum waktu ini aksi "Next" ditolak
 }
 
 export type CompletedListener = (player: Player, dialogueId: string) -> ()
@@ -35,13 +37,24 @@ local sessions: { [Player]: Session } = {}
 local lastNext: { [Player]: number } = {}
 local updateRemote: RemoteEvent
 
+-- Jeda wajib per baris = waktu ketik + jeda baca, dibatasi MIN..MAX.
+local function getLineDelay(text: string): number
+	local length = utf8.len(text) or #text
+	local delay = length / DialogueTiming.TYPE_SPEED + DialogueTiming.POST_TYPE_PAUSE
+	return math.clamp(delay, DialogueTiming.MIN_LINE_DELAY, DialogueTiming.MAX_LINE_DELAY)
+end
+
 local function sendLine(player: Player, session: Session)
 	local dialogue = DialogueConfig[session.dialogueId]
+	local text = dialogue.lines[session.index]
+	local delay = getLineDelay(text)
+	session.readyAt = os.clock() + delay
 	updateRemote:FireClient(player, {
 		action = "Show",
 		speaker = dialogue.speaker,
-		text = dialogue.lines[session.index],
+		text = text,
 		isLast = session.index >= #dialogue.lines,
+		delay = delay,
 	})
 end
 
@@ -67,7 +80,7 @@ function DialogueService.start(player: Player, dialogueId: string, npc: Instance
 		return
 	end
 
-	local session: Session = { dialogueId = dialogueId, index = 1, npc = npc }
+	local session: Session = { dialogueId = dialogueId, index = 1, npc = npc, readyAt = 0 }
 	sessions[player] = session
 	sendLine(player, session)
 end
@@ -100,6 +113,12 @@ local function onAction(player: Player, action: unknown)
 	end
 
 	local now = os.clock()
+	-- Jeda baca: "Next" sebelum waktunya diabaikan diam-diam (client sudah menahan input;
+	-- ini menahan client yang dimodifikasi). Client menerima baris lebih lambat dari server
+	-- mengirim, jadi pemain normal tidak pernah ditolak di sini.
+	if now < session.readyAt then
+		return
+	end
 	local last = lastNext[player]
 	if last and now - last < NEXT_COOLDOWN then
 		return

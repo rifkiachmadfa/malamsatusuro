@@ -715,3 +715,26 @@ Consequences / batasan (jujur):
 
 Status:
 ACCEPTED atas arahan user; logika server lulus harness offline (CutsceneService + FinalRitualService + GameManager asli, 23 cek + mutation test); client/Studio BELUM dites.
+
+
+## ADR-044 — JEDA WAJIB PER BARIS DIALOG NPC (TIDAK BISA DI-SKIP)
+
+Context:
+
+Pemain bisa melewati dialog Pemandu dengan menekan lanjut berulang (ketukan pertama menampilkan teks penuh, berikutnya langsung ke baris berikut; server hanya punya cooldown 0.1 dtk). User ingin pemain fokus pada dialog.
+
+Decision:
+
+- `GameConfig.Dialogue`: `TYPE_SPEED` 45, `POST_TYPE_PAUSE` 0.8, `MIN_LINE_DELAY` 1.5, `MAX_LINE_DELAY` 8.
+- Jeda per baris = panjang teks / TYPE_SPEED + POST_TYPE_PAUSE, dibatasi MIN..MAX. Berlaku untuk semua dialog (termasuk baris terakhir).
+- SERVER menegakkan: `DialogueService` menyimpan `session.readyAt`; aksi `Next` sebelum waktunya diabaikan diam-diam. Payload `Show` membawa `delay`.
+- CLIENT mengikuti: ketuk saat teks diketik tidak lagi menampilkan teks penuh (skip-ketik dihapus); input lanjut diabaikan sampai jeda habis; petunjuk menampilkan "..." lalu "Ketuk untuk lanjut".
+- Tombol X / Close TIDAK diubah: menutup dialog tidak memajukan progres (quest hanya maju bila dialog tamat), jadi bukan skip.
+
+Consequences:
+
+- Angka jeda bisa disetel tanpa menyentuh kode (GameConfig.Dialogue). Dialog panjang menjadi lebih lama; sesuaikan POST_TYPE_PAUSE bila terasa lambat.
+- Tidak ada perubahan Remote name; hanya field `delay` tambahan di payload Show (client lama tanpa field ini memakai MIN_LINE_DELAY).
+
+Status:
+ACCEPTED atas arahan user; BELUM dites di Studio.

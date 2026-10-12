@@ -40,4 +40,13 @@ GameConfig.Interaction = table.freeze({
 	REQUEST_COOLDOWN = 0.3, -- detik, per pemain
 })
 
+-- Dialog NPC: jeda wajib sebelum pemain boleh lanjut ke baris berikutnya (ADR-044).
+-- Server yang menegakkan; client hanya mengikuti agar UI konsisten.
+GameConfig.Dialogue = table.freeze({
+	TYPE_SPEED = 45, -- karakter per detik (efek ketik, dipakai client dan untuk hitung jeda)
+	POST_TYPE_PAUSE = 0.8, -- detik jeda setelah teks selesai diketik sebelum boleh lanjut
+	MIN_LINE_DELAY = 1.5, -- detik, batas bawah jeda per baris (baris pendek)
+	MAX_LINE_DELAY = 8, -- detik, batas atas jeda per baris (baris panjang)
+})
+
 return table.freeze(GameConfig)
