@@ -81,11 +81,17 @@ local function onInteract(player: Player, target: Instance)
 		return
 	end
 
+	local carriedNotHeld: string? = nil
 	for _, offering in RitualConfig.Offerings do
 		if
 			QuestService.getState(offering.questId) == offering.obtainedState
 			and ItemService.has(player, offering.itemId)
 		then
+			-- Item harus dipegang (di-equip) agar bisa disimpan.
+			if not ItemService.isHeld(player, offering.itemId) then
+				carriedNotHeld = carriedNotHeld or displayName(offering.itemId)
+				continue
+			end
 			if store(player, offering) then
 				local name = displayName(offering.itemId)
 				local total = #RitualConfig.Offerings
@@ -102,6 +108,11 @@ local function onInteract(player: Player, target: Instance)
 			end
 			return
 		end
+	end
+
+	if carriedNotHeld then
+		NoticeService.send(player, string.format("Pegang %s di tangan untuk menyimpannya.", carriedNotHeld))
+		return
 	end
 
 	NoticeService.send(player, "Kamu tidak membawa benda ritual untuk disimpan.")

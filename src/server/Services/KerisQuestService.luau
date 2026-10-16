@@ -13,6 +13,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local GameConfig = require(Shared:WaitForChild("Config"):WaitForChild("GameConfig") :: ModuleScript)
 local ItemConfig = require(Shared:WaitForChild("Config"):WaitForChild("ItemConfig") :: ModuleScript)
 local Log = require(Shared:WaitForChild("Util"):WaitForChild("Log") :: ModuleScript)
+local QuestConfig = require(Shared:WaitForChild("Config"):WaitForChild("QuestConfig") :: ModuleScript)
 local Services = script.Parent
 local GameManager = require(Services:WaitForChild("GameManager") :: ModuleScript)
 local DialogueService = require(Services:WaitForChild("DialogueService") :: ModuleScript)
@@ -127,7 +128,12 @@ local function onChestInteract(player: Player, target: Instance)
 	end
 
 	if not ItemService.has(player, KEY_ITEM_ID) then
-		NoticeService.send(player, "Peti terkunci. Kamu tidak memegang Kunci Peti.")
+		NoticeService.send(player, "Peti terkunci. Kamu tidak memiliki Kunci Peti.")
+		return
+	end
+	-- Kunci harus dipegang (di-equip), bukan sekadar ada di Backpack.
+	if not ItemService.isHeld(player, KEY_ITEM_ID) then
+		NoticeService.send(player, "Pegang Kunci Peti di tangan untuk membuka peti.")
 		return
 	end
 
@@ -199,6 +205,57 @@ local function handOverKey(player: Player)
 		"Kamu memegang Kunci Peti. Hanya kamu yang bisa membuka peti.",
 		holder.Name .. " memegang Kunci Peti."
 	)
+end
+
+-- ===== Penyerahan Daun Kelor ke Pemandu (ADR-046) =====
+
+-- Sisa Daun Kelor di Backpack/Character semua pemain (kecuali `exclude`, mis. pemain yang sedang keluar).
+local function remainingKelor(exclude: Player?): number
+	local total = 0
+	for _, member in Players:GetPlayers() do
+		if member ~= exclude then
+			total += ItemService.count(member, KELOR_ITEM_ID)
+		end
+	end
+	return total
+end
+
+-- Dipanggil saat pemain berinteraksi dengan Pemandu. Pada KELOR_COMPLETE, tiap pemegang Kelor harus MEMEGANG
+-- Kelor lalu [E] pada Pemandu untuk menyerahkan seluruh tumpukannya. Dialog kunci baru jalan setelah semua
+-- Kelor diserahkan (sisa 0). Return true = interaksi sudah ditangani di sini (tanpa dialog); false = lanjut dialog biasa.
+function KerisQuestService.handleKelorHandIn(player: Player): boolean
+	if QuestService.getState(QUEST_ID) ~= "KELOR_COMPLETE" or DialogueService.isInDialogue(player) then
+		return false
+	end
+
+	local owned = ItemService.count(player, KELOR_ITEM_ID)
+	if owned > 0 then
+		if not ItemService.isHeld(player, KELOR_ITEM_ID) then
+			NoticeService.send(player, "Pegang Daun Kelor di tangan untuk menyerahkannya kepada Pemandu.")
+			return true
+		end
+		-- Tanpa yield: consume atomik, dua permintaan bersamaan tidak bisa menyerahkan tumpukan yang sama dua kali.
+		if not ItemService.consume(player, KELOR_ITEM_ID, owned) then
+			return true
+		end
+		local left = remainingKelor(nil)
+		local target: number = ((QuestConfig.Quests :: any)[QUEST_ID]).counters.Kelor.target
+		local delivered = target - left
+		NoticeService.notifyParty(
+			player,
+			string.format("Kamu menyerahkan %d Daun Kelor kepada Pemandu (%d/%d).", owned, delivered, target),
+			string.format("%s menyerahkan %d Daun Kelor kepada Pemandu (%d/%d).", player.Name, owned, delivered, target)
+		)
+		Log.info(TAG, string.format("%s menyerahkan %d Kelor; sisa %d", player.Name, owned, left))
+		return left > 0 -- sisa 0: biarkan dialog kunci berjalan untuk pemain ini
+	end
+
+	local left = remainingKelor(nil)
+	if left > 0 then
+		NoticeService.send(player, string.format("Masih ada %d Daun Kelor yang belum diserahkan oleh rekanmu.", left))
+		return true
+	end
+	return false
 end
 
 -- ===== Pemegang item keluar game =====

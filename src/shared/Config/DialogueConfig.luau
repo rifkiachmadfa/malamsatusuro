@@ -29,7 +29,7 @@ local DialogueConfig: { [string]: Dialogue } = {
 	Pemandu_KerisKey = {
 		speaker = "Pemandu",
 		lines = {
-			"Empat helai kelor sudah terkumpul. Serahkan semuanya padaku.",
+			"Empat helai kelor sudah kuterima.",
 			"Kunci peti kuberikan pada salah satu dari kalian. Hanya dia yang bisa membuka peti itu.",
 			"Carilah peti itu bersama-sama.",
 		},

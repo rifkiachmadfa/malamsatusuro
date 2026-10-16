@@ -145,6 +145,21 @@ function ItemService.has(player: Player, itemId: string, amount: number?): boole
 	return ItemService.count(player, itemId) >= (amount or 1)
 end
 
+-- Item sedang DIPEGANG: Tool dengan ItemId tsb sedang di-equip (child Character), bukan hanya ada di Backpack.
+-- Dipakai interaksi yang mensyaratkan item di tangan (buka peti, simpan di ritual). Server yang menentukan.
+function ItemService.isHeld(player: Player, itemId: string): boolean
+	local character = player.Character
+	if not character then
+		return false
+	end
+	for _, child in character:GetChildren() do
+		if child:IsA("Tool") and child:GetAttribute(ATTR_ITEM_ID) == itemId then
+			return true
+		end
+	end
+	return false
+end
+
 -- Beri item ke pemain. Return true jika berhasil. Ditolak jika: item/template tidak ada,
 -- amount tidak valid, Backpack tidak ada, item unique sudah dimiliki, atau melewati MAX_STACK.
 function ItemService.give(player: Player, itemId: string, amount: number?): boolean

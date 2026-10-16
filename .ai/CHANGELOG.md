@@ -178,3 +178,12 @@
 - Registrasi InteractionId "Pemandu" dipindah ke PemanduService
 - Dokumen: ADR-018..021, CURRENT_STATE, SESSION_HANDOFF, TASKS
 - Verifikasi AI: luau-compile 8 file OK; tes mock 30/30
+## 2026-10-12 — Item harus dipegang (ADR-045)
+- Baru: ItemService.isHeld
+- Diubah: KerisQuestService (peti butuh Kunci dipegang), RitualCollectionService (simpan butuh item dipegang)
+- Verifikasi AI: tidak ada tes Studio
+
+## 2026-10-12 — Serah Kelor ke Pemandu harus dipegang (ADR-046)
+- Baru: KerisQuestService.handleKelorHandIn
+- Diubah: init.server (handler Pemandu), DialogueConfig (baris 1 Pemandu_KerisKey)
+- Verifikasi AI: tidak ada tes Studio dan tidak ada Luau compiler

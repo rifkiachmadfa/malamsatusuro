@@ -69,6 +69,10 @@ end)
 
 -- Pemandu: objek Workspace.NPC.Pemandu (dibuat di Studio) ber-tag Interactable dengan InteractionId = "Pemandu".
 InteractionService.register("Pemandu", function(player: Player, target: Instance)
+	-- KELOR_COMPLETE: Kelor harus dipegang dan diserahkan dulu (ADR-046); dialog kunci menyusul setelah semua terserahkan.
+	if KerisQuestService.handleKelorHandIn(player) then
+		return
+	end
 	local dialogueId = GameFlowService.getPemanduDialogueId(player)
 	if dialogueId then
 		DialogueService.start(player, dialogueId, target)

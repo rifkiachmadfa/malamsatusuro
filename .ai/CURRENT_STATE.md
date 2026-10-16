@@ -131,3 +131,9 @@ Kode tes cutscene (join ADR-041, trigger ProximityPrompt ADR-042) DIHAPUS. `Cuts
 
 Dokumen ini adalah kondisi terakhir yang diketahui. Perbarui setelah pekerjaan signifikan.
 Jangan menulis bahwa sebuah sistem berfungsi kalau belum dites.
+
+## UPDATE 2026-10-12 (ADR-045)
+Item harus dipegang untuk buka peti dan simpan di ritual. Kode selesai; BELUM dites di Studio. Item belum dipegang -> notifikasi "Pegang X di tangan ...".
+
+## UPDATE 2026-10-12 (ADR-046)
+Kelor diserahkan ke Pemandu per pemain, harus dipegang; kunci diberikan setelah semua Kelor diserahkan. BELUM dites di Studio.

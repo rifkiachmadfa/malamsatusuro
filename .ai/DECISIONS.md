@@ -738,3 +738,40 @@ Consequences:
 
 Status:
 ACCEPTED atas arahan user; BELUM dites di Studio.
+
+
+## ADR-045 — ITEM HARUS DIPEGANG (EQUIPPED) UNTUK DIGUNAKAN / DISIMPAN
+
+Context:
+User menemukan Keris dan item lain bisa dipakai/disimpan hanya dengan ada di Backpack, tanpa dipegang.
+
+Decision:
+- `ItemService.isHeld(player, itemId)`: true hanya bila Tool ber-ItemId tsb sedang di-equip (child Character). Dicek SERVER.
+- Interaksi yang mensyaratkan item di tangan: buka Peti (Kunci Peti, KerisQuestService) dan simpan di ritual (Keris/Kembang Kantil Hitam/Kain Kafan, RitualCollectionService).
+- Sudah memakai aturan ini sebelumnya (tidak diubah): Minyak Zaitun (ReviveService.holdsPotion) dan bunga di makam (GravePuzzleService.getHeldFlower).
+- `has()` tetap berarti "dimiliki" (Backpack + Character), dipakai untuk kepemilikan/reward/anti-duplikasi.
+- Tidak ada fitur serah-terima antar pemain di kode saat ini; bila dibuat kelak, wajib memakai isHeld.
+
+Consequences:
+- Pemain harus equip item lebih dulu; bila tidak, notifikasi "Pegang X di tangan ...".
+- Pemeriksaan hanya saat interaksi dimulai. Memory puzzle peti yang sedang berjalan tetap memakai has() saat hadiah (agar unequip di tengah puzzle tidak menghanguskan hasil).
+
+Status:
+ACCEPTED atas temuan user; BELUM dites di Studio.
+
+
+## ADR-046 — PENYERAHAN DAUN KELOR KE PEMANDU HARUS DIPEGANG
+
+Context:
+Sebelumnya, saat KELOR_COMPLETE dialog Pemandu otomatis menghapus semua Kelor (stripKelor) dan memberi kunci. User ingin tiap pemain MEMEGANG Kelor lalu menyerahkannya ke Pemandu (kelanjutan ADR-045).
+
+Decision:
+- `KerisQuestService.handleKelorHandIn(player)` dipanggil di handler interaksi Pemandu (init.server) sebelum dialog.
+- Pada KELOR_COMPLETE: pemain memegang Kelor + [E] Pemandu -> seluruh tumpukan Kelor miliknya dikonsumsi (server, tanpa yield), notifikasi party "(n/4)".
+- Tidak memegang Kelor -> notifikasi "Pegang Daun Kelor di tangan ..."; tidak punya Kelor tapi rekan masih punya -> notifikasi sisa.
+- Dialog Pemandu_KerisKey (dan pemberian kunci) baru berjalan setelah SISA Kelor semua pemain = 0. Tidak ada counter baru; syarat dihitung dari isi inventory.
+- Pemain keluar membawa Kelor: Kelornya hilang bersama Backpack, sisa dihitung dari pemain yang masih ada, jadi quest tidak buntu.
+- stripKelor di handOverKey dibiarkan sebagai pengaman. Baris pertama Pemandu_KerisKey diubah ke "sudah kuterima" (placeholder).
+
+Status:
+ACCEPTED atas arahan user; BELUM dites di Studio.
