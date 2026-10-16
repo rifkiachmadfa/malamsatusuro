@@ -434,7 +434,7 @@ Decision (pola dari user 2026-10-10, dibangun di Phase 6):
 - Multiplayer: pemain di-knock; bunga yang salah kembali ke pemain itu dan bunga yang sudah benar tetap di makam (jawaban user). Rekan yang berdiri melanjutkan; revive dengan Minyak Zaitun.
 - [DIGANTI ADR-032 2026-10-10] Solo: jumpscare -> respawn -> quest KANTIL direset ke LOCKED dan dimulai lagi lewat Pemandu (Keris yang sudah disimpan tidak ikut reset).
 - Disatukan: setelah pelaku di-knock, jika tidak ada lagi pemain NORMAL (semua knock) = party wipe (CANTIL_PUZZLE -> SEARCHING_FLOWERS, makam kosong, bunga di Backpack dihapus lalu di-spawn ulang lewat CollectibleService). [Solo = cabang khusus, lihat ADR-032.]
-- Jumpscare = presentasi client (event dari server, visual/audio Phase 9). Kontrol giliran tunggal (Task 5.9) dirancang bersama paket ini.
+- Jumpscare = presentasi client (event dari server, visual/audio Phase 10). Kontrol giliran tunggal (Task 5.9) dirancang bersama paket ini.
 - Titik sambung di kode: `GravePuzzleService.onWrong(player, graveName, itemId)`. TIDAK perlu mengubah QuestConfig (wipe dari CANTIL_PUZZLE sudah ada).
 
 Status:
@@ -633,7 +633,7 @@ Decision:
 Consequences / batasan:
 
 - Pemain yang bergabung di tengah cutscene tidak dibekukan dan hanya melihat sisa langkah (lobby/teleport nanti membuat ini jarang).
-- Belum ada gerak kamera; letterbox + subtitle + Lighting saja. Efek horor lengkap = Phase 9.
+- Belum ada gerak kamera; letterbox + subtitle + Lighting saja. Efek horor lengkap = Phase 10.
 - Setelah GAME_COMPLETE pemain bebas bergerak; kembali ke lobby menunggu sistem lobby.
 
 Status:
@@ -775,3 +775,36 @@ Decision:
 
 Status:
 ACCEPTED atas arahan user; BELUM dites di Studio.
+
+
+## ADR-047 — PHASE 9 BARU: GHOST ENCOUNTER SYSTEM (3 HANTU NON-COMBAT TERIKAT QUEST); PHASE LAMA 9–12 DINOMORI ULANG JADI 10–13
+
+Context:
+
+Audit horor (2026-10-16): ancaman hanya muncul sebagai hukuman. Jumpscare Pocong dipakai untuk bunga salah dan gamelan gagal (cepat prediktif), tidak ada ancaman saat eksplorasi, `KnockConfig.Reason.GHOST` masih RESERVED, atmosfer baru ada di transisi ending. GDD (horor dari atmosfer, jumpscare terbatas, bukan game combat) dan arahan user menghendaki ancaman aktif NON-COMBAT dengan perilaku berbeda per hantu.
+
+Decision:
+
+- Sistem baru: GHOST ENCOUNTER SYSTEM (`GhostService`, server-authoritative). Tiap hantu = satu encounter (pemicu, perilaku, counter, hukuman) yang aturannya dipelajari pemain. Hantu tidak bisa dilawan.
+- Hantu terikat quest (bukan hantu bebas/acak; hantu bebas ditunda ke Phase 10 bila perlu). Pemetaan DIKUNCI user: Kelor = Kuntilanak, Kembang = Pocong, Gamelan = Genderuwo.
+  - Kuntilanak: pemicu Kelor ke-2 dan ke-4; tawa dari arah acak; counter = semua pemain diam (server membaca kecepatan root); yang bergerak = target.
+  - Pocong: muncul tiap bunga dipetik, di luar pandangan pemetik; gerak melompat berirama; counter = berkumpul dengan rekan; kena = knock.
+  - Genderuwo: spawn langsung di aula gamelan setelah musik mulai; STALK -> CHASE -> INVESTIGATE; mengincar pemain gamelan; rekan mengalihkan lewat dikejar (memutari pilar/meja) atau membunyikan item Lonceng; kena pemain gamelan = `failSession` + jumpscare (ADR-039), kena rekan = knock.
+- Item baru Lonceng (3 buah di aula, equip membunyikan + menarik Genderuwo, cooldown server, hanya aktif saat sesi gamelan). Item lewat `ItemService`. Konsisten dengan ADR-045: Lonceng harus dipegang (equipped) untuk dipakai, validasi di server.
+- Arsitektur: satu `GhostService` + `GhostConfig` (perilaku per hantu data-driven); hukuman lewat `FailureService`/`KnockService` reason `GHOST`; pergerakan Genderuwo memakai `PathfindingService` dengan `SetNetworkOwner(nil)`, Kuntilanak/Pocong gerak lurus tanpa pathfinding; client hanya suara/peringatan/jumpscare. Solo kena = jumpscare + respawn tanpa reset quest (hukuman = jumpscare).
+- Prasyarat wajib sebelum hantu pertama: knock harus membatalkan sesi puzzle/dialog/gamelan/revive (batasan ADR-031).
+- Jumpscare penuh dibatasi (kontak pertama, party wipe, ending) dan hantu berbeda memakai model berbeda.
+- PENOMORAN ULANG: Phase 9 baru = Ghost Encounters; Horror Polish = Phase 10; Multiplayer Testing = 11; Optimization = 12; Final Build = 13. Semua rujukan "Phase 10" (tes multiplayer) di TASKS/CURRENT_STATE/BUGS/SESSION_HANDOFF diperbarui menjadi Phase 11; rujukan "Phase 9" ke horor visual/audio menjadi Phase 10. Entri CHANGELOG lama TIDAK diubah (catatan sejarah memakai penomoran lama). Rujukan "tinjau ulang di Phase 9 bila ada hantu" (ADR-040) kini tepat menunjuk Phase 9 baru.
+- Dikerjakan SATU hantu per langkah (Kuntilanak dulu, aturan paling sederhana, jadi uji kerangka), tes 1–4 pemain per hantu sebelum lanjut.
+
+Consequences / batasan (jujur):
+
+- Perubahan GDD besar: ancaman aktif non-combat, item baru, perubahan alur gagal. Menyentuh FailureService, KnockService, ItemService, KafanQuestService, RhythmGameService, dan tiga quest.
+- Semua angka (radius, kecepatan, cooldown, durasi) adalah ASUMSI awal di config; baru bisa dinilai lewat tes.
+- Klimaks final belum diputuskan (Task 9.6): kandidat A (tiga hantu bergantian selama ritual), B (twist Pemandu), C (pengorbanan). Tergantung keputusan cerita siapa Pemandu.
+- Deteksi "diam" (Kuntilanak) memakai kecepatan root karakter di server; toleransi lag perlu dites. Pengejaran Genderuwo butuh aula dengan pilar/meja agar bisa dihindari.
+- Dependency Studio (tidak ada di Git): model + animasi tiga hantu, Tool Lonceng + titik meja, `GenderuwoSpawn` bertag, aula berpenghalang, aset suara.
+- Prompt master/instruksi AI di luar repo yang memuat daftar fase perlu dinomori ulang manual oleh user agar sama dengan TASKS.md.
+
+Status:
+ACCEPTED (desain, atas arahan user 2026-10-16). BELUM diimplementasi; tidak ada kode yang berubah.

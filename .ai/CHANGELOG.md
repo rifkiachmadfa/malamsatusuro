@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 2026-10-16 — Rencana Phase 9 baru: Ghost Encounter System; Phase lama 9–12 dinomori ulang jadi 10–13 (ADR-047)
+- Arahan user: masukkan hasil diskusi desain horor sebagai phase baru setelah Phase 8; Horror Polish dan seterusnya bergeser
+- Tidak ada perubahan kode. Dokumen: TASKS (Phase 9 baru + renumber), DECISIONS (ADR-047), CURRENT_STATE, SESSION_HANDOFF, GAME_CONTEXT (bagian 14A), BUGS (rujukan Phase 11)
+- Komentar di `FinalRitualConfig.luau` diperbarui ("Horor penuh = Phase 10")
+- Catatan: entri CHANGELOG lama memakai penomoran lama (Phase 10 = tes multiplayer) dan sengaja tidak diubah
+
 ## 2026-10-12 — Jeda wajib per baris dialog NPC, dialog tidak bisa di-skip (ADR-044) (belum dites di Studio)
 - Arahan user: pemain masih bisa skip dialog Pemandu; beri delay/cooldown agar fokus
 - UBAH: shared/Config/GameConfig (blok `Dialogue`), server/Services/DialogueService (`readyAt` per sesi, `delay` di payload Show, Next dini ditolak), client/Controllers/DialogueController (skip-ketik dihapus, input lanjut ditahan sampai jeda habis, hint "..." lalu "Ketuk untuk lanjut")

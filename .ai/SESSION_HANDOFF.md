@@ -1,15 +1,18 @@
 # SESSION HANDOFF
 
-Last Updated: 2026-10-11 (Phase 8, ADR-043 cutscene final)
+Last Updated: 2026-10-16 (rencana Phase 9 Ghost Encounters, ADR-047; sebelumnya 2026-10-11 Phase 8 ADR-043)
 
 ## Ringkasan
-- Fase aktif: PHASE 5 — KEMBANG KANTIL HITAM (belum dimulai). Phase 1–4 selesai (Phase 4 dengan catatan: 3–4 pemain di Phase 10). Quest KERIS lengkap: Kelor -> kunci -> peti -> memory puzzle -> keris -> simpan di RitualCollection.
+- Fase aktif: PHASE 5 — KEMBANG KANTIL HITAM (belum dimulai). Phase 1–4 selesai (Phase 4 dengan catatan: 3–4 pemain di Phase 11). Quest KERIS lengkap: Kelor -> kunci -> peti -> memory puzzle -> keris -> simpan di RitualCollection.
 - Aturan wajib: semua notifikasi lewat NoticeService (ADR-025); quest selesai saat item disimpan di RitualCollection, Pemandu hanya melapor (ADR-026). Lihat AGENTS.md.
 - Repo: github.com/rifkiachmadfa/malamsatusuro (folder lokal: D:\roblox\malam-satu-suro)
 - `src/` berisi: shared (Config/GameConfig, Config/DialogueConfig, Util/Log, Util/Spatial, Util/Interactable, Remotes),
   server (Services/GameManager, SpawnService, InteractionService, DialogueService, init.server),
   client (Controllers/InteractionController, DialogueController, UI/Theme, init.client).
 - QuestService ada tapi belum dipanggil siapa pun. Inventory = Backpack Tool (ADR-018).
+
+## Rencana berikutnya (ADR-047)
+- PHASE 9 = GHOST ENCOUNTERS (Kuntilanak/Kelor, Pocong/Kembang, Genderuwo + Lonceng/Gamelan), dikerjakan satu hantu per langkah mulai dari prasyarat 9.0 (knock membatalkan sesi). Phase lama 9–12 kini 10–13. Klimaks final belum diputuskan. Baca ADR-047 sebelum coding.
 
 ## Cara kerja saat ini
 - Chat Claude TANPA MCP Studio. AI hanya melihat GitHub dan file yang dikirim; hasil test Studio/Output ditempel oleh user.

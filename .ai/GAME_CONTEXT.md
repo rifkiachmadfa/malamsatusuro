@@ -288,6 +288,17 @@ Jumpscares should be limited.
 Do not rely on constant jumpscares.
 
 
+## 14A. GHOST ENCOUNTERS (ADR-047, desain disetujui 2026-10-16, belum diimplementasi)
+
+Ancaman aktif NON-COMBAT, terikat quest, tiap hantu punya aturan berbeda yang harus dipelajari pemain:
+
+- Kelor = Kuntilanak: tawa terdengar -> semua pemain diam; yang bergerak jadi target.
+- Kembang = Pocong: pemetik bunga diincar; counter = berkumpul dengan rekan.
+- Gamelan = Genderuwo: mengincar pemain gamelan; rekan mengalihkan dengan dikejar atau membunyikan Lonceng (item baru di aula).
+
+Hantu tidak bisa dilawan. Semua keputusan di server. Jumpscare penuh dibatasi. Klimaks final masih keputusan terbuka (lihat TASKS Phase 9, Task 9.6).
+
+
 ## 15. TECHNICAL PRINCIPLES
 
 Server-authoritative multiplayer.

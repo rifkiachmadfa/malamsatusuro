@@ -38,7 +38,7 @@ Fix:
 Peta state->dialog (KERIS_DIALOGUES), dialog Pemandu_KerisKey, handOverKey di KerisQuestService.
 
 Verification:
-Dilaporkan lulus oleh user (2026-10-05); uji 3–4 pemain di Phase 10.
+Dilaporkan lulus oleh user (2026-10-05); uji 3–4 pemain di Phase 11.
 
 Affected Players:
 1 / 2 / 3 / 4

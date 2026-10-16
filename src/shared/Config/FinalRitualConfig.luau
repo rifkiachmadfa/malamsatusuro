@@ -39,7 +39,7 @@ FinalRitualConfig.END_CARD_SECONDS = 8
 FinalRitualConfig.END_TITLE = "TAMAT"
 FinalRitualConfig.END_SUBTITLE = "Malam Suro: Dusun Kelabu"
 
--- Lingkungan (dimainkan di client; server hanya menyebut namanya). Horor penuh = Phase 9.
+-- Lingkungan (dimainkan di client; server hanya menyebut namanya). Horor penuh = Phase 10 (ancaman hantu = Phase 9, ADR-047).
 FinalRitualConfig.Environments = table.freeze({
 	Ritual = table.freeze({
 		tweenSeconds = 3,

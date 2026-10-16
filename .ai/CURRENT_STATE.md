@@ -1,14 +1,14 @@
 # CURRENT PROJECT STATE
 
 Last Updated:
-2026-10-12
+2026-10-16
 
 ## CURRENT PHASE
 
 PHASE 1 — FOUNDATION: SELESAI.
 PHASE 2 — QUEST SYSTEM: SELESAI (diuji 1 dan 2 pemain).
 PHASE 3 — INTERACTION & INVENTORY: ItemService selesai (boot diuji; give/consume diuji lewat Phase 4).
-PHASE 4 — KERIS PUSAKA: SELESAI dengan catatan (alur Kelor -> kunci -> peti -> puzzle -> keris -> simpan di RitualCollection; 3–4 pemain di Phase 10).
+PHASE 4 — KERIS PUSAKA: SELESAI dengan catatan (alur Kelor -> kunci -> peti -> puzzle -> keris -> simpan di RitualCollection; 3–4 pemain di Phase 11).
 PHASE 5 — KEMBANG KANTIL HITAM: 5.1–5.8 SELESAI dan DITES user di Studio (normal, 2026-10-11). Sisa (giliran tunggal, revive, wipe, flower reset) dikerjakan di Phase 6.
 PHASE 6 — KNOCK / REVIVE: DITUTUP dan dites user di Studio (dilaporkan user 2026-10-11; rincian per-poin tidak dilaporkan).
 PHASE 7 — KAIN KAFAN / GAMELAN: DITUTUP user (commit 36b9c74); hasil tes Studio per-poin tidak dilaporkan. Kode gamelan ritme (satu pemain, 4 kolom) ditulis; direvisi 2026-10-11 (ADR-039): skor mulai 100, gagal < 80 = UI tutup + jumpscare, musik terdengar pemain lain. Logika server lulus harness offline; client/GUI/audio BELUM dites di Studio.
@@ -16,6 +16,9 @@ PHASE 7 — KAIN KAFAN / GAMELAN: DITUTUP user (commit 36b9c74); hasil tes Studi
 
 PHASE 8 — FINAL RITUAL: SEDANG BERJALAN (ADR-040, ADR-043). Kode ditulis termasuk cutscene kamera final, harness offline lulus; BELUM dites di Studio.
 
+
+PHASE 9 — GHOST ENCOUNTERS: DIRENCANAKAN (ADR-047, desain disetujui user 2026-10-16). BELUM ada kode. Tiga hantu non-combat terikat quest: Kuntilanak (Kelor), Pocong (Kembang), Genderuwo (Gamelan) + item Lonceng. Rincian task di TASKS.md.
+PHASE 10 — HORROR POLISH (dulunya Phase 9): BELUM dimulai. Phase 11 = Multiplayer Testing, 12 = Optimization, 13 = Final Build (dinomori ulang oleh ADR-047).
 
 ## TOOLCHAIN
 
@@ -44,7 +47,7 @@ Hasil test (dilaporkan user, 2026-10-04):
 - Interaksi dan dialog Pemandu: lulus (1 pemain, 2+ pemain)
 - Tampilan dialog: lulus di berbagai device di Device Emulator
 - Output server/client: tanpa error dari kode project
-- Belum dites: 4 pemain penuh; disconnect/reconnect saat dialog (dijadwalkan Phase 10)
+- Belum dites: 4 pemain penuh; disconnect/reconnect saat dialog (dijadwalkan Phase 11)
 
 
 ## OBJEK WORKSPACE (di Studio, tidak ada di Git)
@@ -103,7 +106,7 @@ Risiko terbuka (belum dikerjakan, bahan Task 6.5): (1) pemain yang masih KNOCK s
 Zaitun kini SELALU 2 pickup aktif: tiap pickup diambil, server spawn pengganti di titik `ZaitunSpawns` yang belum pernah dipakai (tidak pernah di tempat yang sama setelah 1x spawn). Pool habis = siklus baru (asumsi, minta konfirmasi). Menggantikan poin "(4) zaitun tidak respawn" pada risiko 6.4. Syntax OK + harness offline lulus; BELUM dites di Studio. Rekomendasi: `ZaitunSpawns` berisi >= 6 titik.
 
 ## HASIL TES 2026-10-11 (dilaporkan user: Phase 5 dan Phase 6 sampai 6.2 berhasil, Studio normal)
-Berlaku untuk: CollectibleService/bunga (5.1–5.4), alur Pemandu KERIS->KANTIL (5.5), clue makam (5.6), placement + validasi per bunga + hadiah Kantil Hitam (5.7–5.8), KnockService (6.1), FailureService solo/multiplayer + QuestService.reset (6.1b), jumpscare (6.2), audio jumpscare placeholder dan state RETRY_GUIDE dengan Quest UI "Kembali berbicara kepada Pemandu". User hanya melaporkan "berhasil, tes Studio normal"; rincian jumlah pemain tidak dilaporkan, jadi uji 2–4 pemain tetap dijadwalkan di Phase 10. Masih placeholder: jawaban makam (ANSWER_CONFIRMED=false), teks Pemandu_KantilRetry, suara jumpscare.
+Berlaku untuk: CollectibleService/bunga (5.1–5.4), alur Pemandu KERIS->KANTIL (5.5), clue makam (5.6), placement + validasi per bunga + hadiah Kantil Hitam (5.7–5.8), KnockService (6.1), FailureService solo/multiplayer + QuestService.reset (6.1b), jumpscare (6.2), audio jumpscare placeholder dan state RETRY_GUIDE dengan Quest UI "Kembali berbicara kepada Pemandu". User hanya melaporkan "berhasil, tes Studio normal"; rincian jumlah pemain tidak dilaporkan, jadi uji 2–4 pemain tetap dijadwalkan di Phase 11. Masih placeholder: jawaban makam (ANSWER_CONFIRMED=false), teks Pemandu_KantilRetry, suara jumpscare.
 Task 6.3 (KnockController, overlay vinyet + teks "KAMU PINGSAN", hotbar disembunyikan saat knock) baru ditulis: BELUM dites.
 
 ## UPDATE 2026-10-11 (Phase 7 awal, ADR-038)
@@ -117,6 +120,9 @@ Alur: KAFAN COMPLETE (3/3 pusaka) -> notifikasi "Temui Pemandu" -> Pemandu_Kafan
 
 ## UPDATE 2026-10-11 (cutscene kamera final, ADR-043)
 Kode tes cutscene (join ADR-041, trigger ProximityPrompt ADR-042) DIHAPUS. `CutsceneService.play(participants)` (mode MERGED hasil tes) dipanggil `FinalRitualService.playSequence` untuk pemain yang dibekukan: kamera plugin `ServerStorage/CutScenes/CutscenePlayer1..4` diputar bersama letterbox + subtitle (`CutsceneConfig.LAYOUT`, default PARALLEL); kartu TAMAT menunggu kamera selesai. Harness offline 23 cek lulus; client/Studio BELUM dites. DEPENDENCY Studio: `ServerStorage.CutScenes.CutscenePlayer1..4` (modul 1 memuat LocalCutscenePlayer). Objek `Workspace.triggerCutscene` tidak dipakai lagi (hapus manual).
+
+## UPDATE 2026-10-16 (rencana Phase 9, ADR-047)
+Tidak ada perubahan kode. Hasil audit horor: ancaman baru muncul sebagai hukuman (jumpscare Pocong dipakai bunga salah dan gamelan gagal), belum ada ancaman saat eksplorasi, `KnockConfig.Reason.GHOST` masih RESERVED. Diputuskan user: sistem Ghost Encounter (3 hantu, aturan beda, terikat quest) menjadi Phase 9; Horror Polish digeser ke Phase 10. Klimaks final (Task 9.6) belum diputuskan. Risiko terbuka (4) di bagian Phase 8 (knock dipulihkan otomatis saat FINAL_RITUAL) ditinjau ulang di Phase 9 yang baru.
 
 ## NEXT ACTION
 

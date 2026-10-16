@@ -49,12 +49,12 @@ DONE (2026-10-04)
 - [x] 1.6 Player spawn (test 4 pemain belum dilaporkan)
 - [x] 1.7 Pemandu NPC + interaksi dasar — DITES user di Studio 2026-10-04 (1 pemain dan 2+ pemain)
 - [x] 1.8 GUI foundation (dialog NPC, hitam-putih, mobile-friendly) — DITES user di Device Emulator (berbagai device)
-- [x] 1.9 Multiplayer state foundation — dialog per pemain dites 2+ pemain; kode debug Phase 1 dihapus (test 4 pemain penuh dijadwalkan di Phase 10)
+- [x] 1.9 Multiplayer state foundation — dialog per pemain dites 2+ pemain; kode debug Phase 1 dihapus (test 4 pemain penuh dijadwalkan di Phase 11)
 
 # PHASE 2 — QUEST SYSTEM
 
 Status:
-DONE (2026-10-05, diuji 1 dan 2 pemain; 3–4 pemain di Phase 10)
+DONE (2026-10-05, diuji 1 dan 2 pemain; 3–4 pemain di Phase 11)
 
 - [x] 2.1 QuestConfig + QuestService (state machine, counter party-wide, replikasi Attribute) — kode ditulis, logika lulus harness offline (32 cek); BELUM dites di Studio
 - [x] 2.2 Quest UI dasar (QuestView + QuestController, top-right, minimize) — DITES user di Studio 1 pemain 2026-10-05: panel muncul, addProgress via Command Bar mengubah panel, minimize berfungsi. Device Emulator dan 2+ pemain belum dilaporkan
@@ -78,7 +78,7 @@ IN PROGRESS
 # PHASE 4 — KERIS PUSAKA
 
 Status:
-DONE dengan catatan (2026-10-05, ditutup atas instruksi user; commit 0d8dfa2). Status ini sempat termundur di commit 6acfb27 dan dipulihkan 2026-10-10. Uji 3–4 pemain di Phase 10.
+DONE dengan catatan (2026-10-05, ditutup atas instruksi user; commit 0d8dfa2). Status ini sempat termundur di commit 6acfb27 dan dipulihkan 2026-10-10. Uji 3–4 pemain di Phase 11.
 
 - [x] 4.1 Kelor spawn system + server randomization + 4 active / 4 inactive (RandomSpawnService, KerisQuestService, ADR-023) — logika lulus harness offline (18 cek); BELUM dites di Studio
 - [x] 4.2 Kelor collection + party progress (pickup [E], ItemService.give, QuestService.addProgress) — idem
@@ -124,10 +124,10 @@ DONE — ditutup dan dites user di Studio (dilaporkan user 2026-10-11). Dikerjak
 - [x] 6.4 Ramuan Minyak Zaitun + revive (ADR-035/036): spawn 2 dari semua Part di `QuestObjects/ZaitunSpawns` (CollectibleService); revive = pegang zaitun, dekat korban, tahan [E] 3 detik, validasi + hitung waktu di server, kurangi 1 saat berhasil — kode ditulis, luau-compile OK; BELUM dites di Studio (lihat SESSION_HANDOFF "Uji Studio Task 6.4")
 - [x] 6.4b Revisi zaitun (ADR-037): selalu 2 pickup aktif, pengganti di titik yang belum pernah dipakai — kode ditulis, harness offline lulus; BELUM dites di Studio
 - [x] 6.5 Giliran tunggal (Task 5.9) + party wipe (semua knock) + reset bunga Kantil (hapus bunga di Backpack, spawn ulang)
-- [x] Uji 1/2/3/4 pemain knock (jadwalkan di Phase 10 untuk 3–4 pemain)
+- [x] Uji 1/2/3/4 pemain knock (jadwalkan di Phase 11 untuk 3–4 pemain)
 
 Catatan masa depan (belum dikerjakan, JANGAN dilupakan):
-- Serangan hantu: knock via jalur yang sama (jumpscare -> KnockService.knock(player, "GHOST")). Perlu: AI hantu, deteksi serangan, knock saat pemain MINIGAME/dialog (batalkan sesi puzzle/dialog dulu).
+- Serangan hantu: DIJADWALKAN sebagai PHASE 9 — GHOST ENCOUNTERS (ADR-047). Knock via jalur yang sama (jumpscare -> KnockService.knock(player, "GHOST")). Perlu: AI hantu, deteksi serangan, knock saat pemain MINIGAME/dialog (batalkan sesi puzzle/dialog dulu).
 - Aset jumpscare (model 3D berrig + animasi) disiapkan user; ID aset dikonfigurasi di Config.
 - Teks dialog Pemandu_KantilRetry dan audio jumpscare (`rbxasset://sounds/bass.mp3`) masih PLACEHOLDER: ganti dengan teks final dan aset suara asli.
 - Pemain knock yang rekan-rekannya keluar hingga tersisa satu: tangani di 6.5 (onAllKnocked -> jalur solo).
@@ -175,15 +175,36 @@ IN PROGRESS (ADR-040, 2026-10-11). Kode ditulis; logika server lulus harness off
 - [x] Pemandu sequence (bagian 1): laporan akhir `Pemandu_KafanDone` -> membuka FINAL_RITUAL; `Pemandu_FinalGather` = pengingat saat menunggu — dialog PLACEHOLDER
 - [x] Party gathering + readiness tracking: radius 30 studs dari pivot `QuestObjects.RitualCollection`, dihitung SERVER; semua pemain hidup + NORMAL, tahan 3 detik; HUD "n/N" — harness 1/1..4/4
 - [x] Pemandu sequence (bagian 2) + Dialogue: 5 langkah subtitle otomatis dari server (`FinalRitualConfig.Sequence`) — teks PLACEHOLDER
-- [x] Environment transition: preset Lighting `Ritual` -> `Fajar` (tween di client); horor penuh = Phase 9
+- [x] Environment transition: preset Lighting `Ritual` -> `Fajar` (tween di client); horor penuh = Phase 10
 - [x] Cutscene: letterbox + subtitle + kartu akhir (FinalRitualController); TANPA gerak kamera (belum dikerjakan)
 - [x] Ending + Game complete state: ENDING -> GAME_COMPLETE, pemain dilepas — harness
 - [x] 8.0 Trigger TES cutscene (ADR-042) — SUDAH DIHAPUS (ADR-043)
 - [x] 8.1 Cutscene kamera ending NYATA (ADR-043): `CutsceneService` + `CutsceneConfig`, disambung ke `FinalRitualService.playSequence`; cutscene join dan trigger tes dihapus — harness offline lulus; BELUM dites Studio
-# PHASE 9 — HORROR POLISH
+# PHASE 9 — GHOST ENCOUNTERS
 
 Status:
-NOT STARTED
+PLANNED (ADR-047, desain disetujui user 2026-10-16). BELUM ada kode. Dikerjakan SATU hantu per langkah; tiap hantu dites 1–4 pemain sebelum lanjut. Phase 9 lama (Horror Polish) kini PHASE 10; Multiplayer Testing = 11, Optimization = 12, Final Build = 13.
+
+Nama sistem: Ghost Encounter System (`GhostService`). Ancaman NON-COMBAT: hantu tidak bisa dilawan, pemain hanya bereaksi sesuai aturan hantu itu. Semua keputusan di server; client hanya presentasi (suara, peringatan, jumpscare).
+
+Pemetaan (DIKUNCI user): Kelor = Kuntilanak, Kembang = Pocong, Gamelan = Genderuwo.
+
+- [ ] 9.0 Prasyarat: `KnockService.knock` harus bisa membatalkan sesi MemoryPuzzle / dialog / gamelan / revive (batasan ADR-031 dan ADR-035 butir REVIVING); tanpa ini hantu tidak boleh dibuat
+- [ ] 9.1 Kerangka: `GhostService` + `GhostConfig` (perilaku per hantu dari config, satu hantu aktif per kejadian), reason `GHOST` di `FailureService`/`KnockService`; solo kena = jumpscare + respawn TANPA reset quest
+- [ ] 9.2 Kuntilanak (Kelor): pemicu saat Daun Kelor ke-2 dan ke-4 diambil; tawa dari arah acak, melayang lurus tanpa pathfinding ~10 dtk; counter = SEMUA pemain diam (server membaca kecepatan root, jeda 1 dtk + toleransi); yang bergerak = target (jumpscare + knock); solo berlaku sama
+- [ ] 9.3 Pocong (Kembang): muncul 40–60 studs dari pemetik tiap bunga dipetik, di luar pandangan; melompat (gerak 1,2 dtk, jeda 0,8 dtk), lebih lambat dari pemain; counter = bergabung dengan rekan (>= 2 pemain dalam 6 studs) lalu dia menunggu dan tenggelam ~12 dtk, atau pemetik menjauh/bertahan; kena = knock; solo = lebih lambat + telegraph lebih panjang
+- [ ] 9.4 Genderuwo (Gamelan) + item Lonceng: muncul ~10–15 dtk setelah musik mulai (lampu aula berkedip) di salah satu `GenderuwoSpawn`; state STALK -> CHASE -> INVESTIGATE; mengincar pemain gamelan; rekan dalam radius ~25 studs jadi target kejar (sedikit lebih lambat dari pemain, bisa dihindari memutari pilar/meja), menyerah ~8 dtk; Lonceng (3 item di meja aula, equip = bunyi + menarik Genderuwo ke posisi pemegang, cooldown ~5 dtk server, hanya aktif saat sesi gamelan); menyentuh pemain gamelan = `failSession` + jumpscare (ADR-039); menyentuh pengejar = knock lalu kembali mengincar pemain gamelan; `PathfindingService` + `SetNetworkOwner(nil)`; solo: kecepatan naik tiap Miss, turun saat streak benar
+- [ ] 9.5 Jumpscare dibatasi: jumpscare penuh hanya kontak pertama per hantu / party wipe / ending, bukan tiap kesalahan; hantu berbeda memakai model berbeda (ganti placeholder Pocong di `FailureConfig.JumpscareByReason`)
+- [ ] 9.6 Klimaks final — KEPUTUSAN TERBUKA. Kandidat: A = tiga hantu bergantian selama ritual sampai fajar (rekomendasi MVP, tanpa sistem baru); B = twist Pemandu (lapisan cerita di atas A); C = pengorbanan satu pemain (mahal, berisiko untuk co-op). Putuskan sebelum 9.6 dikerjakan; tinjau ulang pemulihan knock otomatis saat FINAL_RITUAL (ADR-040)
+- [ ] 9.7 Tes 1/2/3/4 pemain PER hantu: aturan counter, kena, knock, party wipe, pemain keluar saat hantu aktif, spam Lonceng, request ganda, disconnect
+
+Dependency Studio (tidak ada di Git): model + animasi Kuntilanak, Pocong, Genderuwo; Tool Lonceng + 3 titik meja; `GenderuwoSpawn` bertag; aula dengan pilar/meja; suara tawa, lompatan, langkah, napas, lonceng.
+Catatan: semua angka di atas ASUMSI awal (masuk config, disetel lewat tes). "Kegelisahan party" (meter pemicu) sempat dibahas tetapi TIDAK dipakai; pemicu per hantu seperti di atas.
+
+# PHASE 10 — HORROR POLISH
+
+Status:
+NOT STARTED (sebelumnya Phase 9, dinomori ulang oleh ADR-047). Lapisan suasana (visual/audio) di atas gameplay stabil; dikerjakan SETELAH Phase 9 agar suara/efek dipasang pada kejadian hantu nyata.
 
 - [ ] Fog
 - [ ] Lighting
@@ -196,7 +217,7 @@ NOT STARTED
 - [ ] Environmental transitions
 
 
-# PHASE 10 — MULTIPLAYER TESTING
+# PHASE 11 — MULTIPLAYER TESTING
 
 Status:
 NOT STARTED
@@ -216,7 +237,7 @@ NOT STARTED
 - [ ] final ritual test
 
 
-# PHASE 11 — OPTIMIZATION
+# PHASE 12 — OPTIMIZATION
 
 Status:
 NOT STARTED
@@ -233,7 +254,7 @@ NOT STARTED
 - [ ] UI update frequency
 
 
-# PHASE 12 — FINAL BUILD
+# PHASE 13 — FINAL BUILD
 
 Status:
 NOT STARTED
