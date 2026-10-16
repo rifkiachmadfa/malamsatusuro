@@ -1,0 +1,26 @@
+diff --git a/.ai/ADR-048_POCONG_TORCH_COUNTER.md b/.ai/ADR-048_POCONG_TORCH_COUNTER.md
+index 3c05061..65e5529 100644
+--- a/.ai/ADR-048_POCONG_TORCH_COUNTER.md
++++ b/.ai/ADR-048_POCONG_TORCH_COUNTER.md
+@@ -26,7 +26,7 @@ Task 9.3 di ADR-047 mendefinisikan Pocong yang muncul 40-60 studs dari pemetik d
+ - Nama Tool/Attribute bunga di `PocongConfig.FLOWER_KEYS` adalah tebakan; cocokkan dengan ItemConfig.
+ - Satu Pocong per bunga bisa membuat 4 Pocong sekaligus; setel `MAX_ACTIVE` dari hasil tes.
+ - Pocong terhalang zona hanya secara posisi XZ-3D radius; obor di area sempit/bertingkat mungkin perlu radius per obor.
+-- Dependency Studio: `Workspace.PocongSpawn` (1-4 part), `Workspace.TorchCounter` (obor), model `ServerStorage.Ghosts.Pocong` (opsional; ada placeholder).
++- Dependency Studio: `Workspace.PocongSpawn` (1-4 part), `Workspace.TorchCounter` (obor), model `ServerStorage.GhostModels.Pocong` (opsional; ada placeholder).
+ 
+ ## Pemasangan (3 titik, di luar patch ini karena file target belum terbaca)
+ 
+diff --git a/src/shared/Config/PocongConfig.luau b/src/shared/Config/PocongConfig.luau
+index 59aebab..8425a8b 100644
+--- a/src/shared/Config/PocongConfig.luau
++++ b/src/shared/Config/PocongConfig.luau
+@@ -12,7 +12,7 @@ PocongConfig.TORCH_RADIUS_ATTRIBUTE = "Radius" -- Attribute number di obor, over
+ PocongConfig.GHOST_FOLDER = "Ghosts" -- folder runtime di Workspace untuk Pocong aktif
+ 
+ -- Template model Pocong: {Service, anak, anak, ...}. Kalau tidak ada -> placeholder + warn.
+-PocongConfig.MODEL_PATH = table.freeze({ "ServerStorage", "Ghosts", "Pocong" })
++PocongConfig.MODEL_PATH = table.freeze({ "ServerStorage", "GhostModels", "Pocong" })
+ 
+ -- Item bunga yang membuat pemain jadi target. Cocok lewat Attribute "ItemId" ATAU nama Tool.
+ -- Kembang Kantil Hitam sengaja TIDAK termasuk (itu hadiah, bukan bunga yang dicari).
