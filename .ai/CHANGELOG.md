@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 2026-10-17 — Phase 9: perbaikan pose hantu (tertidur) + config animasi/suara per hantu (ADR-049) (belum dites di Studio)
+- Laporan user: model Kuntilanak terlihat tertidur/rebah di game, padahal berdiri bila ditaruh manual di Workspace
+- Dugaan akar masalah: GhostService menimpa rotasi model dengan rotasi yaw-saja (`CFrame.new(pos)` saat spawn, `CFrame.lookAt` saat gerak) sehingga rotasi ASLI root/pivot model hilang. Sekarang rotasi root asli dibaca dari template (`Ghost.baseRotation`) dan hanya yaw yang ditambahkan di atasnya
+- BARU di GhostConfig: `animations.chase` (AnimationId, di-LOOP selama fase CHASING), param presentasi `facingYawDegrees`, `spawnVolume`, `loopVolume`, `soundMaxDistance`, `chaseAnimSpeed` (default di `PRESENTATION_DEFAULTS`); `sounds.spawn/loop` sudah ada, kini dengan volume + jarak dari config
+- BARU di GhostService: `host.playAnimation/stopAnimation/presentation`; bila hantu punya animasi, bagian model yang tersambung ke root tidak lagi di-anchor (massless) agar rig bisa beranimasi, root tetap anchored
+- UBAH: Ghosts/Kuntilanak (panggil playAnimation saat CHASING), tools/harness/prelude (mock CF.Angles)
+- Verifikasi: harness offline 17/17 lulus, mutasi M1/M2 tetap tertangkap. Jalur model asli, animasi, dan suara TIDAK tercakup harness; Studio BELUM dites
+
 ## 2026-10-17 — Phase 9: Ghost System modular + Kuntilanak (ADR-048) (belum dites di Studio)
 - Arahan user: sistem ghost modular (Kuntilanak/Pocong/Genderuwo), sementara hanya Kuntilanak; desain Kuntilanak user menggantikan butir ADR-047
 - BARU: server/Services/GhostService, server/Config/GhostConfig, server/Ghosts/Kuntilanak, tools/harness (harness offline + README)

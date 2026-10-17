@@ -17,7 +17,7 @@ PHASE 7 — KAIN KAFAN / GAMELAN: DITUTUP user (commit 36b9c74); hasil tes Studi
 PHASE 8 — FINAL RITUAL: SEDANG BERJALAN (ADR-040, ADR-043). Kode ditulis termasuk cutscene kamera final, harness offline lulus; BELUM dites di Studio.
 
 
-PHASE 9 — GHOST ENCOUNTERS: SEDANG BERJALAN (ADR-047 desain, ADR-048 implementasi). Kerangka modular `GhostService` + Kuntilanak (Kelor) ditulis, lulus harness offline (`tools/harness`), BELUM dites di Studio. Pocong dan Genderuwo belum dibuat. Rincian di TASKS.md.
+PHASE 9 — GHOST ENCOUNTERS: SEDANG BERJALAN (ADR-047 desain, ADR-048 implementasi). Kerangka modular `GhostService` + Kuntilanak (Kelor) ditulis, lulus harness offline (`tools/harness`), BELUM dites di Studio. Pocong dan Genderuwo belum dibuat. Update 2026-10-17 (ADR-049): pose asli model dipertahankan (perbaikan Kuntilanak rebah) + config animasi chase / suara spawn-loop per hantu; BELUM dites Studio. Rincian di TASKS.md.
 PHASE 10 — HORROR POLISH (dulunya Phase 9): BELUM dimulai. Phase 11 = Multiplayer Testing, 12 = Optimization, 13 = Final Build (dinomori ulang oleh ADR-047).
 
 ## TOOLCHAIN

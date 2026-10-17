@@ -18,6 +18,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local GamelanConfig = require(Shared:WaitForChild("Config"):WaitForChild("GamelanConfig") :: ModuleScript)
 local Remotes = require(Shared:WaitForChild("Remotes") :: ModuleScript)
 local Theme = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("Theme") :: ModuleScript)
+local CursorUnlock = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("CursorUnlock") :: ModuleScript)
 
 local Config = GamelanConfig
 local ACTION_NAME = "GamelanLanes"
@@ -634,6 +635,7 @@ local function build()
 	infoLabel.Size = UDim2.fromScale(0.92, 0.045)
 	addTextConstraint(infoLabel, 10, 18)
 
+	CursorUnlock.attach(gui) -- first person terkunci: bebaskan kursor selama GUI ini terbuka
 	gui.Parent = localPlayer:WaitForChild("PlayerGui")
 end
 

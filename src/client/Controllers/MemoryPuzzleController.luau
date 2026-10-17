@@ -9,6 +9,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared:WaitForChild("Remotes") :: ModuleScript)
 local Theme = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("Theme") :: ModuleScript)
+local CursorUnlock = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("CursorUnlock") :: ModuleScript)
 
 local RESULT_SECONDS = 1.8
 local TILE_FILLED = Color3.fromRGB(255, 255, 255)
@@ -386,6 +387,7 @@ local function build()
 	checkButton = makeButton("Check", "PERIKSA", UDim2.fromScale(0.66, 0.82), panel)
 	checkButton.Activated:Connect(submit)
 
+	CursorUnlock.attach(gui) -- first person terkunci: bebaskan kursor selama GUI ini terbuka
 	gui.Parent = localPlayer:WaitForChild("PlayerGui")
 end
 

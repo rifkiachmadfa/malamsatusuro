@@ -20,12 +20,28 @@ export type GhostDef = {
 	bindings: { [string]: string }, -- nama objek dunia/quest/item yang diikat perilaku (tanpa magic string di kode)
 	texts: { [string]: string }, -- notifikasi (Indonesia, PLACEHOLDER), tampil lewat NoticeService (ADR-025)
 	sounds: { [string]: string }, -- SoundId; "" = tanpa suara. spawn = sekali saat muncul, loop = berulang selama hidup
+	animations: { [string]: string }, -- AnimationId; "" = tanpa animasi. chase = di-LOOP selama hantu mengejar (fase CHASING)
 	params: { [string]: number }, -- angka perilaku (studs, detik, studs/detik)
 }
+
+-- Parameter PRESENTASI per model (opsional; bila tidak ada di `params`, dipakai nilai default ini):
+--   facingYawDegrees  putar arah hadap model (derajat). Isi 180 bila hantu berjalan mundur / wajah membelakangi arah gerak.
+--   spawnVolume       volume suara spawn (0..10)
+--   loopVolume        volume suara loop selama hidup
+--   soundMaxDistance  RollOffMaxDistance (studs) kedua suara
+--   chaseAnimSpeed    kecepatan putar animasi chase (1 = normal)
+local PRESENTATION_DEFAULTS = table.freeze({
+	facingYawDegrees = 0,
+	spawnVolume = 1,
+	loopVolume = 0.6,
+	soundMaxDistance = 90,
+	chaseAnimSpeed = 1,
+} :: { [string]: number })
 
 local GhostConfig = {}
 
 -- Urutan pemuatan (dan init behavior).
+GhostConfig.PRESENTATION_DEFAULTS = PRESENTATION_DEFAULTS
 GhostConfig.ORDER = table.freeze({ "Kuntilanak" } :: { string })
 
 GhostConfig.TICK_INTERVAL = 1 / 30 -- detik; update perilaku dibatasi sekian (Heartbeat dikumpulkan)
@@ -70,6 +86,9 @@ GhostConfig.Ghosts = table.freeze({
 			spawn = "", -- TODO: tawa kuntilanak (aset suara belum ada)
 			loop = "", -- TODO: desis/tawa berulang selama ia mengejar
 		},
+		animations = {
+			chase = "", -- TODO: rbxassetid:// animasi mengejar (di-loop). Kosong = pose diam. Model harus punya rig (Motor6D + Humanoid/AnimationController)
+		},
 		params = {
 			appearSeconds = 3, -- diam setelah muncul, belum bisa menangkap (peringatan + pemain sempat bereaksi)
 			chaseSpeed = 12, -- studs/detik; pemain berlari 16, jadi bisa dihindari
@@ -82,6 +101,11 @@ GhostConfig.Ghosts = table.freeze({
 			soloChaseSeconds = 25, -- solo (party tinggal 1): bertahan sekian detik tanpa tertangkap -> ia menyerah
 			maxChaseSeconds = 90, -- pengaman: bagaimanapun ia menghilang setelah sekian detik mengejar
 			noTargetSeconds = 8, -- tak ada pembawa Kelor yang valid selama ini -> ia menghilang
+			facingYawDegrees = 0, -- setel 180 bila ia terlihat berjalan mundur
+			spawnVolume = 1,
+			loopVolume = 0.6,
+			soundMaxDistance = 90,
+			chaseAnimSpeed = 1,
 		},
 	} :: GhostDef,
 } :: { [string]: GhostDef })

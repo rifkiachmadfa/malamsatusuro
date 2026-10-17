@@ -11,6 +11,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Remotes = require(Shared:WaitForChild("Remotes") :: ModuleScript)
 local GameConfig = require(Shared:WaitForChild("Config"):WaitForChild("GameConfig") :: ModuleScript)
 local Theme = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("Theme") :: ModuleScript)
+local CursorUnlock = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("CursorUnlock") :: ModuleScript)
 
 local ACTION_ADVANCE = "MalamSuroDialogueAdvance"
 local ACTION_CLOSE = "MalamSuroDialogueClose"
@@ -246,6 +247,7 @@ local function build()
 	panel.Activated:Connect(advance)
 	closeButton.Activated:Connect(requestClose)
 
+	CursorUnlock.attach(gui) -- first person terkunci: bebaskan kursor selama GUI ini terbuka
 	gui.Parent = localPlayer:WaitForChild("PlayerGui")
 end
 

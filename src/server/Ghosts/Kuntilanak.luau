@@ -255,6 +255,7 @@ function Kuntilanak.update(host: Host, ghost: Ghost, dt: number)
 	if ghost.phase == "APPEARING" then
 		if ghost.age >= host.param(def, "appearSeconds") then
 			ghost.phase = "CHASING"
+			host.playAnimation(ghost, "chase") -- loop selama mengejar (GhostConfig.animations.chase); kosong = diam
 		end
 		return
 	end

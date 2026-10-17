@@ -42,6 +42,7 @@ function CF.new(p, y, z)
 	return setmetatable({ Position = p or V3.zero, __isCF = true }, CFmt)
 end
 function CF.lookAt(a, b) return setmetatable({ Position = a }, CFmt) end
+function CF.Angles(_x, _y, _z) return setmetatable({ Position = V3.zero }, CFmt) end
 
 -- ===== Signal =====
 local function newSignal()

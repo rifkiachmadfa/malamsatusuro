@@ -841,3 +841,26 @@ Consequences / batasan (jujur):
 
 Status:
 ACCEPTED atas arahan user 2026-10-17. Kode ditulis; harness offline lulus; BELUM dites di Studio.
+
+
+## ADR-049 — POSE ASLI MODEL HANTU DIPERTAHANKAN; ANIMASI CHASE + SUARA SPAWN/LOOP LEWAT GHOSTCONFIG
+
+Context:
+
+Model Kuntilanak tampak rebah di game padahal berdiri di Workspace. GhostService memakai `PivotTo(CFrame.new(pos))` dan `CFrame.lookAt`, yang membuang rotasi asli root/pivot model.
+
+Decision:
+
+- Rotasi root asli dibaca saat meng-clone template (`Ghost.baseRotation`); spawn = `at * baseRotation`; gerak = `CFrame.new(pos) * Angles(0, yaw, 0) * baseRotation`. Arah hadap dapat dikoreksi per hantu lewat `params.facingYawDegrees` (mis. 180).
+- Data presentasi per hantu di GhostConfig: `sounds.spawn`, `sounds.loop`, `animations.chase` (+ volume/jarak/kecepatan di params, default di `PRESENTATION_DEFAULTS`). Hantu baru = isi entri config, tanpa ubah GhostService.
+- Animasi diputar SERVER lewat Animator (replikasi otomatis ke client), loop selama fase CHASING; dimulai oleh modul perilaku lewat `host.playAnimation`. Bagian model yang tersambung ke root di-unanchor + Massless hanya bila hantu punya animasi (kalau tidak, semua di-anchor seperti sebelumnya).
+
+Consequences / batasan:
+
+- Dugaan akar masalah BELUM dikonfirmasi di Studio. Bila masih rebah setelah ini, kemungkinan lain: PrimaryPart model bukan bagian torso, atau animasi/pose bawaan rig; minta Output baris "rotasi model asli (derajat)" dan properti PrimaryPart/PivotOffset model.
+- Animasi butuh rig (Motor6D + Humanoid/AnimationController) dan AnimationId milik/ diizinkan untuk experience. Tanpa itu = warning + pose diam.
+- Saat korban dilindungi rekan (hantu menahan jarak), animasi chase tetap berjalan (belum ada animasi idle).
+
+Status:
+
+ACCEPTED atas arahan user 2026-10-17. Harness offline lulus; Studio BELUM dites.
