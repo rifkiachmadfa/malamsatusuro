@@ -35,6 +35,7 @@ local KnockConfig = require(script:WaitForChild("Config"):WaitForChild("KnockCon
 local FailureConfig = require(script:WaitForChild("Config"):WaitForChild("FailureConfig") :: ModuleScript)
 local JumpscareService = require(Services:WaitForChild("JumpscareService") :: ModuleScript)
 local FailureService = require(Services:WaitForChild("FailureService") :: ModuleScript)
+local GhostService = require(Services:WaitForChild("GhostService") :: ModuleScript)
 
 Log.info("Server", string.format("Malam Suro server siap (MAX_PLAYERS=%d)", GameConfig.MAX_PLAYERS))
 
@@ -58,6 +59,8 @@ FailureService.init()
 RhythmGameService.init()
 KafanQuestService.init()
 FinalRitualService.init()
+-- Ghost Encounter System (Phase 9, ADR-048): terakhir, karena perilaku hantu memasang pendengar ke CollectibleService/QuestService.
+GhostService.init()
 
 -- Bunga salah di makam -> kebijakan gagal (ADR-030/032): multiplayer = knock, solo = respawn + reset quest.
 -- Jumpscare (ADR-033) dimainkan di dalam FailureService sebelum hukuman.

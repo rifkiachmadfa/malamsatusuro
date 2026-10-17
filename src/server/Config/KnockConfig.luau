@@ -4,10 +4,11 @@
 
 local KnockConfig = {}
 
--- Penyebab knock. GHOST belum dipakai (serangan hantu belum dibuat; lihat TASKS Phase 6 "Catatan masa depan").
+-- Penyebab knock/gagal. Satu penyebab per hantu (ADR-048) agar jumpscare dan kebijakan hukuman bisa dibedakan per hantu.
 KnockConfig.Reason = table.freeze({
 	WRONG_FLOWER = "WRONG_FLOWER", -- bunga salah di makam (quest Kantil)
-	GHOST = "GHOST", -- RESERVED: diserang hantu
+	GHOST = "GHOST", -- RESERVED: hantu umum (belum dipakai; hantu nyata memakai alasan per hantu di bawah)
+	GHOST_KUNTILANAK = "GHOST_KUNTILANAK", -- ditangkap Kuntilanak (quest Keris, Daun Kelor); dipakai GhostConfig.Ghosts.Kuntilanak.failureReason
 })
 
 -- Pose berbaring (telentang, menghadap atas). Posisi dihitung dari lantai di bawah pemain (raycast).

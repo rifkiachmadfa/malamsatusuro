@@ -34,9 +34,14 @@ type Pickup = {
 	itemId: string,
 }
 
+export type CollectedListener = (collectionId: string, player: Player, spawn: Instance, itemId: string) -> ()
+
 local CollectibleService = {}
 
 local rng = Random.new()
+local collectedListeners: { CollectedListener } = {}
+-- Per objective: operasi yang butuh akses ke tabel pickup milik objective itu (ADR-048).
+local handles: { [string]: { returnToWorld: (count: number) -> number } } = {}
 
 local function displayName(itemId: string): string
 	local def = ItemConfig.Items[itemId]
@@ -101,12 +106,12 @@ local function register(config: CollectionConfig.Collection)
 	local pickups: { [Instance]: Pickup } = {}
 	local usedSpawns: { [Instance]: boolean } = {} -- titik yang sudah pernah dipakai (untuk replenish, ADR-037)
 
-	-- Buat satu pickup di titik `spawn`; mencatat titik sebagai "pernah dipakai". Return true bila berhasil.
-	local function placePickup(spawn: Instance, itemId: string, folder: Instance): boolean
+	-- Buat satu pickup di titik `spawn`; mencatat titik sebagai "pernah dipakai". Return Model pickup bila berhasil, nil bila gagal.
+	local function placePickup(spawn: Instance, itemId: string, folder: Instance): Model?
 		local template = ItemService.getTemplate(itemId)
 		if not template then
 			Log.warn(TAG, "dependency belum ada: template " .. itemId)
-			return false
+			return nil
 		end
 		local model = RandomSpawnService.createPickup(template, spawn, folder, {
 			interactionId = config.interactionId,
@@ -115,11 +120,11 @@ local function register(config: CollectionConfig.Collection)
 			maxDistance = config.pickupDistance,
 		})
 		if not model then
-			return false
+			return nil
 		end
 		pickups[model] = { status = "AVAILABLE", spawnName = spawn.Name, spawn = spawn, itemId = itemId }
 		usedSpawns[spawn] = true
-		return true
+		return model
 	end
 
 	local function clear()
@@ -292,7 +297,70 @@ local function register(config: CollectionConfig.Collection)
 				string.format("%s mendapatkan %s.", player.Name, name)
 			)
 		end
+
+		-- Setelah semua state/progres/notifikasi beres: beri tahu pendengar (mis. pemicu hantu, ADR-048).
+		-- Lewat task.spawn agar error di pendengar tidak merusak pickup; pendengar harus memeriksa ulang state quest.
+		for _, listener in collectedListeners do
+			task.spawn(listener, config.id, player, pickup.spawn, pickup.itemId)
+		end
 	end
+
+	-- Kembalikan `count` item ke dunia di titik acak yang SEDANG BEBAS dan kurangi progres party sebanyak yang berhasil
+	-- di-spawn (ADR-048: Kelor dirampas Kuntilanak). Return jumlah yang benar-benar dikembalikan (0 bila ditolak/gagal).
+	-- Atomik (tanpa yield): pemanggil menghapus item dari pemain SEBANYAK nilai kembalian, sehingga progres + pickup di
+	-- dunia + item di tangan pemain tetap konsisten. Gagal di tengah (template/titik kurang/state salah) = tidak ada
+	-- yang berubah untuk bagian yang gagal, jadi quest tidak pernah buntu.
+	-- Hanya untuk objective ber-counter, bukan persistent/replenish, dan assignment SAME.
+	local function returnToWorld(count: number): number
+		if counterId == nil or persistent or replenish or config.assignment ~= "SAME" then
+			Log.warn(TAG, string.format("%s: returnToWorld tidak didukung untuk konfigurasi ini", config.id))
+			return 0
+		end
+		if count ~= count or count < 1 or count % 1 ~= 0 then
+			Log.warn(TAG, string.format("%s: returnToWorld jumlah tidak valid: %s", config.id, tostring(count)))
+			return 0
+		end
+		local questState = QuestService.getState(config.questId)
+		if questState == nil or not isActiveState(questState) then
+			return 0
+		end
+		local container = findSpawnContainer(config.spawnFolder)
+		if not container then
+			Log.warn(TAG, string.format("dependency belum ada: Workspace.QuestObjects.%s", config.spawnFolder))
+			return 0
+		end
+
+		-- Titik yang masih berisi pickup tidak boleh dipakai lagi (dua pickup di satu titik = membingungkan + bisa tumpang tindih).
+		local occupied: { [Instance]: boolean } = {}
+		for _, pickup in pickups do
+			occupied[pickup.spawn] = true
+		end
+
+		local folder = RandomSpawnService.getRuntimeFolder()
+		local created: { Model } = {}
+		for _, spawn in RandomSpawnService.pickSpawns(container, count, occupied) do
+			local model = placePickup(spawn, config.itemIds[1], folder)
+			if model then
+				table.insert(created, model)
+			end
+		end
+		if #created == 0 then
+			return 0
+		end
+
+		if QuestService.removeProgress(config.questId, counterId, #created) == nil then
+			-- Progres tidak bisa dikurangi (state berubah): batalkan semua pickup baru agar tidak ada item ganda di dunia.
+			for _, model in created do
+				pickups[model] = nil
+				model:Destroy()
+			end
+			return 0
+		end
+
+		Log.info(TAG, string.format("%s: %d item dikembalikan ke dunia di titik acak", config.id, #created))
+		return #created
+	end
+	handles[config.id] = { returnToWorld = returnToWorld }
 
 	InteractionService.register(config.interactionId, onInteract)
 	QuestService.onStateChanged(function(questId: string, fromState: string, toState: string)
@@ -305,6 +373,23 @@ local function register(config: CollectionConfig.Collection)
 			clear()
 		end
 	end)
+end
+
+-- Daftarkan pendengar yang dipanggil SETELAH pemain berhasil mengambil item dari sebuah objective (ADR-048).
+-- Dijalankan lewat task.spawn: state quest bisa sudah berubah saat pendengar berjalan (mis. pickup terakhir
+-- memindahkan quest ke KELOR_COMPLETE), jadi pendengar wajib memeriksa ulang state yang ia butuhkan.
+function CollectibleService.onCollected(listener: CollectedListener)
+	table.insert(collectedListeners, listener)
+end
+
+-- Kembalikan `count` item objective `collectionId` ke dunia (titik acak bebas) dan kurangi progres party. Lihat returnToWorld.
+function CollectibleService.returnToWorld(collectionId: string, count: number): number
+	local handle = handles[collectionId]
+	if not handle then
+		Log.warn(TAG, "objective koleksi tidak dikenal: " .. tostring(collectionId))
+		return 0
+	end
+	return handle.returnToWorld(count)
 end
 
 function CollectibleService.init()

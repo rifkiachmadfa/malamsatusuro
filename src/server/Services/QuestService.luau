@@ -215,4 +215,47 @@ function QuestService.addProgress(questId: string, counterId: string, amount: nu
 	return value
 end
 
+-- Kurangi progres party (ADR-048): item yang sudah dihitung diambil kembali (mis. Kelor dirampas Kuntilanak).
+-- Cermin addProgress: hanya diterima saat quest berada di requiredState, nilai dibatasi minimal 0.
+-- TIDAK pernah memutar balik state quest; state yang sudah melewati requiredState (mis. KELOR_COMPLETE) menolak.
+-- Return nilai counter terbaru, atau nil jika ditolak.
+function QuestService.removeProgress(questId: string, counterId: string, amount: number): number?
+	local def = getDef(questId)
+	if not def then
+		Log.warn(TAG, "quest tidak dikenal: " .. tostring(questId))
+		return nil
+	end
+
+	local counterDef = def.counters[counterId]
+	if not counterDef then
+		Log.warn(TAG, string.format("counter tidak ada (%s.%s)", questId, tostring(counterId)))
+		return nil
+	end
+
+	if amount ~= amount or amount < 1 or amount % 1 ~= 0 then
+		Log.warn(TAG, string.format("amount tidak valid (%s.%s): %s", questId, counterId, tostring(amount)))
+		return nil
+	end
+
+	if questStates[questId] ~= counterDef.requiredState then
+		Log.warn(
+			TAG,
+			string.format(
+				"pengurangan progres ditolak (%s.%s): state %s, butuh %s",
+				questId,
+				counterId,
+				tostring(questStates[questId]),
+				counterDef.requiredState
+			)
+		)
+		return nil
+	end
+
+	local value = math.max(0, counters[questId][counterId] - amount)
+	counters[questId][counterId] = value
+	publishCounter(questId, counterId)
+	Log.info(TAG, string.format("progres dikurangi (%s.%s): %d/%d", questId, counterId, value, counterDef.target))
+	return value
+end
+
 return table.freeze(QuestService)

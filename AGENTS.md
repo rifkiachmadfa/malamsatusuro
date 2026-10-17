@@ -36,6 +36,12 @@ Project: MALAM SURO: DUSUN KELABU (Roblox, horor co-op 1–4 pemain, bahasa Indo
 ## Cutscene (ADR-043)
 - Scene kamera = modul plugin Open Cutscene Editor di ServerStorage/CutScenes (objek Studio). Baca `.ai/CUTSCENE_GUIDE.md` sebelum membuat atau memutar cutscene. Server hanya memicu lewat `CutsceneService.play(participants)` (yield sampai selesai, tidak mengubah state pemain); kamera berjalan di client. Pemilik state CUTSCENE = pemanggil (saat ini `FinalRitualService`). Tidak ada cutscene saat join atau trigger tes (dihapus).
 
+## Hantu (ADR-048)
+- Semua hantu lewat Ghost Encounter System: `GhostService` (host generik, jangan diisi logika khas hantu), data di `server/Config/GhostConfig`, aturan di `server/Ghosts/<behavior>.luau`. Hantu baru = entri config + modul perilaku; angka dan teks TIDAK di-hardcode di kode perilaku.
+- Hantu non-combat, server-authoritative. Hukuman HANYA lewat `host.punish` -> `FailureService.fail` (reason per hantu di `KnockConfig.Reason`); jangan memanggil KnockService/respawn langsung dari perilaku. Hantu hanya menghukum pemain berstatus NORMAL.
+- Merampas/mengembalikan item objective koleksi lewat `CollectibleService.returnToWorld` (menjaga progres + pickup + item konsisten), bukan menyalin logika spawn.
+- Verifikasi logika hantu dengan `tools/harness` (wajib lulus + mutation test) SEBELUM tes Studio; harness bukan pengganti tes Studio.
+
 ## Alur task
 AUDIT -> CURRENT STATE -> PLAN -> IMPLEMENT -> TEST -> DEBUG -> REVIEW DIFF -> UPDATE .ai/ -> COMMIT -> HANDOFF
 

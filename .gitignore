@@ -5,3 +5,5 @@
 *.rbxlx.lock
 
 sourcemap.json
+# Output harness offline (dibuat ulang oleh tools/harness/gen.py)
+tools/harness/harness_*.luau

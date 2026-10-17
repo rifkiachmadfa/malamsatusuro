@@ -54,6 +54,29 @@ local function soloAftermath(player: Player, reason: string, questId: string)
 	NoticeService.send(player, Config.SOLO_FAIL_NOTICE)
 end
 
+-- Ada rekan lain yang masih berdiri (belum knock)? Pemain yang sedang jumpscare (CUTSCENE) atau menyadarkan rekan
+-- (REVIVING) dihitung berdiri: mereka akan kembali NORMAL dan bisa menolong.
+local function hasStandingTeammate(player: Player): boolean
+	for _, other in Players:GetPlayers() do
+		if other ~= player then
+			local state = GameManager.getPlayerState(other)
+			if state ~= nil and state ~= PlayerState.KNOCKED then
+				return true
+			end
+		end
+	end
+	return false
+end
+
+-- Hukuman ringan (ADR-048): jumpscare sudah lewat; respawn tanpa reset quest dan tanpa knock.
+-- CATATAN: respawn me-reset Backpack (ADR-018), sama seperti jalur solo yang sudah ada.
+local function respawnOnlyAftermath(player: Player, reason: string)
+	Log.info(TAG, string.format("%s sendirian saat gagal (%s): respawn tanpa reset quest", player.Name, reason))
+	player:LoadCharacter()
+	GameManager.setPlayerState(player, PlayerState.NORMAL)
+	NoticeService.send(player, Config.ALONE_RESPAWN_NOTICE)
+end
+
 -- Urutan gagal: kunci pemain (CUTSCENE) -> jumpscare di layarnya -> hukuman (solo/multiplayer).
 -- Pemain berstatus bukan NORMAL (sedang gagal/knock/cutscene) diabaikan, jadi tidak bisa ganda.
 local function failureSequence(player: Player, reason: string, questId: string)
@@ -68,8 +91,10 @@ local function failureSequence(player: Player, reason: string, questId: string)
 		return
 	end
 
-	-- Ukuran party dinilai SETELAH jumpscare (pemain lain bisa keluar selama jumpscare).
-	if PartyService.isSolo() then
+	-- Ukuran party dinilai SETELAH jumpscare (pemain lain bisa keluar/knock selama jumpscare).
+	if Config.RESPAWN_ONLY_WHEN_ALONE[reason] and (PartyService.isSolo() or not hasStandingTeammate(player)) then
+		respawnOnlyAftermath(player, reason)
+	elseif PartyService.isSolo() then
 		soloAftermath(player, reason, questId)
 	else
 		GameManager.setPlayerState(player, PlayerState.NORMAL)

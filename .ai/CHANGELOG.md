@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 2026-10-17 — Phase 9: Ghost System modular + Kuntilanak (ADR-048) (belum dites di Studio)
+- Arahan user: sistem ghost modular (Kuntilanak/Pocong/Genderuwo), sementara hanya Kuntilanak; desain Kuntilanak user menggantikan butir ADR-047
+- BARU: server/Services/GhostService, server/Config/GhostConfig, server/Ghosts/Kuntilanak, tools/harness (harness offline + README)
+- UBAH: QuestService (+removeProgress), CollectibleService (+onCollected, +returnToWorld; placePickup mengembalikan Model), FailureService + FailureConfig (RESPAWN_ONLY_WHEN_ALONE), KnockConfig (GHOST_KUNTILANAK), init.server (GhostService.init), .gitignore
+- Verifikasi: harness offline 17 skenario lulus, 7 mutasi tertangkap; luau-compile semua file OK; luau-lsp tanpa diagnostik nyata baru. Studio BELUM dites
+- Temuan: BUG-002 (party wipe tanpa kode). Dokumen: ADR-048, TASKS 9.1/9.2, CURRENT_STATE, SESSION_HANDOFF, AGENTS
+
 ## 2026-10-16 — Rencana Phase 9 baru: Ghost Encounter System; Phase lama 9–12 dinomori ulang jadi 10–13 (ADR-047)
 - Arahan user: masukkan hasil diskusi desain horor sebagai phase baru setelah Phase 8; Horror Polish dan seterusnya bergeser
 - Tidak ada perubahan kode. Dokumen: TASKS (Phase 9 baru + renumber), DECISIONS (ADR-047), CURRENT_STATE, SESSION_HANDOFF, GAME_CONTEXT (bagian 14A), BUGS (rujukan Phase 11)

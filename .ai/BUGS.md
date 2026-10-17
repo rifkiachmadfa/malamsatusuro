@@ -46,6 +46,41 @@ Affected Players:
 Regression Risk:
 Rendah. Tidak menyentuh pickup Kelor, QuestService, atau ItemService.
 
+## BUG-002 — Party wipe tidak punya kode (Task 6.5 tertulis selesai)
+
+Status:
+OPEN (temuan audit kode 2026-10-17; belum direproduksi di Studio)
+
+Severity:
+HIGH (multiplayer: semua pemain knock = party buntu)
+
+System:
+KnockService / ReviveService / GravePuzzleService / QuestConfig
+
+Steps to Reproduce:
+Multiplayer, semua pemain knock (mis. 2 pemain gagal di makam Kantil, atau diserang hantu).
+
+Expected:
+TASKS Task 6.5 / ADR-031/032: semua knock = party wipe (CANTIL_PUZZLE -> SEARCHING_FLOWERS, makam kosong, bunga direset).
+
+Actual:
+Pencarian kode: `KnockService.onAllKnocked` TIDAK punya pendengar di mana pun; tidak ada kode yang memanggil transisi wipe. Hanya komentar yang menyebut party wipe. Tanpa Minyak Zaitun/rekan berdiri, pemain tidak bisa pulih.
+
+Root Cause:
+Pendengar `onAllKnocked` tidak pernah dipasang (kemungkinan tertinggal saat Task 6.5). Belum diverifikasi di Studio.
+
+Fix:
+Belum dikerjakan (di luar scope Phase 9 Kuntilanak). Mitigasi hantu: pemain terakhir berdiri tidak di-knock oleh hantu (ADR-048).
+
+Verification:
+-
+
+Affected Players:
+2 / 3 / 4 (solo memakai jalur FailureService sendiri)
+
+Regression Risk:
+Sedang: menyentuh GravePuzzleService/QuestService/CollectibleService reset.
+
 ## Risiko diketahui (belum bug terkonfirmasi)
 - Pemegang kunci mati/respawn: Backpack reset, kunci hilang (ADR-018, dibahas Phase 5/6). Pemegang keluar game sudah ditangani.
 - src/server/Services/PemanduService.luau adalah kode mati (tidak di-require, mengacu QuestConfig.Order/def.pemandu yang tidak ada). Usul: hapus setelah disetujui.

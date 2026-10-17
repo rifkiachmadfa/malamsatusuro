@@ -808,3 +808,36 @@ Consequences / batasan (jujur):
 
 Status:
 ACCEPTED (desain, atas arahan user 2026-10-16). BELUM diimplementasi; tidak ada kode yang berubah.
+
+
+## ADR-048 — GHOST SYSTEM MODULAR + KUNTILANAK (HANTU PERTAMA); MENGGANTIKAN BUTIR KUNTILANAK DI ADR-047
+
+Context:
+
+Arahan user 2026-10-17: masuk Phase 9, buat sistem ghost MODULAR untuk Kuntilanak (Kelor), Pocong (Kembang), Genderuwo (Gamelan), tetapi sementara hanya Kuntilanak. Desain Kuntilanak dari user BERBEDA dari butir Kuntilanak di ADR-047 (pemicu Kelor ke-2/ke-4 + counter "semua pemain diam"); instruksi terbaru user yang dipakai. Butir Pocong dan Genderuwo di ADR-047 TIDAK diubah.
+
+Decision:
+
+- ARSITEKTUR MODULAR: `GhostService` = host generik (muat perilaku, buat/hapus body, satu loop tick, batas `maxActive`, helper `move`/`punish`/`param`). `Config/GhostConfig` = data per hantu (pengikat objek, teks, suara, angka). `Ghosts/<behavior>.luau` = aturan khas hantu (kontrak: `init(host)`, `update(host, ghost, dt)`, opsional `onDespawn`). Hantu baru = entri GhostConfig + `GhostConfig.ORDER` + satu modul perilaku, TANPA mengubah GhostService. Modul perilaku yang gagal dimuat/error dilewati dengan warning (tidak menjatuhkan game).
+- ATURAN KUNTILANAK (angka di `GhostConfig.Ghosts.Kuntilanak.params`, semuanya ASUMSI):
+  - Muncul saat pemain mengambil Daun Kelor, di titik `Workspace.QuestObjects.KuntilanakSpawn` TERDEKAT (garis lurus) dari titik Kelor yang diambil. Maksimal 1 hantu.
+  - Hanya mengejar pemain NORMAL yang membawa Daun Kelor (Backpack atau tangan). Pemain tanpa Kelor diabaikan.
+  - Tertangkap (<= catchRadius): SEMUA Kelor korban dirampas, kembali ke dunia di titik acak yang sedang bebas, progres party turun sebanyak yang dikembalikan; jumpscare + knock. Hanya Kelor itu yang dicari lagi. Hantu lalu menghilang.
+  - Lawan: pemain lain (NORMAL/REVIVING) dalam `protectRadius` dari korban = terlindungi; hantu menahan jarak lalu menyerah setelah `repelSeconds`. Solo (atau rekan lain sudah knock): bertahan `soloChaseSeconds` tanpa tertangkap lalu hantu menyerah.
+  - Aktif hanya selama quest KERIS di state `SEARCHING_KELOR`; pickup ke-4 (KELOR_COMPLETE) tidak memanggilnya dan hantu aktif menghilang saat state berganti.
+- API GENERIK BARU (bukan salinan): `QuestService.removeProgress` (cermin addProgress; hanya di requiredState, minimal 0, tidak memutar balik state), `CollectibleService.onCollected` (hook setelah pickup) dan `CollectibleService.returnToWorld` (kembalikan item ke titik bebas + kurangi progres, atomik tanpa yield; hanya objective ber-counter, bukan persistent/replenish, assignment SAME).
+- KEBIJAKAN HUKUMAN: reason baru `GHOST_KUNTILANAK` (KnockConfig). `FailureConfig.RESPAWN_ONLY_WHEN_ALONE`: untuk reason terdaftar, solo ATAU tidak ada rekan yang masih berdiri = jumpscare + respawn TANPA reset quest dan TANPA knock; selain itu knock. Jalur WRONG_FLOWER/GAMELAN_FAIL tidak berubah.
+- Gerak: melayang lurus (tanpa pathfinding, menembus dinding), kecepatan 12 < pemain 16. Hantu hanya menghukum pemain berstatus NORMAL, jadi tidak memotong sesi puzzle/revive/cutscene.
+
+Consequences / batasan (jujur):
+
+- Prasyarat 9.0 (knock membatalkan sesi puzzle/dialog/gamelan/revive) BELUM dikerjakan; tidak dibutuhkan Kuntilanak karena hanya menangkap pemain NORMAL, tetapi WAJIB sebelum hantu yang bisa menangkap pemain di tengah sesi (Genderuwo).
+- Party wipe untuk quest Keris TIDAK ADA (lihat BUG-002; `onAllKnocked` tanpa pendengar). Karena itu pemain terakhir yang berdiri dibuat respawn-only agar party tidak buntu.
+- Respawn me-reset Backpack (ADR-018): item lain pemain tersebut (mis. Minyak Zaitun, Kunci bila ada) ikut hilang pada jalur respawn-only, sama seperti jalur solo yang sudah ada.
+- Hantu berhenti saat KELOR_COMPLETE. Mempertahankannya sampai Kelor diserahkan ke Pemandu (ADR-046) butuh rollback state quest; ditunda menunggu keputusan user.
+- Jumpscare sementara memakai Pocong (DEFAULT_JUMPSCARE); body hantu PLACEHOLDER (Part putih) bila `ServerStorage/GhostModels/Kuntilanak` belum ada; suara kosong; semua teks PLACEHOLDER.
+- Diuji HANYA lewat harness offline (`tools/harness`, 17 skenario + 7 mutasi tertangkap). Studio/Output/jarak nyata/lag/multiplayer nyata BELUM dites.
+- Dependency Studio (tidak ada di Git): `Workspace.QuestObjects.KuntilanakSpawn` (>= 1 Part, rekomendasi 4), model Kuntilanak di `ServerStorage/GhostModels` (+ entri JumpscareConfig bila ingin jumpscare sendiri), aset suara tawa.
+
+Status:
+ACCEPTED atas arahan user 2026-10-17. Kode ditulis; harness offline lulus; BELUM dites di Studio.

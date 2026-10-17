@@ -1,6 +1,6 @@
 # SESSION HANDOFF
 
-Last Updated: 2026-10-16 (rencana Phase 9 Ghost Encounters, ADR-047; sebelumnya 2026-10-11 Phase 8 ADR-043)
+Last Updated: 2026-10-17 (Phase 9 Ghost System + Kuntilanak, ADR-048; sebelumnya 2026-10-16 rencana ADR-047; sebelumnya 2026-10-11 Phase 8 ADR-043)
 
 ## Ringkasan
 - Fase aktif: PHASE 5 — KEMBANG KANTIL HITAM (belum dimulai). Phase 1–4 selesai (Phase 4 dengan catatan: 3–4 pemain di Phase 11). Quest KERIS lengkap: Kelor -> kunci -> peti -> memory puzzle -> keris -> simpan di RitualCollection.
@@ -13,6 +13,18 @@ Last Updated: 2026-10-16 (rencana Phase 9 Ghost Encounters, ADR-047; sebelumnya 
 
 ## Rencana berikutnya (ADR-047)
 - PHASE 9 = GHOST ENCOUNTERS (Kuntilanak/Kelor, Pocong/Kembang, Genderuwo + Lonceng/Gamelan), dikerjakan satu hantu per langkah mulai dari prasyarat 9.0 (knock membatalkan sesi). Phase lama 9–12 kini 10–13. Klimaks final belum diputuskan. Baca ADR-047 sebelum coding.
+
+## Phase 9 — Kuntilanak (ADR-048): yang harus ada di Studio dan cara tes
+Dependency (tidak ada di Git): `Workspace.QuestObjects.KuntilanakSpawn` berisi >= 1 Part (rekomendasi 4, tersebar); opsional model `ServerStorage/GhostModels/Kuntilanak` (tanpa model = body PLACEHOLDER putih + warning) dan entri `JumpscareConfig.Ghosts` + `FailureConfig.JumpscareByReason.GHOST_KUNTILANAK` untuk jumpscare sendiri (sementara Pocong).
+Tes Studio (PERLU 2 pemain untuk butir 3-5):
+1. Solo: mulai quest Keris, ambil 1 Daun Kelor -> notifikasi tawa, hantu muncul di KuntilanakSpawn terdekat, diam ~3 dtk lalu mengejar. Diam = tertangkap: jumpscare, Kelor hilang dan muncul lagi di titik lain, progres turun, respawn, quest TIDAK reset.
+2. Solo: ambil Kelor lalu berlari terus ~25 dtk -> hantu menyerah, Kelor tetap.
+3. 2 pemain: pembawa berdiri dekat rekan (< ~15 studs) -> hantu tidak menangkap dan menyerah ~6 dtk. Rekan menjauh -> pembawa tertangkap = KNOCK (bukan respawn).
+4. Pemain tanpa Kelor tidak dikejar. Pickup ke-4 tidak memunculkan hantu; hantu aktif hilang saat Kelor 4/4.
+5. Rekan sudah knock, pembawa terakhir tertangkap -> respawn (tidak knock).
+Cek Output: tag [GhostService], [Kuntilanak], [CollectibleService] tanpa error. Harness offline: lihat `tools/harness/README.md`.
+Angka (kecepatan, radius, durasi) ASUMSI di `GhostConfig.Ghosts.Kuntilanak.params`; setel lewat tes, bukan kode.
+Berikutnya: Pocong (Task 9.3) sebagai modul `Ghosts/Pocong` + entri GhostConfig; prasyarat 9.0 wajib sebelum Genderuwo. BUG-002 (party wipe) sebaiknya dibereskan sebelum Pocong karena Pocong memakai knock.
 
 ## Cara kerja saat ini
 - Chat Claude TANPA MCP Studio. AI hanya melihat GitHub dan file yang dikirim; hasil test Studio/Output ditempel oleh user.

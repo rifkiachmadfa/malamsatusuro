@@ -1,7 +1,7 @@
 # CURRENT PROJECT STATE
 
 Last Updated:
-2026-10-16
+2026-10-17
 
 ## CURRENT PHASE
 
@@ -17,7 +17,7 @@ PHASE 7 — KAIN KAFAN / GAMELAN: DITUTUP user (commit 36b9c74); hasil tes Studi
 PHASE 8 — FINAL RITUAL: SEDANG BERJALAN (ADR-040, ADR-043). Kode ditulis termasuk cutscene kamera final, harness offline lulus; BELUM dites di Studio.
 
 
-PHASE 9 — GHOST ENCOUNTERS: DIRENCANAKAN (ADR-047, desain disetujui user 2026-10-16). BELUM ada kode. Tiga hantu non-combat terikat quest: Kuntilanak (Kelor), Pocong (Kembang), Genderuwo (Gamelan) + item Lonceng. Rincian task di TASKS.md.
+PHASE 9 — GHOST ENCOUNTERS: SEDANG BERJALAN (ADR-047 desain, ADR-048 implementasi). Kerangka modular `GhostService` + Kuntilanak (Kelor) ditulis, lulus harness offline (`tools/harness`), BELUM dites di Studio. Pocong dan Genderuwo belum dibuat. Rincian di TASKS.md.
 PHASE 10 — HORROR POLISH (dulunya Phase 9): BELUM dimulai. Phase 11 = Multiplayer Testing, 12 = Optimization, 13 = Final Build (dinomori ulang oleh ADR-047).
 
 ## TOOLCHAIN
@@ -123,6 +123,9 @@ Kode tes cutscene (join ADR-041, trigger ProximityPrompt ADR-042) DIHAPUS. `Cuts
 
 ## UPDATE 2026-10-16 (rencana Phase 9, ADR-047)
 Tidak ada perubahan kode. Hasil audit horor: ancaman baru muncul sebagai hukuman (jumpscare Pocong dipakai bunga salah dan gamelan gagal), belum ada ancaman saat eksplorasi, `KnockConfig.Reason.GHOST` masih RESERVED. Diputuskan user: sistem Ghost Encounter (3 hantu, aturan beda, terikat quest) menjadi Phase 9; Horror Polish digeser ke Phase 10. Klimaks final (Task 9.6) belum diputuskan. Risiko terbuka (4) di bagian Phase 8 (knock dipulihkan otomatis saat FINAL_RITUAL) ditinjau ulang di Phase 9 yang baru.
+
+## UPDATE 2026-10-17 (Phase 9: Ghost System modular + Kuntilanak, ADR-048)
+KODE BARU: `server/Services/GhostService`, `server/Config/GhostConfig`, `server/Ghosts/Kuntilanak`; API generik `QuestService.removeProgress`, `CollectibleService.onCollected/returnToWorld`; `FailureConfig.RESPAWN_ONLY_WHEN_ALONE`; reason `GHOST_KUNTILANAK`; `init.server` memanggil `GhostService.init()` terakhir. Harness offline `tools/harness` (17 skenario lulus; 7 mutasi tertangkap). Analisis tipe luau-lsp: tidak ada diagnostik nyata baru (noise `WaitForChild` sama dengan baseline). BELUM dites di Studio. Dependency Studio: `Workspace.QuestObjects.KuntilanakSpawn` (>= 1 Part), model `ServerStorage/GhostModels/Kuntilanak`, suara. TEMUAN: party wipe (Task 6.5) tidak punya kode (BUG-002).
 
 ## NEXT ACTION
 
