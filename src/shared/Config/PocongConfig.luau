@@ -5,8 +5,12 @@
 local PocongConfig = {}
 
 -- Objek di Workspace (dibuat user di Studio, tidak ada di Git)
-PocongConfig.SPAWN_CONTAINER = "PocongSpawn" -- anak langsung = titik spawn (1-4): BasePart / Model / Attachment
-PocongConfig.TORCH_CONTAINER = "TorchCounter" -- anak langsung (atau anak Folder) = obor; atau obor tunggal
+-- Lokasi dicari berurutan: (1) path persis dari Workspace, (2) pencarian rekursif berdasar nama.
+PocongConfig.SPAWN_PATH = table.freeze({ "QuestObjects", "PocongSpawn" }) -- anak langsung = PocongSpawn_1..4 (BasePart / Model / Attachment)
+PocongConfig.SPAWN_CONTAINER = "PocongSpawn"
+PocongConfig.TORCH_PATH = table.freeze({ "QuestObjects", "TorchCounter" }) -- anak langsung (atau anak Folder) = obor; atau obor tunggal
+PocongConfig.TORCH_CONTAINER = "TorchCounter"
+PocongConfig.DEBUG_LOG = true -- print/warn diagnosa di Output; matikan setelah tes lulus
 PocongConfig.TORCH_TAG = "TorchCounter" -- alternatif: obor bertag CollectionService
 PocongConfig.TORCH_RADIUS_ATTRIBUTE = "Radius" -- Attribute number di obor, override radius default
 PocongConfig.GHOST_FOLDER = "Ghosts" -- folder runtime di Workspace untuk Pocong aktif
@@ -25,6 +29,11 @@ PocongConfig.FLOWER_KEYS = table.freeze({
 	"Mawar Putih",
 	"Kantil Kuning",
 })
+
+-- Pemicu spawn mandiri: server memantau Tool bunga yang MASUK ke Backpack/Character pemain,
+-- jadi Pocong tetap spawn walau CollectibleService belum memanggil onFlowerCollected.
+PocongConfig.WATCH_BACKPACK = true
+PocongConfig.TRIGGER_DEDUPE_SECONDS = 1 -- pemicu ganda dari satu pemain dalam jangka ini dianggap satu
 
 -- Spawn
 PocongConfig.MAX_ACTIVE = 4 -- juga dibatasi jumlah titik PocongSpawn

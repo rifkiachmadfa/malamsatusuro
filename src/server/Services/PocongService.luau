@@ -47,9 +47,31 @@ local holderPlayers = {}
 local lastHolderRefresh = -math.huge
 local warnedPlaceholder = false
 
-local FLOWER_SET = {}
+local lastTriggerAt = {}
+local seenTools = setmetatable({}, { __mode = "k" })
+local watchedContainers = setmetatable({}, { __mode = "k" })
+
+-- Pencocokan longgar: huruf kecil, buang spasi/simbol. "Mawar Merah" == "MawarMerah" == "kembang_mawar_merah".
+local function normalize(text)
+	return (string.lower(text):gsub("[^%w]", ""))
+end
+
+local FLOWER_NORMALIZED = {}
 for _, key in CFG.FLOWER_KEYS do
-	FLOWER_SET[key] = true
+	table.insert(FLOWER_NORMALIZED, normalize(key))
+end
+
+local function matchesFlowerKey(text)
+	local n = normalize(text)
+	if n:find("hitam", 1, true) then
+		return false -- Kembang Kantil Hitam = hadiah, bukan bunga yang dicari
+	end
+	for _, key in FLOWER_NORMALIZED do
+		if n:find(key, 1, true) then
+			return true
+		end
+	end
+	return false
 end
 
 -- ============================================================
@@ -93,10 +115,10 @@ local function isFlowerTool(tool)
 		return false
 	end
 	local id = tool:GetAttribute("ItemId")
-	if typeof(id) == "string" and FLOWER_SET[id] then
+	if typeof(id) == "string" and matchesFlowerKey(id) then
 		return true
 	end
-	return FLOWER_SET[tool.Name] == true
+	return matchesFlowerKey(tool.Name)
 end
 
 local function defaultHasFlower(player)
@@ -150,9 +172,27 @@ local function toEntry(inst)
 	return nil
 end
 
+local function debugLog(...)
+	if CFG.DEBUG_LOG then
+		print("[PocongService]", ...)
+	end
+end
+
+-- Cari container: path persis dari Workspace dulu, lalu pencarian rekursif berdasar nama.
+local function findContainer(path, name)
+	local node = Workspace
+	for _, part in path do
+		node = node and node:FindFirstChild(part)
+	end
+	if node and node ~= Workspace then
+		return node
+	end
+	return Workspace:FindFirstChild(name, true)
+end
+
 local function getSpawnPoints()
 	local list = {}
-	local container = Workspace:FindFirstChild(CFG.SPAWN_CONTAINER)
+	local container = findContainer(CFG.SPAWN_PATH, CFG.SPAWN_CONTAINER)
 	if not container then
 		return list
 	end
@@ -191,7 +231,7 @@ local function getTorches()
 		table.insert(torches, { pos = entry.pos, radius = radius })
 	end
 
-	local container = Workspace:FindFirstChild(CFG.TORCH_CONTAINER)
+	local container = findContainer(CFG.TORCH_PATH, CFG.TORCH_CONTAINER)
 	if container then
 		if container:IsA("Folder") then
 			for _, child in container:GetChildren() do
@@ -415,6 +455,7 @@ local function stepPocong(p, now, dt, holders, torches, rayParams)
 	if #holders == 0 then
 		p.noTargetSince = p.noTargetSince or now
 		if now - p.noTargetSince >= CFG.NO_TARGET_GRACE_SECONDS then
+			debugLog("Pocong", p.id, "tenggelam: tidak ada pemegang bunga yang valid (Tool bunga tidak terdeteksi / pemain knock)")
 			setState(p, "SINKING")
 			p.stateUntil = now + CFG.SINK_SECONDS
 			return false
@@ -530,14 +571,26 @@ end
 -- Panggil SERVER-SIDE tepat setelah bunga berhasil diberikan ke pemain (setelah validasi + ItemService.give).
 -- Mengembalikan true bila sebuah Pocong dimunculkan.
 function PocongService.onFlowerCollected(picker)
+	debugLog("onFlowerCollected dipanggil oleh", picker and picker.Name or "nil", "| aktif:", #active)
+	if picker then
+		local nowTrigger = os.clock()
+		local lastTrigger = lastTriggerAt[picker]
+		if lastTrigger and nowTrigger - lastTrigger < CFG.TRIGGER_DEDUPE_SECONDS then
+			debugLog("diabaikan: pemicu ganda <", CFG.TRIGGER_DEDUPE_SECONDS, "dtk")
+			return false
+		end
+		lastTriggerAt[picker] = nowTrigger
+	end
 	if #active >= CFG.MAX_ACTIVE then
+		debugLog("batal: MAX_ACTIVE tercapai")
 		return false
 	end
 	local points = getSpawnPoints()
 	if #points == 0 then
-		warn("[PocongService] Workspace." .. CFG.SPAWN_CONTAINER .. " kosong/tidak ada; Pocong tidak muncul")
+		warn("[PocongService] Titik spawn tidak ditemukan (dicari: Workspace." .. table.concat(CFG.SPAWN_PATH, ".") .. " lalu nama '" .. CFG.SPAWN_CONTAINER .. "'); Pocong tidak muncul")
 		return false
 	end
+	debugLog("titik spawn ditemukan:", #points)
 
 	local occupied = {}
 	for _, p in active do
@@ -570,7 +623,8 @@ function PocongService.onFlowerCollected(picker)
 		end
 	end
 
-	spawnPocong(chosen, picker)
+	local spawned = spawnPocong(chosen, picker)
+	debugLog("Pocong spawn di", chosen.inst:GetFullName(), "| id:", spawned.id)
 	return true
 end
 
@@ -587,10 +641,64 @@ function PocongService.getActiveCount()
 	return #active
 end
 
+-- Pemantau Tool bunga: pemicu spawn mandiri (tidak bergantung pada wiring CollectibleService).
+local function onToolAdded(player, tool)
+	if not tool:IsA("Tool") then
+		return
+	end
+	local isFlower = isFlowerTool(tool)
+	debugLog("Tool masuk ke", player.Name, "| nama:", tool.Name, "| ItemId:", tool:GetAttribute("ItemId"), "| bunga?", isFlower)
+	if not isFlower or seenTools[tool] then
+		return
+	end
+	seenTools[tool] = true
+	PocongService.onFlowerCollected(player)
+end
+
+local function watchContainer(player, container)
+	if watchedContainers[container] then
+		return
+	end
+	watchedContainers[container] = true
+	container.ChildAdded:Connect(function(child)
+		onToolAdded(player, child)
+	end)
+	for _, child in container:GetChildren() do
+		if child:IsA("Tool") and isFlowerTool(child) then
+			seenTools[child] = true -- sudah dipegang sebelum pemantau aktif: tidak memicu spawn
+		end
+	end
+end
+
+local function watchPlayer(player)
+	local function watchBackpack()
+		local backpack = player:WaitForChild("Backpack", 10)
+		if backpack then
+			watchContainer(player, backpack)
+		end
+	end
+	task.spawn(watchBackpack)
+	local function onCharacter(character)
+		watchContainer(player, character)
+		task.spawn(watchBackpack) -- Backpack dibuat ulang saat respawn
+	end
+	player.CharacterAdded:Connect(onCharacter)
+	if player.Character then
+		onCharacter(player.Character)
+	end
+end
+
 function PocongService.start()
 	if connection then
 		return
 	end
+	if CFG.WATCH_BACKPACK then
+		for _, player in Players:GetPlayers() do
+			watchPlayer(player)
+		end
+		Players.PlayerAdded:Connect(watchPlayer)
+	end
+	debugLog("start() | spawn:", #getSpawnPoints(), "| obor:", #getTorches(), "| template model:", resolveTemplate() ~= nil)
 	getGhostFolder()
 	connection = RunService.Heartbeat:Connect(onHeartbeat)
 	Players.PlayerRemoving:Connect(function(player)
