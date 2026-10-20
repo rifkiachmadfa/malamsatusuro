@@ -130,15 +130,17 @@ local function play(ghostId: string)
 			created.Parent = humanoid
 			animator = created
 		end
-		local animation = Instance.new("Animation")
-		animation.AnimationId = def.animationId
-		local ok, result = pcall(animator.LoadAnimation, animator, animation)
-		if ok and result then
-			track = result :: AnimationTrack
-			track.Priority = Enum.AnimationPriority.Action
-			track:Play()
-		else
-			Log.warn(TAG, "animasi jumpscare gagal dimuat: " .. def.animationId)
+		if def.animationId ~= "" then
+			local animation = Instance.new("Animation")
+			animation.AnimationId = def.animationId
+			local ok, result = pcall(animator.LoadAnimation, animator, animation)
+			if ok and result then
+				track = result :: AnimationTrack
+				track.Priority = Enum.AnimationPriority.Action
+				track:Play()
+			else
+				Log.warn(TAG, "animasi jumpscare gagal dimuat: " .. def.animationId)
+			end
 		end
 	else
 		Log.warn(TAG, "model tanpa Humanoid, animasi dilewati: " .. def.modelName)

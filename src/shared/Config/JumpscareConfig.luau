@@ -44,6 +44,22 @@ JumpscareConfig.Ghosts = table.freeze({
 		soundId = "rbxasset://sounds/bass.mp3", -- PLACEHOLDER (suara bawaan Roblox): ganti dengan aset jumpscare asli
 		soundVolume = 1,
 	} :: GhostDef,
+	Kuntilanak = {
+		modelName = "Kuntilanak",
+		animationId = "", -- TODO: rbxassetid:// animasi jumpscare Kuntilanak (R15). Kosong = pose diam model
+		duration = 2.0,
+		yawOffset = 0, -- ubah ke 180 bila wajah Kuntilanak membelakangi kamera
+		fov = 70,
+		distanceStartScale = 1.6,
+		distanceEndScale = 0.6,
+		lungeTime = 0.35,
+		lookOffsetScale = 0,
+		shake = 14,
+		flashTime = 0.25,
+		fadeOutTime = 0.3,
+		soundId = "rbxasset://sounds/bass.mp3", -- PLACEHOLDER: ganti dengan suara jumpscare Kuntilanak
+		soundVolume = 1,
+	} :: GhostDef,
 } :: { [string]: GhostDef })
 
 return table.freeze(JumpscareConfig)

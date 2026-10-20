@@ -26,11 +26,13 @@ local PocongService = {}
 -- ============================================================
 -- Dependensi (disuntik)
 -- ============================================================
-local knockFn = nil -- (player: Player, reason: string) -> ()
+local failFn = nil -- (player: Player) -> ()  PREFERRED: jumpscare lalu knock (FailureService.fail)
+local knockFn = nil -- (player: Player, reason: string) -> ()  fallback bila failFn tidak dipasang (tanpa jumpscare)
 local isPlayerNormalFn = nil -- (player: Player) -> boolean   (default: Humanoid hidup)
 local hasFlowerFn = nil -- (player: Player) -> boolean        (default: pindai Tool bunga)
 
 function PocongService.configure(opts)
+	failFn = opts.fail or failFn
 	knockFn = opts.knock or knockFn
 	isPlayerNormalFn = opts.isPlayerNormal or isPlayerNormalFn
 	hasFlowerFn = opts.hasFlower or hasFlowerFn
@@ -398,13 +400,19 @@ local function tryCatch(p, player, now)
 		return
 	end
 	lastKnockAt[player] = now
-	if knockFn then
+	if failFn then
+		-- FailureService.fail menjalankan jumpscare lalu knock (asinkron, via task.spawn); aman dipanggil dari Heartbeat.
+		local ok, err = pcall(failFn, player)
+		if not ok then
+			warn("[PocongService] fail gagal: " .. tostring(err))
+		end
+	elseif knockFn then
 		local ok, err = pcall(knockFn, player, "GHOST")
 		if not ok then
 			warn("[PocongService] knock gagal: " .. tostring(err))
 		end
 	else
-		warn("[PocongService] knock belum dipasang lewat configure(); pemain tidak di-knock")
+		warn("[PocongService] fail/knock belum dipasang lewat configure(); pemain tidak dihukum")
 	end
 	setState(p, "PAUSED")
 	p.stateUntil = now + CFG.POST_KNOCK_PAUSE_SECONDS

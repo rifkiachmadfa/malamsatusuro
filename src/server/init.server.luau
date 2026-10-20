@@ -36,6 +36,8 @@ local FailureConfig = require(script:WaitForChild("Config"):WaitForChild("Failur
 local JumpscareService = require(Services:WaitForChild("JumpscareService") :: ModuleScript)
 local FailureService = require(Services:WaitForChild("FailureService") :: ModuleScript)
 local GhostService = require(Services:WaitForChild("GhostService") :: ModuleScript)
+local PocongService = require(Services:WaitForChild("PocongService") :: ModuleScript)
+local PlayerState = GameConfig.PlayerState
 
 Log.info("Server", string.format("Malam Suro server siap (MAX_PLAYERS=%d)", GameConfig.MAX_PLAYERS))
 
@@ -61,6 +63,26 @@ KafanQuestService.init()
 FinalRitualService.init()
 -- Ghost Encounter System (Phase 9, ADR-048): terakhir, karena perilaku hantu memasang pendengar ke CollectibleService/QuestService.
 GhostService.init()
+
+-- Pocong (Phase 9.3, desain obor TorchCounter): berdiri sendiri di luar GhostService (lihat .ai/CURRENT_STATE.md).
+-- Pemicu spawn = pemantau Tool bunga di Backpack (PocongConfig.WATCH_BACKPACK); knock lewat KnockService.
+PocongService.configure({
+	-- Tertangkap Pocong = jumpscare lalu knock (multiplayer) atau kebijakan solo ADR-032 (FailureService).
+	fail = function(player: Player)
+		FailureService.fail(player, KnockConfig.Reason.GHOST_POCONG, "KANTIL")
+	end,
+	isPlayerNormal = function(player: Player): boolean
+		return GameManager.getPlayerState(player) == PlayerState.NORMAL
+	end,
+})
+PocongService.start()
+-- Pocong hanya hidup selama KANTIL = SEARCHING_FLOWERS. Masuk ke state itu lagi (party wipe) atau keluar darinya
+-- (bunga lengkap / selesai / reset) = bersihkan semua Pocong.
+QuestService.onStateChanged(function(questId: string, _fromState: string, _toState: string)
+	if questId == "KANTIL" then
+		PocongService.reset()
+	end
+end)
 
 -- Bunga salah di makam -> kebijakan gagal (ADR-030/032): multiplayer = knock, solo = respawn + reset quest.
 -- Jumpscare (ADR-033) dimainkan di dalam FailureService sebelum hukuman.

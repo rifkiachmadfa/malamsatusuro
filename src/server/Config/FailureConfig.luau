@@ -11,6 +11,8 @@ FailureConfig.FAIL_ON_WRONG_FLOWER = true
 -- Jumpscare per penyebab gagal (id hantu dari JumpscareConfig.Ghosts). Penyebab tanpa entri memakai DEFAULT_JUMPSCARE.
 FailureConfig.JumpscareByReason = table.freeze({
 	WRONG_FLOWER = "Pocong",
+	GHOST_KUNTILANAK = "Kuntilanak", -- Kuntilanak menangkap pembawa Kelor (Phase 9.2); model ServerStorage/GhostModels/Kuntilanak
+	GHOST_POCONG = "Pocong", -- Pocong menangkap pemegang bunga (Phase 9.3)
 	GAMELAN_FAIL = "Pocong", -- PLACEHOLDER (ADR-039): ganti ke hantu lain nanti, cukup tambah entri di JumpscareConfig.Ghosts
 } :: { [string]: string })
 FailureConfig.DEFAULT_JUMPSCARE = "Pocong"
@@ -27,8 +29,6 @@ FailureConfig.RESPAWN_ONLY_WHEN_ALONE = table.freeze({
 } :: { [string]: boolean })
 
 -- Jumpscare per hantu ditambahkan di JumpscareByReason di atas bila model berbeda sudah ada.
--- PLACEHOLDER: GHOST_KUNTILANAK sementara memakai DEFAULT_JUMPSCARE (Pocong) sampai model Kuntilanak dibuat user
--- (ServerStorage/GhostModels/Kuntilanak + entri di JumpscareConfig.Ghosts).
 
 FailureConfig.ALONE_RESPAWN_NOTICE = "Kamu ditangkap dan terbangun lagi. Tidak ada rekan di dekatmu, jadi kamu tidak pingsan."
 

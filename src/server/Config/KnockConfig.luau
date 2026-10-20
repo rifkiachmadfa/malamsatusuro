@@ -8,6 +8,7 @@ local KnockConfig = {}
 KnockConfig.Reason = table.freeze({
 	WRONG_FLOWER = "WRONG_FLOWER", -- bunga salah di makam (quest Kantil)
 	GHOST = "GHOST", -- RESERVED: hantu umum (belum dipakai; hantu nyata memakai alasan per hantu di bawah)
+	GHOST_POCONG = "GHOST_POCONG", -- ditangkap Pocong (quest Kantil, memegang bunga); jumpscare lalu knock lewat FailureService
 	GHOST_KUNTILANAK = "GHOST_KUNTILANAK", -- ditangkap Kuntilanak (quest Keris, Daun Kelor); dipakai GhostConfig.Ghosts.Kuntilanak.failureReason
 })
 
